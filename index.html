@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | PRO MOBILE</title>
+    <title>SPACE MAZE | CROSS-PLATFORM</title>
     <style>
         body { 
             background: #000; color: #00ff41; font-family: 'Courier New', monospace; 
@@ -16,68 +16,69 @@
             width: 100%; height: 100%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
-        .title { font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 20px #00ff41; margin-bottom: 10px; }
-        .settings-box { background: rgba(0,255,65,0.1); border: 1px solid #00ff41; padding: 15px; border-radius: 10px; margin: 10px; width: 280px; }
+        .title { font-size: 3rem; font-weight: bold; text-shadow: 0 0 20px #00ff41; margin-bottom: 20px; }
+        .settings-box { background: rgba(0,255,65,0.1); border: 1px solid #00ff41; padding: 15px; border-radius: 10px; margin: 10px; width: 300px; }
         
         button {
             background: transparent; border: 2px solid #00ff41; color: #00ff41;
             padding: 10px 20px; font-size: 1rem; font-family: 'Courier New';
             cursor: pointer; transition: 0.3s; border-radius: 5px; margin: 5px;
         }
-        button.active { background: #00ff41; color: #000; }
+        button.active { background: #00ff41; color: #000; box-shadow: 0 0 10px #00ff41; }
+        .start-btn { margin-top: 20px; background: #00ff41 !important; color: #000 !important; font-weight: bold; width: 200px; font-size: 1.5rem; }
 
-        /* MOBILE UI LAYOUT */
-        #mobile-ui {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; pointer-events: none; z-index: 50;
-        }
-        .control-side { position: absolute; bottom: 40px; width: 160px; height: 250px; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
-        
-        /* Left/Right Logic */
+        /* MOBILE UI */
+        #mobile-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; z-index: 50; }
+        .control-side { position: absolute; bottom: 40px; width: 180px; height: 250px; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
         .side-left { left: 20px; }
         .side-right { right: 20px; }
 
-        /* JOYSTICK */
+        /* JOYSTICK & DPAD */
         #joy-base { width: 120px; height: 120px; background: rgba(0,255,65,0.1); border: 2px solid #00ff41; border-radius: 50%; position: relative; display: none; }
         #joy-stick { width: 50px; height: 50px; background: #00ff41; border-radius: 50%; position: absolute; top: 35px; left: 35px; box-shadow: 0 0 15px #00ff41; }
-
-        /* D-PAD */
-        #dpad { display: grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(2, 55px); gap: 5px; }
-        .m-btn { width: 50px; height: 50px; border: 2px solid #00ff41; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #00ff41; font-weight: bold; background: rgba(0,255,65,0.1); }
+        #dpad { display: grid; grid-template-columns: repeat(3, 55px); grid-template-rows: repeat(2, 55px); gap: 5px; }
+        .m-btn { width: 55px; height: 55px; border: 2px solid #00ff41; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #00ff41; font-weight: bold; background: rgba(0,255,65,0.1); font-size: 1.5rem; }
         .m-btn:active { background: #00ff41; color: #000; }
 
-        /* ACTION BUTTONS (Moved UP) */
-        .action-btns { display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: flex-start; padding-top: 20px; }
-        .act-btn { width: 75px; height: 75px; border-radius: 50%; border: 3px solid #f05; color: #f05; display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); }
+        /* ACTIONS */
+        .action-btns { display: flex; flex-direction: column; gap: 25px; align-items: center; }
+        .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #f05; color: #f05; display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); }
         .dash-btn { border-color: #0cf; color: #0cf; background: rgba(0,204,255,0.1); }
 
         #game-container { position: relative; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; }
-        canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 50vh; }
-        #stats { position: absolute; top: 10px; font-size: 1rem; width: 100%; text-align: center; }
+        canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 55vh; }
+        #stats { position: absolute; top: 15px; font-size: 1.2rem; width: 100%; text-align: center; color: #00ff41; text-shadow: 0 0 5px #00ff41; }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <div class="title">SPACE MAZE PRO</div>
+        <div class="title">SPACE MAZE</div>
         
         <div class="settings-box">
-            <p>MOVEMENT TYPE</p>
-            <button id="btn-joy" onclick="setControl('joy')">JOYSTICK</button>
-            <button id="btn-dpad" class="active" onclick="setControl('dpad')">ARROWS</button>
+            <p>1. CHOOSE DEVICE</p>
+            <button id="dev-pc" class="active" onclick="setDevice('pc')">DESKTOP</button>
+            <button id="dev-mo" onclick="setDevice('mobile')">MOBILE</button>
         </div>
 
-        <div class="settings-box">
-            <p>HANDEDNESS</p>
-            <button id="btn-lefty" onclick="setHand('lefty')">LEFT MOVE</button>
-            <button id="btn-righty" class="active" onclick="setHand('righty')">RIGHT MOVE</button>
+        <div id="mobile-options" style="display:none;">
+            <div class="settings-box">
+                <p>2. MOVEMENT STYLE</p>
+                <button id="btn-joy" onclick="setControl('joy')">JOYSTICK</button>
+                <button id="btn-dpad" class="active" onclick="setControl('dpad')">ARROWS</button>
+            </div>
+            <div class="settings-box">
+                <p>3. HANDEDNESS</p>
+                <button id="btn-lefty" onclick="setHand('lefty')">L-MOVE</button>
+                <button id="btn-righty" class="active" onclick="setHand('righty')">R-MOVE</button>
+            </div>
         </div>
 
-        <button onclick="launch()" style="margin-top:20px; background:#00ff41; color:#000; font-weight:bold;">START MISSION</button>
+        <button class="start-btn" onclick="launch()">LAUNCH</button>
     </div>
 
     <div id="game-container">
-        <div id="stats">SECTOR: <span id="lvl">1</span> | OX: <span id="ox">100</span>%</div>
+        <div id="stats">SECTOR: <span id="lvl">1</span> | OXYGEN: <span id="ox">100</span>%</div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         
         <div id="mobile-ui">
@@ -90,7 +91,6 @@
                     <div class="m-btn" ontouchstart="keys.ArrowRight=true" ontouchend="keys.ArrowRight=false">→</div>
                 </div>
             </div>
-
             <div id="action-zone" class="control-side side-left">
                 <div class="action-btns">
                     <div class="act-btn dash-btn" ontouchstart="dash()">WARP</div>
@@ -105,49 +105,39 @@
         const ctx = canvas.getContext("2d");
         const ROWS = 13, COLS = 19, CELL_W = 800/COLS, CELL_H = 600/ROWS;
         let currentLevel = 1, player, enemies, maze, bullets, keys = {}, gameActive = false;
-        let controlType = 'dpad', handMode = 'righty';
+        let deviceType = 'pc', controlType = 'dpad', handMode = 'righty';
 
-        function setControl(t) { 
-            controlType = t; 
-            document.getElementById('btn-joy').className = t==='joy'?'active':'';
-            document.getElementById('btn-dpad').className = t==='dpad'?'active':'';
+        function setDevice(d) {
+            deviceType = d;
+            document.getElementById('dev-pc').className = d==='pc'?'active':'';
+            document.getElementById('dev-mo').className = d==='mobile'?'active':'';
+            document.getElementById('mobile-options').style.display = d==='mobile'?'block':'none';
         }
-        function setHand(h) { 
-            handMode = h; 
-            document.getElementById('btn-lefty').className = h==='lefty'?'active':'';
-            document.getElementById('btn-righty').className = h==='righty'?'active':'';
-        }
+        function setControl(t) { controlType = t; document.getElementById('btn-joy').className = t==='joy'?'active':''; document.getElementById('btn-dpad').className = t==='dpad'?'active':''; }
+        function setHand(h) { handMode = h; document.getElementById('btn-lefty').className = h==='lefty'?'active':''; document.getElementById('btn-righty').className = h==='righty'?'active':''; }
 
         function launch() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
-            document.getElementById('mobile-ui').style.display = 'block';
-            
-            // Apply Handedness
-            document.getElementById('move-zone').className = `control-side side-${handMode==='righty'?'right':'left'}`;
-            document.getElementById('action-zone').className = `control-side side-${handMode==='righty'?'left':'right'}`;
-            
-            // Apply Control Type
-            document.getElementById('joy-base').style.display = controlType==='joy'?'block':'none';
-            document.getElementById('dpad').style.display = controlType==='dpad'?'grid':'none';
-            
-            if(controlType === 'joy') initJoystick();
+            if(deviceType === 'mobile') {
+                document.getElementById('mobile-ui').style.display = 'block';
+                document.getElementById('move-zone').className = `control-side side-${handMode==='righty'?'right':'left'}`;
+                document.getElementById('action-zone').className = `control-side side-${handMode==='righty'?'left':'right'}`;
+                document.getElementById('joy-base').style.display = controlType==='joy'?'block':'none';
+                document.getElementById('dpad').style.display = controlType==='dpad'?'grid':'none';
+                if(controlType === 'joy') initJoystick();
+            }
             gameActive = true; initLevel(1); draw();
         }
 
         function initJoystick() {
             const base = document.getElementById('joy-base'), stick = document.getElementById('joy-stick');
-            const limit = 40;
             base.ontouchmove = (e) => {
-                const touch = e.touches[0];
                 const rect = base.getBoundingClientRect();
-                const centerX = rect.left + 60, centerY = rect.top + 60;
-                let dx = touch.clientX - centerX, dy = touch.clientY - centerY;
-                const dist = Math.min(limit, Math.hypot(dx, dy));
-                const angle = Math.atan2(dy, dx);
+                const dx = e.touches[0].clientX - (rect.left + 60), dy = e.touches[0].clientY - (rect.top + 60);
+                const dist = Math.min(40, Math.hypot(dx, dy)), angle = Math.atan2(dy, dx);
                 stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
-                keys.ArrowLeft = dx < -20; keys.ArrowRight = dx > 20;
-                keys.ArrowUp = dy < -20; keys.ArrowDown = dy > 20;
+                keys.ArrowLeft = dx < -15; keys.ArrowRight = dx > 15; keys.ArrowUp = dy < -15; keys.ArrowDown = dy > 15;
             };
             base.ontouchend = () => { stick.style.transform = ''; keys = {}; };
         }
@@ -168,28 +158,22 @@
             }
         }
 
+        window.addEventListener("keydown", e => { keys[e.code] = true; if(e.code === "Space") shoot(); if(e.code.includes("Shift")) dash(); });
+        window.addEventListener("keyup", e => keys[e.code] = false);
+
         function shoot() { if (player.ox >= 10) { bullets.push({x: player.x, y: player.y, dx: player.dir.x*12, dy: player.dir.y*12}); player.ox -= 8; } }
         function dash() { if (player.ox >= 20) { let nx = player.x + (player.dir.x * 80), ny = player.y + (player.dir.y * 80); if (!isWall(nx, ny)) { player.x = nx; player.y = ny; player.ox -= 15; } } }
         function isWall(x, y) { let r = Math.floor(y/CELL_H), c = Math.floor(x/CELL_W); return (r<0 || r>=ROWS || c<0 || c>=COLS || maze[r][c] === 1); }
 
         function update() {
             let mx = 0, my = 0;
-            if (keys.ArrowUp) my = -1; if (keys.ArrowDown) my = 1;
-            if (keys.ArrowLeft) mx = -1; if (keys.ArrowRight) mx = 1;
+            if (keys.ArrowUp) my = -1; if (keys.ArrowDown) my = 1; if (keys.ArrowLeft) mx = -1; if (keys.ArrowRight) mx = 1;
             if (mx || my) { player.dir = {x: mx||player.dir.x, y: my||player.dir.y}; if (!isWall(player.x+mx*4, player.y)) player.x+=mx*4; if (!isWall(player.x, player.y+my*4)) player.y+=my*4; }
-            enemies.forEach(en => {
-                if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx;
-                if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy;
-                if (Math.hypot(player.x-en.x, player.y-en.y) < 20) location.reload();
-            });
-            bullets = bullets.filter(b => {
-                b.x += b.dx; b.y += b.dy; enemies.forEach((en, i) => { if (Math.hypot(b.x-en.x, b.y-en.y) < 15) enemies.splice(i, 1); });
-                return !isWall(b.x, b.y);
-            });
+            enemies.forEach(en => { if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx; if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy; if (Math.hypot(player.x-en.x, player.y-en.y) < 20) location.reload(); });
+            bullets = bullets.filter(b => { b.x += b.dx; b.y += b.dy; enemies.forEach((en, i) => { if (Math.hypot(b.x-en.x, b.y-en.y) < 15) enemies.splice(i, 1); }); return !isWall(b.x, b.y); });
             if (player.x > 800-CELL_W && player.y > 600-CELL_H) { currentLevel++; initLevel(currentLevel); }
             if (player.ox < 100) player.ox += 0.08;
-            document.getElementById("ox").innerText = Math.floor(player.ox);
-            document.getElementById("lvl").innerText = currentLevel;
+            document.getElementById("ox").innerText = Math.floor(player.ox); document.getElementById("lvl").innerText = currentLevel;
         }
 
         function draw() { if(!gameActive) return; ctx.clearRect(0,0,800,600); ctx.fillStyle="#00ff41"; for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2); ctx.fillStyle="#0cf"; ctx.fillRect(800-CELL_W+5, 600-CELL_H+5, CELL_W-10, CELL_H-10); ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(player.x,player.y,10,0,7); ctx.fill(); ctx.fillStyle="#f05"; enemies.forEach(en=>{ctx.beginPath(); ctx.arc(en.x,en.y,11,0,7); ctx.fill();}); ctx.fillStyle="#ff0"; bullets.forEach(b=>{ctx.beginPath(); ctx.arc(b.x,b.y,4,0,7); ctx.fill();}); update(); requestAnimationFrame(draw); }
