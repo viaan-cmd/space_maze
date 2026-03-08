@@ -26,28 +26,44 @@
         }
         button:hover { background: #00ff41; color: #000; box-shadow: 0 0 20px #00ff41; }
 
-        /* MOBILE CONTROLS */
+        /* MOBILE CONTROLS - KEYBOARD STYLE D-PAD */
         #mobile-ui {
-            position: absolute; bottom: 20px; width: 100%; height: 180px;
-            display: none; justify-content: space-between; padding: 0 20px; box-sizing: border-box;
+            position: absolute; bottom: 30px; width: 100%; 
+            display: none; justify-content: space-between; padding: 0 30px; box-sizing: border-box;
             z-index: 50; pointer-events: none;
         }
-        .d-pad, .action-btns { display: grid; gap: 5px; pointer-events: auto; }
-        .d-pad { grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 60px); }
-        .action-btns { grid-template-columns: repeat(2, 70px); align-items: center; }
+        .d-pad { 
+            display: grid; 
+            grid-template-columns: repeat(3, 55px); 
+            grid-template-rows: repeat(3, 55px); 
+            gap: 8px; pointer-events: auto;
+        }
+        .action-btns { 
+            display: flex; flex-direction: column; gap: 15px; pointer-events: auto;
+            justify-content: center;
+        }
         
         .m-btn {
-            width: 60px; height: 60px; background: rgba(0, 255, 65, 0.2);
-            border: 2px solid #00ff41; border-radius: 10px;
+            width: 55px; height: 55px; background: rgba(0, 255, 65, 0.1);
+            border: 2px solid #00ff41; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: #00ff41; user-select: none; -webkit-user-select: none;
+            font-size: 1.5rem; font-weight: bold; color: #00ff41; 
+            user-select: none; -webkit-user-select: none;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
         }
-        .m-btn:active { background: #00ff41; color: #000; }
-        .btn-fire { background: rgba(255, 0, 85, 0.2); border-color: #f05; color: #f05; height: 80px; width: 70px; }
-        .btn-dash { background: rgba(0, 204, 255, 0.2); border-color: #0cf; color: #0cf; height: 80px; width: 70px; }
+        .m-btn:active { background: #00ff41; color: #000; box-shadow: 0 0 25px #00ff41; }
+        
+        /* Positioning the arrows in a cross */
+        .up    { grid-column: 2; grid-row: 1; }
+        .left  { grid-column: 1; grid-row: 2; }
+        .down  { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+
+        .btn-fire { background: rgba(255, 0, 85, 0.1); border-color: #f05; color: #f05; width: 75px; height: 75px; border-radius: 50%; }
+        .btn-dash { background: rgba(0, 204, 255, 0.1); border-color: #0cf; color: #0cf; width: 75px; height: 75px; border-radius: 50%; }
 
         #game-container { position: relative; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; }
-        canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 60vh; }
+        canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 50vh; }
         #stats { position: absolute; top: 10px; font-size: 1rem; width: 100%; text-align: center; }
     </style>
 </head>
@@ -68,10 +84,10 @@
         
         <div id="mobile-ui">
             <div class="d-pad">
-                <div style="grid-column: 2" class="m-btn" ontouchstart="move('up', true)" ontouchend="move('up', false)">↑</div>
-                <div class="m-btn" ontouchstart="move('left', true)" ontouchend="move('left', false)">←</div>
-                <div class="m-btn" ontouchstart="move('down', true)" ontouchend="move('down', false)">↓</div>
-                <div class="m-btn" ontouchstart="move('right', true)" ontouchend="move('right', false)">→</div>
+                <div class="m-btn up" ontouchstart="move('up', true)" ontouchend="move('up', false)">↑</div>
+                <div class="m-btn left" ontouchstart="move('left', true)" ontouchend="move('left', false)">←</div>
+                <div class="m-btn down" ontouchstart="move('down', true)" ontouchend="move('down', false)">↓</div>
+                <div class="m-btn right" ontouchstart="move('right', true)" ontouchend="move('right', false)">→</div>
             </div>
             <div class="action-btns">
                 <div class="m-btn btn-dash" ontouchstart="dash()">WARP</div>
