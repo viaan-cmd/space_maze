@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACE MAZE | OFFICIAL</title>
+    <style>
+        body { 
+            background: #000; color: #00ff41; font-family: 'Courier New', monospace; 
+            margin: 0; padding: 0; overflow: hidden; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw;
+        }
+        /* START & GAME OVER SCREENS */
+        #overlay {
+            position: absolute; z-index: 10; background: radial-gradient(circle, #0a0a1a 0%, #000 100%);
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+        }
+        .title { font-size: 4rem; font-weight: bold; text-shadow: 0 0 30px #00ff41; letter-spacing: 10px; margin-bottom: 10px; }
+        .death-title { color: #f05; text-shadow: 0 0 20px #f05; font-size: 3.5rem; margin-bottom: 10px; }
+        .stats-hit { font-size: 1.5rem; color: #fff; margin-bottom: 30px; }
+        button {
+            background: transparent; border: 2px solid #00ff41; color: #00ff41;
+            padding: 15px 50px; font-size: 1.5rem; font-family: 'Courier New';
+            cursor: pointer; transition: 0.3s; box-shadow: 0 0 15px #00ff41; border-radius: 5px;
+        }
+        button:hover { background: #00ff41; color: #000; box-shadow: 0 0 40px #00ff41; transform: scale(1.1); }
+        
+        /* GAME UI */
+        #ui-layer { 
+            position: absolute; top: 15px; width: 100%; text-align: center; pointer-events: none;
+            text-shadow: 0 0 10px #00ff41; font-size: 1.3rem; display: none;
+        }
+        #game-container { width: 95vw; height: 80vh; display: none; align-items: center; justify-content: center; }
+        canvas { 
+            background: #010101; border: 2px solid #00ff41; 
+            box-shadow: 0 0 50px #00ff4133; max-width: 100%; max-height: 100%; object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <div id="content">
+            <div class="title">SPACE MAZE</div>
+            <p>MISSION: REACH LEVEL 202</p>
+            <button onclick="startGame()">LAUNCH MISSION</button>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        SECTOR: <span id="lvl">1</span>/202 | OXYGEN: <span id="ox">100</span>%
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const ROWS = 13, COLS = 19, CELL_W = 800/COLS, CELL_H = 600/ROWS;
+        
+        let currentLevel = 1, player, goal, enemies, maze, bullets, keys = {}, gameActive = false;
+        let highScore = localStorage.getItem('spaceMazeHigh') || 1;
+
+        function startGame() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'block';
+            document.getElementById('game-container').style.display = 'flex';
+            gameActive = true;
+            currentLevel = 1;
+            initLevel(1);
+            draw();
+        }
+
+        function gameOver() {
+            gameActive = false;
+            if(currentLevel > highScore) {
+                highScore = currentLevel;
+                localStorage.setItem('spaceMazeHigh', highScore);
+            }
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('content').innerHTML = `
+                <div class="death-title">CRITICAL FAILURE</div>
+                <div class="stats-hit">SECTOR REACHED: ${currentLevel}</div>
+                <div style="margin-bottom:20px;">BEST: SECTOR ${highScore}</div>
+                <button onclick="startGame()">REBOOT SYSTEM</button>
+            `;
+        }
+
+        function generateMaze() {
+            let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(1));
+            let stack = [[0, 0]]; grid[0][0] = 0;
+            while (stack.length > 0) {
+                let [r, c] = stack[stack.length - 1];
+                let neighbors = [[r-2, c], [r+2, c], [r, c-2], [r, c+2]].filter(([nr, nc]) => 
+                    nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && grid[nr][nc] === 1);
+                if (neighbors.length > 0) {
+                    let [nr, nc] = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    grid[nr][nc] = 0; grid[(r + nr) / 2][(c + nc) / 2] = 0; stack.push([nr, nc]);
+                } else { stack.pop(); }
+            }
+            return grid;
+        }
+
+        function initLevel(lvl, isRestart = false) {
+            if (!isRestart) maze = generateMaze();
+            player = { x: CELL_W/2, y: CELL_H/2, r: 10, speed: 4, ox: 100, dir: {x: 1, y: 0} };
+            goal = { x: 800 - CELL_W, y: 600 - CELL_H };
+            bullets = []; enemies = [];
+            let enemyCount = Math.min(3 + Math.floor(lvl / 5), 18);
+            for(let i=0; i<enemyCount; i++) {
+                let rx, ry;
+                do { rx = Math.floor(Math.random()*COLS); ry = Math.floor(Math.random()*ROWS); }
+                while(maze[ry][rx] === 1 || (rx < 4 && ry < 4));
+                enemies.push({
+                    x: rx*CELL_W + CELL_W/2, y: ry*CELL_H + CELL_H/2, r: 11,
+                    dx: (Math.random()-0.5)*(3.5 + lvl*0.1), dy: (Math.random()-0.5)*(3.5 + lvl*0.1)
+                });
+            }
+        }
+
+        window.addEventListener("keydown", e => { keys[e.code] = true; if(e.code === "Space") shoot(); if(e.code === "ShiftLeft" || e.code === "ShiftRight") dash(); });
+        window.addEventListener("keyup", e => keys[e.code] = false);
+
+        function shoot() { if (player.ox >= 10) { bullets.push({x: player.x, y: player.y, dx: player.dir.x*12, dy: player.dir.y*12}); player.ox -= 5; } }
+        function dash() { if (player.ox >= 20) { let d = 80; let nx = player.x + (player.dir.x * d), ny = player.y + (player.dir.y * d); if (!isWall(nx, ny)) { player.x = nx; player.y = ny; player.ox -= 15; } } }
+        function isWall(x, y) { let r = Math.floor(y/CELL_H), c = Math.floor(x/CELL_W); return (r<0 || r>=ROWS || c<0 || c>=COLS || maze[r][c] === 1); }
+
+        function update() {
+            let mx = 0, my = 0;
+            if (keys["ArrowUp"]) my = -1; if (keys["ArrowDown"]) my = 1;
+            if (keys["ArrowLeft"]) mx = -1; if (keys["ArrowRight"]) mx = 1;
+            if (mx !== 0 || my !== 0) {
+                player.dir = {x: mx, y: my};
+                if (!isWall(player.x + mx*player.speed, player.y)) player.x += mx*player.speed;
+                if (!isWall(player.x, player.y + my*player.speed)) player.y += my*player.speed;
+            }
+            enemies.forEach(en => {
+                if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx;
+                if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy;
+                if (Math.hypot(player.x-en.x, player.y-en.y) < en.r + 8) gameOver();
+            });
+            bullets = bullets.filter(b => {
+                b.x += b.dx; b.y += b.dy;
+                let hit = false;
+                enemies.forEach((en, i) => { if (Math.hypot(b.x-en.x, b.y-en.y) < en.r) { enemies.splice(i, 1); hit = true; }});
+                return !hit && !isWall(b.x, b.y);
+            });
+            if (player.x > goal.x && player.y > goal.y) { currentLevel++; initLevel(currentLevel); }
+            document.getElementById("ox").innerText = Math.floor(player.ox);
+            document.getElementById("lvl").innerText = currentLevel;
+        }
+
+        function draw() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, 800, 600);
+            ctx.fillStyle = "#00ff41";
+            for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2);
+            ctx.fillStyle = "#0cf"; ctx.fillRect(goal.x+5, goal.y+5, CELL_W-10, CELL_H-10);
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, 7); ctx.fill();
+            ctx.fillStyle = "#f05"; enemies.forEach(en => { ctx.beginPath(); ctx.arc(en.x, en.y, en.r, 0, 7); ctx.fill(); });
+            ctx.fillStyle = "#ff0"; bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill(); });
+            update(); requestAnimationFrame(draw);
+        }
+    </script>
+</body>
+</html>
