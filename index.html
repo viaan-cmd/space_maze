@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | CROSS-PLATFORM</title>
+    <title>SPACE MAZE | FLASH WARP</title>
     <style>
         body { 
             background: #000; color: #00ff41; font-family: 'Courier New', monospace; 
@@ -16,8 +16,8 @@
             width: 100%; height: 100%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
-        .title { font-size: 3rem; font-weight: bold; text-shadow: 0 0 20px #00ff41; margin-bottom: 20px; }
-        .settings-box { background: rgba(0,255,65,0.1); border: 1px solid #00ff41; padding: 15px; border-radius: 10px; margin: 10px; width: 300px; }
+        .title { font-size: 3.5rem; font-weight: bold; text-shadow: 0 0 20px #00ff41; margin-bottom: 10px; }
+        .settings-box { background: rgba(0,255,65,0.1); border: 1px solid #00ff41; padding: 15px; border-radius: 10px; margin: 10px; width: 320px; }
         
         button {
             background: transparent; border: 2px solid #00ff41; color: #00ff41;
@@ -25,7 +25,9 @@
             cursor: pointer; transition: 0.3s; border-radius: 5px; margin: 5px;
         }
         button.active { background: #00ff41; color: #000; box-shadow: 0 0 10px #00ff41; }
-        .start-btn { margin-top: 20px; background: #00ff41 !important; color: #000 !important; font-weight: bold; width: 200px; font-size: 1.5rem; }
+        .start-btn { margin-top: 15px; background: #00ff41 !important; color: #000 !important; font-weight: bold; width: 200px; font-size: 1.5rem; }
+        .leave-btn { border-color: #ff0055; color: #ff0055; }
+        .secret-btn-bold { font-weight: 900; border: 3px solid gold; color: gold; text-transform: uppercase; margin-top: 10px; background: rgba(255,215,0,0.1); }
 
         /* MOBILE UI */
         #mobile-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; z-index: 50; }
@@ -33,24 +35,18 @@
         .side-left { left: 20px; }
         .side-right { right: 20px; }
 
-        /* JOYSTICK & DPAD */
-        #joy-base { width: 120px; height: 120px; background: rgba(0,255,65,0.1); border: 2px solid #00ff41; border-radius: 50%; position: relative; display: none; }
-        #joy-stick { width: 50px; height: 50px; background: #00ff41; border-radius: 50%; position: absolute; top: 35px; left: 35px; box-shadow: 0 0 15px #00ff41; }
         #dpad { display: grid; grid-template-columns: repeat(3, 55px); grid-template-rows: repeat(2, 55px); gap: 5px; }
         .m-btn { width: 55px; height: 55px; border: 2px solid #00ff41; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #00ff41; font-weight: bold; background: rgba(0,255,65,0.1); font-size: 1.5rem; }
-        .m-btn:active { background: #00ff41; color: #000; }
-
-        /* ACTIONS */
+        
         .action-btns { display: flex; flex-direction: column; gap: 25px; align-items: center; }
-        .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #f05; color: #f05; display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); }
+        .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 3px solid #f05; color: #f05; display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); }
         .dash-btn { border-color: #0cf; color: #0cf; background: rgba(0,204,255,0.1); }
 
         #game-container { position: relative; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; }
-        canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 55vh; }
-        #stats { position: absolute; top: 15px; font-size: 1.2rem; width: 100%; text-align: center; color: #00ff41; text-shadow: 0 0 5px #00ff41; }
+        canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 55vh; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
+        #stats { position: absolute; top: 15px; font-size: 1.3rem; width: 100%; text-align: center; color: #00ff41; }
         
-        .secret-msg { position: absolute; bottom: 5px; right: 5px; width: 10px; height: 10px; background: #00ff41; border-radius: 50%; opacity: 0.2; cursor: pointer; }
-        .tut-box { font-size: 0.8rem; margin-top: 10px; color: #0cf; }
+        .tut-box { font-size: 0.85rem; margin-top: 10px; color: #0cf; background: rgba(0,204,255,0.05); padding: 8px; border-radius: 5px; border: 1px solid rgba(0,204,255,0.2); }
     </style>
 </head>
 <body>
@@ -58,35 +54,34 @@
     <div id="overlay">
         <div class="title" id="menu-title">SPACE MAZE</div>
         
-        <div id="settings-area">
-            <div class="settings-box">
-                <p>1. CHOOSE DEVICE</p>
-                <button id="dev-pc" class="active" onclick="setDevice('pc')">DESKTOP</button>
-                <button id="dev-mo" onclick="setDevice('mobile')">MOBILE</button>
-            </div>
-
-            <div id="mobile-options" style="display:none;">
+        <div id="menu-content">
+            <div id="settings-area">
                 <div class="settings-box">
-                    <p>2. MOVEMENT STYLE</p>
-                    <button id="btn-joy" onclick="setControl('joy')">JOYSTICK</button>
-                    <button id="btn-dpad" class="active" onclick="setControl('dpad')">ARROWS</button>
+                    <p style="margin-top:0">DEVICE</p>
+                    <button id="dev-pc" class="active" onclick="setDevice('pc')">PC</button>
+                    <button id="dev-mo" onclick="setDevice('mobile')">MOBILE</button>
                 </div>
-                <div class="settings-box">
-                    <p>3. HANDEDNESS</p>
-                    <button id="btn-lefty" onclick="setHand('lefty')">L-MOVE</button>
-                    <button id="btn-righty" class="active" onclick="setHand('righty')">R-MOVE</button>
-                </div>
-            </div>
 
-            <div class="tut-box">
-                TUTORIAL: Move to blue portal. Walls block you.<br>
-                <b>WARP</b> (Shift): Phase through walls. <b>FIRE</b> (Space): Auto-aim.<br>
-                Don't let OXYGEN hit 0 or you die!
+                <div id="mobile-options" style="display:none;">
+                    <div class="settings-box">
+                        <p style="margin-top:0">HANDEDNESS</p>
+                        <button id="btn-lefty" onclick="setHand('lefty')">LEFT</button>
+                        <button id="btn-righty" class="active" onclick="setHand('righty')">RIGHT</button>
+                    </div>
+                </div>
+
+                <div class="tut-box">
+                    <b>CONTROLS:</b><br>
+                    PC: WASD to Move | Shift: WARP | Space: FIRE<br>
+                    Mobile: D-Pad to Move | Buttons to Action<br>
+                    <i>Warp (20% OX) is the ONLY way through walls!</i>
+                </div>
             </div>
+            
+            <button class="start-btn" onclick="launch()">LAUNCH</button>
+            <br>
+            <button class="secret-btn-bold" onclick="alert('diddy will oil u up tn')">SECRET MESSAGE</button>
         </div>
-
-        <button class="start-btn" id="main-btn" onclick="launch()">LAUNCH</button>
-        <div class="secret-msg" onclick="alert('if u read this diddy will oil u up')"></div>
     </div>
 
     <div id="game-container">
@@ -95,7 +90,6 @@
         
         <div id="mobile-ui">
             <div id="move-zone" class="control-side side-right">
-                <div id="joy-base"><div id="joy-stick"></div></div>
                 <div id="dpad">
                     <div style="grid-column:2" class="m-btn" ontouchstart="keys.ArrowUp=true" ontouchend="keys.ArrowUp=false">↑</div>
                     <div class="m-btn" ontouchstart="keys.ArrowLeft=true" ontouchend="keys.ArrowLeft=false">←</div>
@@ -117,7 +111,7 @@
         const ctx = canvas.getContext("2d");
         const ROWS = 13, COLS = 19, CELL_W = 800/COLS, CELL_H = 600/ROWS;
         let currentLevel = 1, player, enemies, maze, bullets, keys = {}, gameActive = false;
-        let deviceType = 'pc', controlType = 'dpad', handMode = 'righty';
+        let deviceType = 'pc', handMode = 'righty', raf, flashAlpha = 0;
 
         function setDevice(d) {
             deviceType = d;
@@ -125,8 +119,11 @@
             document.getElementById('dev-mo').className = d==='mobile'?'active':'';
             document.getElementById('mobile-options').style.display = d==='mobile'?'block':'none';
         }
-        function setControl(t) { controlType = t; document.getElementById('btn-joy').className = t==='joy'?'active':''; document.getElementById('btn-dpad').className = t==='dpad'?'active':''; }
-        function setHand(h) { handMode = h; document.getElementById('btn-lefty').className = h==='lefty'?'active':''; document.getElementById('btn-righty').className = h==='righty'?'active':''; }
+        function setHand(h) {
+            handMode = h;
+            document.getElementById('btn-lefty').className = h==='lefty'?'active':'';
+            document.getElementById('btn-righty').className = h==='righty'?'active':'';
+        }
 
         function launch() {
             document.getElementById('overlay').style.display = 'none';
@@ -135,26 +132,11 @@
                 document.getElementById('mobile-ui').style.display = 'block';
                 document.getElementById('move-zone').className = `control-side side-${handMode==='righty'?'right':'left'}`;
                 document.getElementById('action-zone').className = `control-side side-${handMode==='righty'?'left':'right'}`;
-                document.getElementById('joy-base').style.display = controlType==='joy'?'block':'none';
-                document.getElementById('dpad').style.display = controlType==='dpad'?'grid':'none';
-                if(controlType === 'joy') initJoystick();
             }
-            gameActive = true; 
             currentLevel = 1;
-            initLevel(currentLevel); 
-            draw();
-        }
-
-        function initJoystick() {
-            const base = document.getElementById('joy-base'), stick = document.getElementById('joy-stick');
-            base.ontouchmove = (e) => {
-                const rect = base.getBoundingClientRect();
-                const dx = e.touches[0].clientX - (rect.left + 60), dy = e.touches[0].clientY - (rect.top + 60);
-                const dist = Math.min(40, Math.hypot(dx, dy)), angle = Math.atan2(dy, dx);
-                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
-                keys.ArrowLeft = dx < -15; keys.ArrowRight = dx > 15; keys.ArrowUp = dy < -15; keys.ArrowDown = dy > 15;
-            };
-            base.ontouchend = () => { stick.style.transform = ''; keys = {}; };
+            gameActive = true;
+            initLevel(currentLevel);
+            if (!raf) draw(); 
         }
 
         function initLevel(lvl) {
@@ -165,7 +147,7 @@
                 let n = [[r-2, c], [r+2, c], [r, c-2], [r, c+2]].filter(([nr, nc]) => nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && maze[nr][nc] === 1);
                 if (n.length > 0) { let [nr, nc] = n[Math.floor(Math.random()*n.length)]; maze[nr][nc] = 0; maze[(r+nr)/2][(c+nc)/2] = 0; stack.push([nr, nc]); } else stack.pop();
             }
-            player = { x: CELL_W/2, y: CELL_H/2, r: 10, speed: 4, ox: 100, dir: {x: 1, y: 0} };
+            player = { x: CELL_W/2, y: CELL_H/2, ox: 100, dir: {x: 1, y: 0} };
             bullets = []; enemies = [];
             for(let i=0; i<Math.min(3 + lvl, 15); i++) {
                 let rx, ry; do { rx = Math.floor(Math.random()*COLS); ry = Math.floor(Math.random()*ROWS); } while(maze[ry][rx] === 1 || (rx < 3 && ry < 3));
@@ -176,103 +158,135 @@
         window.addEventListener("keydown", e => { keys[e.code] = true; if(e.code === "Space") shoot(); if(e.code.includes("Shift")) dash(); });
         window.addEventListener("keyup", e => keys[e.code] = false);
 
-        // AUTO-AIM FIRE
-        function shoot() { 
-            if (player.ox >= 8 && enemies.length > 0) { 
-                let nearest = enemies[0];
-                let minDist = Math.hypot(nearest.x - player.x, nearest.y - player.y);
+        function shoot() {
+            if (player.ox >= 8 && enemies.length > 0) {
+                let target = enemies[0];
+                let minDist = Math.hypot(target.x - player.x, target.y - player.y);
                 enemies.forEach(en => {
                     let d = Math.hypot(en.x - player.x, en.y - player.y);
-                    if (d < minDist) { minDist = d; nearest = en; }
+                    if (d < minDist) { minDist = d; target = en; }
                 });
-                let angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-                bullets.push({x: player.x, y: player.y, dx: Math.cos(angle)*12, dy: Math.sin(angle)*12}); 
-                player.ox -= 8; 
-            } 
+                let angle = Math.atan2(target.y - player.y, target.x - player.x);
+                bullets.push({x: player.x, y: player.y, dx: Math.cos(angle)*12, dy: Math.sin(angle)*12});
+                player.ox -= 8;
+            }
         }
 
-        // WARP (PHASE THROUGH WALLS)
-        function dash() { 
-            if (player.ox >= 20) { 
-                player.x += (player.dir.x * 100); 
-                player.y += (player.dir.y * 100); 
-                player.ox -= 20; 
-                // Boundary check
-                player.x = Math.max(10, Math.min(790, player.x));
-                player.y = Math.max(10, Math.min(590, player.y));
-            } 
+        function dash() {
+            if (player.ox >= 20) {
+                let tx = player.x + (player.dir.x * 125);
+                let ty = player.y + (player.dir.y * 125);
+                
+                // No-stuck logic: snap to center of target tile
+                let col = Math.floor(tx / CELL_W);
+                let row = Math.floor(ty / CELL_H);
+                col = Math.max(0, Math.min(COLS-1, col));
+                row = Math.max(0, Math.min(ROWS-1, row));
+                
+                player.x = (col * CELL_W) + (CELL_W/2);
+                player.y = (row * CELL_H) + (CELL_H/2);
+                
+                player.ox -= 20;
+                flashAlpha = 0.5; // Trigger Cyan Flash
+            }
         }
 
-        function isWall(x, y) { let r = Math.floor(y/CELL_H), c = Math.floor(x/CELL_W); return (r<0 || r>=ROWS || c<0 || c>=COLS || maze[r][c] === 1); }
+        function isWall(x, y) {
+            let r = Math.floor(y/CELL_H), c = Math.floor(x/CELL_W);
+            return (r<0 || r>=ROWS || c<0 || c>=COLS || maze[r][c] === 1);
+        }
 
-        function gameOver(win) {
+        function endScreen(msg, won = false) {
             gameActive = false;
             document.getElementById('game-container').style.display = 'none';
             document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('settings-area').style.display = 'none';
-            if(win) {
-                document.getElementById('menu-title').innerText = "MISSION COMPLETE";
-                document.getElementById('menu-title').style.color = "#0cf";
-                document.getElementById('main-btn').innerText = "if u read this diddy will oil u up";
-                document.getElementById('main-btn').onclick = () => location.reload();
-            } else {
-                document.getElementById('menu-title').innerText = "MISSION FAILED (DEAD)";
-                document.getElementById('menu-title').style.color = "#f05";
-                document.getElementById('main-btn').innerText = "RETRY";
-                document.getElementById('main-btn').onclick = () => location.reload();
-            }
+            document.getElementById('menu-title').innerText = msg;
+            document.getElementById('menu-title').style.color = won ? "#0cf" : "#f05";
+            
+            document.getElementById('menu-content').innerHTML = `
+                <h2 style="margin:5px; color:#fff">SECTORS REACHED: ${currentLevel}</h2>
+                <button class="start-btn" onclick="retry()">RETRY</button>
+                <button class="start-btn leave-btn" onclick="location.reload()">LEAVE</button>
+                <br>
+                <button class="secret-btn-bold" onclick="alert('diddy will oil u up tn')">SECRET MESSAGE</button>
+            `;
+        }
+
+        function retry() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            currentLevel = 1;
+            gameActive = true;
+            initLevel(currentLevel);
         }
 
         function update() {
             let mx = 0, my = 0;
-            if (keys.ArrowUp || keys.KeyW) my = -1; 
-            if (keys.ArrowDown || keys.KeyS) my = 1; 
-            if (keys.ArrowLeft || keys.KeyA) mx = -1; 
+            if (keys.ArrowUp || keys.KeyW) my = -1;
+            if (keys.ArrowDown || keys.KeyS) my = 1;
+            if (keys.ArrowLeft || keys.KeyA) mx = -1;
             if (keys.ArrowRight || keys.KeyD) mx = 1;
-            
-            if (mx || my) { 
-                player.dir = {x: mx||player.dir.x, y: my||player.dir.y}; 
-                // Normal move BLOCKED by walls
-                if (!isWall(player.x+mx*4, player.y)) player.x+=mx*4; 
-                if (!isWall(player.x, player.y+my*4)) player.y+=my*4; 
+
+            if (mx || my) {
+                player.dir = {x: mx || player.dir.x, y: my || player.dir.y};
+                if (!isWall(player.x + mx*4, player.y)) player.x += mx*4;
+                if (!isWall(player.x, player.y + my*4)) player.y += my*4;
             }
 
-            enemies.forEach(en => { 
-                if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx; 
-                if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy; 
-                if (Math.hypot(player.x-en.x, player.y-en.y) < 20) gameOver(false); 
+            enemies.forEach(en => {
+                if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx;
+                if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy;
+                if (Math.hypot(player.x - en.x, player.y - en.y) < 18) endScreen("MISSION FAILED");
             });
 
-            bullets = bullets.filter(b => { 
-                b.x += b.dx; b.y += b.dy; 
+            bullets = bullets.filter(b => {
+                b.x += b.dx; b.y += b.dy;
                 let hit = false;
-                enemies.forEach((en, i) => { if (Math.hypot(b.x-en.x, b.y-en.y) < 15) { enemies.splice(i, 1); hit = true; }}); 
-                return !hit && !isWall(b.x, b.y); 
+                enemies.forEach((en, i) => { if (Math.hypot(b.x - en.x, b.y - en.y) < 15) { enemies.splice(i, 1); hit = true; }});
+                return !hit && !isWall(b.x, b.y);
             });
 
-            if (player.x > 800-CELL_W && player.y > 600-CELL_H) { 
-                if(currentLevel >= 10) gameOver(true);
+            if (player.x > 800-CELL_W && player.y > 600-CELL_H) {
+                if(currentLevel >= 10) endScreen("GALAXY ESCAPED!", true);
                 else { currentLevel++; initLevel(currentLevel); }
             }
 
-            // OXYGEN DRAIN (1 tick per 5 seconds approx at 60fps)
-            player.ox -= 0.04; 
-            if (player.ox <= 0) gameOver(false);
+            // OXYGEN DRAIN (1% per second)
+            player.ox -= (1/60); 
+            if (player.ox <= 0) endScreen("OXYGEN DEPLETED");
 
-            document.getElementById("ox").innerText = Math.max(0, Math.floor(player.ox)); 
+            document.getElementById("ox").innerText = Math.max(0, Math.floor(player.ox));
             document.getElementById("lvl").innerText = currentLevel;
         }
 
-        function draw() { 
-            if(!gameActive) return; 
-            ctx.clearRect(0,0,800,600); 
-            ctx.fillStyle="#00ff41"; 
-            for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2); 
-            ctx.fillStyle="#0cf"; ctx.fillRect(800-CELL_W+5, 600-CELL_H+5, CELL_W-10, CELL_H-10); 
-            ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(player.x,player.y,10,0,7); ctx.fill(); 
-            ctx.fillStyle="#f05"; enemies.forEach(en=>{ctx.beginPath(); ctx.arc(en.x,en.y,11,0,7); ctx.fill();}); 
-            ctx.fillStyle="#ff0"; bullets.forEach(b=>{ctx.beginPath(); ctx.arc(b.x,b.y,4,0,7); ctx.fill();}); 
-            update(); requestAnimationFrame(draw); 
+        function draw() {
+            if(gameActive) {
+                ctx.clearRect(0,0,800,600);
+                
+                // Draw Maze
+                ctx.fillStyle="#00ff41";
+                for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2);
+                
+                // Draw Goal
+                ctx.fillStyle="#0cf"; ctx.fillRect(800-CELL_W+5, 600-CELL_H+5, CELL_W-10, CELL_H-10);
+                
+                // Draw Player
+                ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(player.x,player.y,10,0,Math.PI*2); ctx.fill();
+                
+                // Draw Enemies & Bullets
+                ctx.fillStyle="#f05"; enemies.forEach(en=>{ctx.beginPath(); ctx.arc(en.x,en.y,11,0,Math.PI*2); ctx.fill();});
+                ctx.fillStyle="#ff0"; bullets.forEach(b=>{ctx.beginPath(); ctx.arc(b.x,b.y,4,0,Math.PI*2); ctx.fill();});
+                
+                // Draw Warp Flash
+                if (flashAlpha > 0) {
+                    ctx.fillStyle = `rgba(0, 204, 255, ${flashAlpha})`;
+                    ctx.fillRect(0,0,800,600);
+                    flashAlpha -= 0.05;
+                }
+
+                update();
+            }
+            raf = requestAnimationFrame(draw);
         }
     </script>
 </body>
