@@ -3,113 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | 202 COMPLETE</title>
+    <title>SPACE MAZE | ADMIN ACCESS</title>
     <style>
-        :root { --neon: #00ff41; --warp: #0cf; --danger: #f05; --gold: #ffd700; }
+        :root { --neon: #00ff41; --warp: #0cf; --danger: #f05; --gold: #ffd700; --purple: #a020f0; }
         body { 
             background: #000; color: var(--neon); font-family: 'Courier New', monospace; 
             margin: 0; padding: 0; overflow: hidden; touch-action: none;
-            display: flex; flex-direction: center; align-items: center; justify-content: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; width: 100vw;
         }
-        #overlay {
+        #overlay, #cutscene, #admin-panel {
             position: absolute; z-index: 100; background: radial-gradient(circle, #0a0a1a 0%, #000 100%);
             width: 100%; height: 100%; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center; padding: 20px;
+            align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box;
         }
-        .title { font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 20px var(--neon); margin-bottom: 5px; }
-        .settings-box { background: rgba(0,255,65,0.1); border: 1px solid var(--neon); padding: 8px; border-radius: 10px; margin: 4px; width: 320px; font-size: 0.8rem; }
+        #cutscene, #admin-panel { display: none; z-index: 110; }
+        #admin-panel { background: rgba(0, 20, 0, 0.95); border: 4px solid var(--neon); height: auto; width: 300px; border-radius: 20px; padding: 30px; }
+        .title { font-size: 2.2rem; font-weight: bold; text-shadow: 0 0 20px var(--neon); margin-bottom: 5px; }
         
         button {
             background: transparent; border: 2px solid var(--neon); color: var(--neon);
-            padding: 5px 10px; font-size: 0.8rem; font-family: 'Courier New';
-            cursor: pointer; transition: 0.2s; border-radius: 5px; margin: 2px;
+            padding: 8px 15px; font-size: 0.9rem; font-family: 'Courier New';
+            cursor: pointer; transition: 0.2s; border-radius: 5px; margin: 5px;
         }
-        button.active { background: var(--neon); color: #000; box-shadow: 0 0 10px var(--neon); }
-        .start-btn { margin-top: 10px; background: var(--neon) !important; color: #000 !important; font-weight: bold; width: 200px; font-size: 1.1rem; }
-        .secret-btn-bold { 
-            font-weight: 900; border: 4px solid var(--gold); color: var(--gold); 
-            text-transform: uppercase; margin-top: 10px; padding: 10px; 
-            background: rgba(255,215,0,0.1); box-shadow: 0 0 15px var(--gold);
-        }
-
-        /* MOBILE UI */
-        #mobile-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; z-index: 50; }
-        .control-side { position: absolute; bottom: 30px; width: 200px; height: 200px; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
-        .side-left { left: 10px; }
-        .side-right { right: 10px; }
-
-        /* JOYSTICK */
-        #joy-base { width: 120px; height: 120px; background: rgba(0, 255, 65, 0.1); border: 2px solid var(--neon); border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; }
-        #joy-stick { width: 45px; height: 45px; background: var(--neon); border-radius: 50%; position: absolute; box-shadow: 0 0 10px var(--neon); pointer-events: none; }
-
-        /* TRUE DIAMOND D-PAD */
-        #dpad-diamond { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); }
-        .d-btn { width: 60px; height: 60px; border: 2px solid var(--neon); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--neon); font-weight: bold; background: rgba(0,255,65,0.1); }
-        .d-btn:active { background: var(--neon); color: #000; }
-
-        .action-btns { display: flex; flex-direction: column; gap: 15px; }
-        .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--danger); color: var(--danger); display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); pointer-events: auto; }
-        .dash-btn { border-color: var(--warp); color: var(--warp); background: rgba(0,204,255,0.1); }
-
+        button:active { background: var(--neon); color: #000; }
+        .start-btn { background: var(--neon) !important; color: #000 !important; font-weight: bold; width: 180px; }
+        
         #game-container { position: relative; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; }
         canvas { background: #010101; border: 1px solid var(--neon); max-width: 95vw; max-height: 50vh; }
         #stats { position: absolute; top: 10px; font-size: 1.1rem; width: 100%; text-align: center; }
-        #boss-hp-bar { position: absolute; bottom: 15px; width: 250px; height: 10px; border: 1px solid var(--gold); display: none; }
-        #boss-inner { height: 100%; background: var(--gold); width: 100%; transition: 0.2s; }
-        .victory-link { color: var(--gold); text-decoration: underline; font-weight: bold; font-size: 1.1rem; margin-top: 10px; display: block; }
+        #boss-hp-bar { position: absolute; bottom: 15px; width: 300px; height: 15px; border: 2px solid var(--gold); display: none; background: #222; }
+        #boss-inner { height: 100%; background: linear-gradient(to right, #f05, #ffd700); width: 100%; transition: 0.3s; }
+        #boss-text { position: absolute; width: 100%; text-align: center; color: #fff; font-size: 0.8rem; font-weight: bold; line-height: 15px; }
+        
+        .dialogue-box { position: absolute; bottom: 80px; background: rgba(0,0,0,0.9); border: 2px solid var(--gold); padding: 15px; color: var(--gold); width: 80%; display: none; z-index: 60;}
+        #mobile-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; z-index: 50; }
+        .control-side { position: absolute; bottom: 30px; width: 200px; height: 200px; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
+        .side-right { right: 10px; } .side-left { left: 10px; }
+        #joy-base { width: 120px; height: 120px; background: rgba(0, 255, 65, 0.1); border: 2px solid var(--neon); border-radius: 50%; position: relative; }
+        #joy-stick { width: 45px; height: 45px; background: var(--neon); border-radius: 50%; position: absolute; left: 37.5px; top: 37.5px; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <div class="title" id="menu-title">SPACE MAZE: 202</div>
-        <div id="menu-content">
-            <div id="settings-area">
-                <div class="settings-box">
-                    DEVICE: <button id="dev-pc" class="active" onclick="setDevice('pc')">PC</button>
-                    <button id="dev-mo" onclick="setDevice('mobile')">MOBILE</button>
-                </div>
-                <div id="mobile-options" style="display:none;">
-                    <div class="settings-box">
-                        HANDS: <button id="btn-lefty" onclick="setHand('lefty')">L-MOVE</button>
-                        <button id="btn-righty" class="active" onclick="setHand('righty')">R-MOVE</button>
-                    </div>
-                    <div class="settings-box">
-                        TYPE: <button id="btn-joy" class="active" onclick="setControlType('joy')">JOYSTICK</button>
-                        <button id="btn-dpad" onclick="setControlType('dpad')">DIAMOND</button>
-                    </div>
-                </div>
-            </div>
-            <button class="start-btn" id="main-start-btn" onclick="launch()">START MISSION</button>
-            <button class="start-btn" id="continue-btn" style="display:none; background:var(--warp)!important;" onclick="launch(true)">CONTINUE SECTOR</button>
-            <br>
-            <button class="secret-btn-bold" onclick="alert('diddy will oil u up tn')">SECRET MESSAGE</button>
-        </div>
+        <div class="title">SPACE MAZE: 202</div>
+        <button class="start-btn" onclick="launch()">START MISSION</button>
+    </div>
+
+    <div id="admin-panel">
+        <h2 style="color:var(--neon); margin-top:0;">ADMIN CONSOLE</h2>
+        <input type="number" id="skip-lvl" placeholder="Sector (1-202)" style="width:80%; padding:10px; margin-bottom:10px;">
+        <button onclick="adminSkip()">WARP TO SECTOR</button>
+        <hr style="width:100%; border:1px solid #333;">
+        <button onclick="adminBuff('OX')">MAX OXYGEN</button>
+        <button onclick="adminBuff('SPD')">SPEED BOOST</button>
+        <br><br>
+        <button style="border-color:var(--danger); color:var(--danger);" onclick="closeAdmin()">CLOSE</button>
+    </div>
+
+    <div id="cutscene">
+        <h2 id="cutscene-text" style="color:var(--warp); line-height: 1.6;"></h2>
+        <button class="start-btn" onclick="closeCutscene()">CONTINUE</button>
     </div>
 
     <div id="game-container">
-        <div id="stats">SECTOR: <span id="lvl">1</span>/202 | OXYGEN: <span id="ox">100</span>%</div>
+        <div id="stats">SECTOR: <span id="lvl">1</span>/202 | OX: <span id="ox">100</span>%</div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div id="boss-hp-bar"><div id="boss-inner"></div></div>
-        
+        <div id="boss-hp-bar">
+            <div id="boss-inner"></div>
+            <div id="boss-text">HP: <span id="hp-val">100</span>/100</div>
+        </div>
+        <div class="dialogue-box" id="dialogue"></div>
         <div id="mobile-ui">
-            <div id="move-zone" class="control-side side-right">
-                <div id="joy-container"><div id="joy-base"><div id="joy-stick"></div></div></div>
-                <div id="dpad-container" style="display:none;">
-                    <div id="dpad-diamond">
-                        <div style="grid-column:2" class="d-btn" ontouchstart="keys.ArrowUp=true" ontouchend="keys.ArrowUp=false">↑</div>
-                        <div style="grid-column:1; grid-row:2" class="d-btn" ontouchstart="keys.ArrowLeft=true" ontouchend="keys.ArrowLeft=false">←</div>
-                        <div style="grid-column:3; grid-row:2" class="d-btn" ontouchstart="keys.ArrowRight=true" ontouchend="keys.ArrowRight=false">→</div>
-                        <div style="grid-column:2; grid-row:3" class="d-btn" ontouchstart="keys.ArrowDown=true" ontouchend="keys.ArrowDown=false">↓</div>
-                    </div>
-                </div>
-            </div>
-            <div id="action-zone" class="control-side side-left">
-                <div class="action-btns">
-                    <div class="act-btn dash-btn" ontouchstart="dash()">WARP</div>
-                    <div class="act-btn fire-btn" ontouchstart="shoot()">FIRE</div>
-                </div>
+            <div class="control-side side-right"><div id="joy-base"><div id="joy-stick"></div></div></div>
+            <div class="control-side side-left">
+                <button class="start-btn" style="width:70px; height:70px; border-radius:50%;" ontouchstart="dash()">WARP</button>
+                <button class="start-btn" style="width:70px; height:70px; border-radius:50%; border-color:var(--danger); color:var(--danger);" ontouchstart="shoot()">FIRE</button>
             </div>
         </div>
     </div>
@@ -118,64 +88,33 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const ROWS = 13, COLS = 19, CELL_W = 800/COLS, CELL_H = 600/ROWS;
-        let currentLevel = 1, player, enemies, maze, bullets, keys = {}, gameActive = false;
-        let deviceType = 'pc', handMode = 'righty', controlType = 'joy', raf, flashAlpha = 0;
-        let joyPos = {x: 0, y: 0}, joyActive = false, warpTrail = [];
-
-        // LOAD SAVE
-        if(localStorage.getItem('mazeSector')) {
-            document.getElementById('continue-btn').style.display = 'inline-block';
-            document.getElementById('continue-btn').innerText = "CONTINUE SECTOR " + localStorage.getItem('mazeSector');
-        }
-
-        function setDevice(d) {
-            deviceType = d;
-            document.getElementById('dev-pc').className = d==='pc'?'active':'';
-            document.getElementById('dev-mo').className = d==='mobile'?'active':'';
-            document.getElementById('mobile-options').style.display = d==='mobile'?'block':'none';
-        }
-        function setHand(h) {
-            handMode = h;
-            document.getElementById('btn-lefty').className = h==='lefty'?'active':'';
-            document.getElementById('btn-righty').className = h==='righty'?'active':'';
-        }
-        function setControlType(t) {
-            controlType = t;
-            document.getElementById('btn-joy').className = t==='joy'?'active':'';
-            document.getElementById('btn-dpad').className = t==='dpad'?'active':'';
-            document.getElementById('joy-container').style.display = t==='joy'?'block':'none';
-            document.getElementById('dpad-container').style.display = t==='dpad'?'block':'none';
-        }
+        let currentLevel = 1, player, enemies, maze, bullets, powerups, puzzleItems, keys = {}, gameActive = false;
+        let raf, flashAlpha = 0, dialogueActive = false, itemsCollected = 0;
+        let joyPos = {x: 0, y: 0}, joyActive = false;
+        let inputLog = []; // Cheat code tracker
 
         const joyBase = document.getElementById('joy-base');
         const joyStick = document.getElementById('joy-stick');
-        joyBase.addEventListener('touchstart', e => { if(controlType==='joy'){joyActive=true; moveStick(e);}});
+        joyBase.addEventListener('touchstart', e => { joyActive=true; moveStick(e); });
         window.addEventListener('touchmove', e => { if(joyActive) moveStick(e); }, {passive:false});
         window.addEventListener('touchend', () => { joyActive=false; joyStick.style.transform=`translate(0,0)`; joyPos={x:0,y:0}; });
         function moveStick(e) {
             const touch = e.touches[0]; const rect = joyBase.getBoundingClientRect();
-            const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-            const dx = touch.clientX - cx, dy = touch.clientY - cy;
+            const dx = touch.clientX - (rect.left + 60), dy = touch.clientY - (rect.top + 60);
             const dist = Math.min(50, Math.hypot(dx, dy)); const ang = Math.atan2(dy, dx);
             joyPos = {x: Math.cos(ang)*(dist/50), y: Math.sin(ang)*(dist/50)};
             joyStick.style.transform = `translate(${Math.cos(ang)*dist}px, ${Math.sin(ang)*dist}px)`;
         }
 
-        function launch(cont = false) {
+        function launch() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
-            if(deviceType === 'mobile') {
-                document.getElementById('mobile-ui').style.display = 'block';
-                document.getElementById('move-zone').className = `control-side side-${handMode==='righty'?'right':'left'}`;
-                document.getElementById('action-zone').className = `control-side side-${handMode==='righty'?'left':'right'}`;
-            }
-            currentLevel = cont ? parseInt(localStorage.getItem('mazeSector')) : 1;
-            gameActive = true; initLevel(currentLevel);
-            if (!raf) draw(); 
+            document.getElementById('mobile-ui').style.display = 'block';
+            initLevel(1); if (!raf) draw(); 
         }
 
         function initLevel(lvl) {
-            localStorage.setItem('mazeSector', lvl);
+            currentLevel = lvl;
             maze = Array.from({ length: ROWS }, () => Array(COLS).fill(1));
             let stack = [[0, 0]]; maze[0][0] = 0;
             while (stack.length > 0) {
@@ -184,25 +123,62 @@
                 if (n.length > 0) { let [nr, nc] = n[Math.floor(Math.random()*n.length)]; maze[nr][nc] = 0; maze[(r+nr)/2][(c+nc)/2] = 0; stack.push([nr, nc]); } else stack.pop();
             }
             player = { x: CELL_W/2, y: CELL_H/2, ox: 100, dir: {x: 1, y: 0} };
-            bullets = []; enemies = [];
-            document.getElementById('boss-hp-bar').style.display = lvl === 202 ? 'block' : 'none';
+            bullets = []; enemies = []; powerups = []; puzzleItems = []; itemsCollected = 0;
+
+            if (lvl === 20) showCutscene("ORIGIN OF THE ORB:<br><br>FORGED IN THE DEPTHS OF A LEGENDARY PARTY...");
+            if (lvl === 21) {
+                puzzleItems = [{x: CELL_W*2.5, y: CELL_H*2.5}, {x: CELL_W*16.5, y: CELL_H*2.5}, {x: CELL_W*9.5, y: CELL_H*10.5}];
+                showDialogue("Collect 3 Golden Invitations.");
+            }
             if (lvl === 202) {
-                enemies.push({ x: 400, y: 300, dx: 4.5, dy: 4.5, hp: 5, maxHp: 5, boss: true, size: 40 });
+                enemies.push({ x: 400, y: 300, dx: 5, dy: 5, hp: 10, maxHp: 10, boss: true, size: 45 });
+                document.getElementById('boss-hp-bar').style.display = 'block';
             } else {
-                let count = Math.min(2 + Math.floor(lvl/10), 15);
+                document.getElementById('boss-hp-bar').style.display = 'none';
+                let count = Math.min(3 + Math.floor(lvl/15), 15);
                 for(let i=0; i<count; i++) {
                     let rx, ry; do { rx = Math.floor(Math.random()*COLS); ry = Math.floor(Math.random()*ROWS); } while(maze[ry][rx] === 1 || (rx < 2 && ry < 2));
-                    enemies.push({ x: rx*CELL_W + CELL_W/2, y: ry*CELL_H + CELL_H/2, dx: (Math.random()-0.5)*6, dy: (Math.random()-0.5)*6, hp: 1, size: 12 });
+                    enemies.push({ x: rx*CELL_W + CELL_W/2, y: ry*CELL_H + CELL_H/2, dx: (Math.random()-0.5)*7, dy: (Math.random()-0.5)*7, hp: 1, size: 12 });
                 }
             }
+            if (lvl >= 50) {
+                let rx, ry; do { rx = Math.floor(Math.random()*COLS); ry = Math.floor(Math.random()*ROWS); } while(maze[ry][rx] === 1);
+                powerups.push({ x: rx*CELL_W + CELL_W/2, y: ry*CELL_H + CELL_H/2, type: Math.random() > 0.5 ? 'OX' : 'SPD' });
+            }
         }
+
+        function trackCheat(action) {
+            inputLog.push(action);
+            if (inputLog.length > 4) inputLog.shift();
+            if (inputLog.join(',') === "S,W,W,S") {
+                gameActive = false;
+                document.getElementById('admin-panel').style.display = 'flex';
+                inputLog = [];
+            }
+        }
+
+        function adminSkip() {
+            let val = parseInt(document.getElementById('skip-lvl').value);
+            if (val >= 1 && val <= 202) { initLevel(val); closeAdmin(); }
+        }
+        function adminBuff(type) {
+            if (type === 'OX') player.ox = 100;
+            if (type === 'SPD') { player.spdBoost = true; setTimeout(() => player.spdBoost = false, 15000); }
+            closeAdmin();
+        }
+        function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; gameActive = true; }
+
+        function showCutscene(txt) { gameActive = false; document.getElementById('cutscene').style.display = 'flex'; document.getElementById('cutscene-text').innerHTML = txt; }
+        function closeCutscene() { document.getElementById('cutscene').style.display = 'none'; gameActive = true; }
+        function showDialogue(txt) { const box = document.getElementById('dialogue'); box.style.display = 'block'; box.innerText = txt; setTimeout(() => box.style.display='none', 4000); }
 
         window.addEventListener("keydown", e => { keys[e.code] = true; if(e.code==="Space") shoot(); if(e.code.includes("Shift")) dash(); });
         window.addEventListener("keyup", e => keys[e.code] = false);
 
         function shoot() {
+            trackCheat("S");
             if (player.ox >= 8 && enemies.length > 0) {
-                let target = enemies[0]; let minDist = Math.hypot(target.x - player.x, target.y - player.y);
+                let target = enemies[0]; let minDist = 1000;
                 enemies.forEach(en => { let d = Math.hypot(en.x-player.x, en.y-player.y); if(d<minDist){minDist=d; target=en;}});
                 let ang = Math.atan2(target.y - player.y, target.x - player.x);
                 bullets.push({x: player.x, y: player.y, dx: Math.cos(ang)*15, dy: Math.sin(ang)*15});
@@ -211,22 +187,15 @@
         }
 
         function dash() {
+            trackCheat("W");
             if (player.ox >= 20) {
-                warpTrail.push({x: player.x, y: player.y});
-                let tx = player.x + (player.dir.x * 125), ty = player.y + (player.dir.y * 125);
-                let col = Math.max(0, Math.min(COLS-1, Math.floor(tx/CELL_W)));
-                let row = Math.max(0, Math.min(ROWS-1, Math.floor(ty/CELL_H)));
-                player.x = (col * CELL_W) + (CELL_W/2); player.y = (row * CELL_H) + (CELL_H/2);
-                player.ox -= 20; flashAlpha = 0.6;
+                player.x += player.dir.x * 140; player.y += player.dir.y * 140;
+                player.ox -= 20; flashAlpha = 0.5;
             }
         }
 
-        function isWall(x, y) {
-            let r = Math.floor(y/CELL_H), c = Math.floor(x/CELL_W);
-            return (r<0 || r>=ROWS || c<0 || c>=COLS || maze[r][c] === 1);
-        }
-
         function update() {
+            if (!gameActive) return;
             let mx = 0, my = 0;
             if (keys.ArrowUp || keys.KeyW) my = -1; if (keys.ArrowDown || keys.KeyS) my = 1;
             if (keys.ArrowLeft || keys.KeyA) mx = -1; if (keys.ArrowRight || keys.KeyD) mx = 1;
@@ -234,77 +203,84 @@
 
             if (mx || my) {
                 player.dir = {x: mx || player.dir.x, y: my || player.dir.y};
-                if (!isWall(player.x + mx*5, player.y)) player.x += mx*5;
-                if (!isWall(player.x, player.y + my*5)) player.y += my*5;
+                let speed = player.spdBoost ? 10 : 6;
+                let r = Math.floor((player.y + my*speed)/CELL_H), c = Math.floor((player.x + mx*speed)/CELL_W);
+                if (!(r<0||r>=ROWS||c<0||c>=COLS||maze[r][c]===1)) { player.x += mx*speed; player.y += my*speed; }
             }
 
+            puzzleItems = puzzleItems.filter(item => {
+                if(Math.hypot(player.x - item.x, player.y - item.y) < 25) {
+                    itemsCollected++;
+                    if(itemsCollected === 3) {
+                        enemies.push({ x: 400, y: 300, boss: true, size: 45, diddy: true });
+                        showDialogue("You aren't worthy. I'll see you at sector 202.");
+                        setTimeout(() => { enemies = []; itemsCollected = 4; }, 3500);
+                    }
+                    return false;
+                } return true;
+            });
+
+            powerups = powerups.filter(p => {
+                if (Math.hypot(player.x - p.x, player.y - p.y) < 25) {
+                    if (p.type === 'OX') player.ox = 100;
+                    else { player.spdBoost = true; setTimeout(() => player.spdBoost = false, 8000); }
+                    return false;
+                } return true;
+            });
+
             enemies.forEach(en => {
-                if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx;
-                if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy;
-                if (Math.hypot(player.x - en.x, player.y - en.y) < en.size + 8) endScreen("TERMINATED");
-                if (en.boss) document.getElementById('boss-inner').style.width = (en.hp/en.maxHp)*100 + '%';
+                if (!en.diddy) {
+                    let nr = Math.floor((en.y + en.dy)/CELL_H), nc = Math.floor((en.x + en.dx)/CELL_W);
+                    if (nr<0||nr>=ROWS||nc<0||nc>=COLS||maze[nr][nc]===1) { en.dx*=-1; en.dy*=-1; }
+                    en.x += en.dx; en.y += en.dy;
+                    if (Math.hypot(player.x - en.x, player.y - en.y) < en.size + 8) initLevel(currentLevel);
+                }
+                if (en.boss) {
+                    let displayHP = Math.ceil((en.hp / en.maxHp) * 100);
+                    document.getElementById('boss-inner').style.width = displayHP + '%';
+                    document.getElementById('hp-val').innerText = displayHP;
+                }
             });
 
             bullets = bullets.filter(b => {
                 b.x += b.dx; b.y += b.dy; let hit = false;
                 enemies.forEach((en, i) => {
-                    if (Math.hypot(b.x - en.x, b.y - en.y) < en.size + 5) { en.hp--; hit = true; if(en.hp<=0) enemies.splice(i,1); }
-                });
-                return !hit && !isWall(b.x, b.y);
+                    if (Math.hypot(b.x - en.x, b.y - en.y) < en.size + 8) { en.hp--; hit = true; if(en.hp<=0) enemies.splice(i,1); }
+                }); 
+                let r = Math.floor(b.y/CELL_H), c = Math.floor(b.x/CELL_W);
+                return !hit && !(r<0||r>=ROWS||c<0||c>=COLS||maze[r][c]===1);
             });
 
             if (player.x > 800-CELL_W && player.y > 600-CELL_H) {
-                if(currentLevel >= 202 && enemies.length === 0) { localStorage.clear(); endScreen("u will get free baby oil", true); }
-                else if (currentLevel < 202) { currentLevel++; player.ox = Math.min(100, player.ox + 20); initLevel(currentLevel); }
+                if (currentLevel === 21 && itemsCollected < 4) return;
+                if (currentLevel >= 202 && enemies.length === 0) endScreen("VICTORY", true);
+                else { initLevel(currentLevel + 1); }
             }
-            player.ox -= (1/60); 
-            if (player.ox <= 0) endScreen("OXYGEN DEPLETED");
-            document.getElementById("ox").innerText = Math.max(0, Math.floor(player.ox));
+            player.ox -= 0.015; if (player.ox <= 0) initLevel(currentLevel);
+            document.getElementById("ox").innerText = Math.floor(player.ox);
             document.getElementById("lvl").innerText = currentLevel;
         }
 
         function draw() {
-            if(gameActive) {
-                ctx.clearRect(0,0,800,600);
-                ctx.fillStyle="#00ff41";
-                for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2);
-                ctx.fillStyle= (currentLevel === 202 && enemies.length > 0) ? "#222" : "#0cf";
-                ctx.fillRect(800-CELL_W+5, 600-CELL_H+5, CELL_W-10, CELL_H-10);
-                
-                warpTrail.forEach((t, i) => {
-                    ctx.strokeStyle = `rgba(0, 204, 255, ${i/10})`;
-                    ctx.beginPath(); ctx.moveTo(t.x, t.y); ctx.lineTo(player.x, player.y); ctx.stroke();
-                    if(warpTrail.length > 5) warpTrail.shift();
-                });
+            ctx.clearRect(0,0,800,600);
+            ctx.fillStyle = currentLevel === 21 ? "#201" : "#00ff41";
+            for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2);
+            ctx.fillStyle = (currentLevel === 21 && itemsCollected < 4) ? "#333" : "#0cf";
+            ctx.fillRect(800-CELL_W+5, 600-CELL_H+5, CELL_W-10, CELL_H-10);
 
-                ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(player.x,player.y,10,0,Math.PI*2); ctx.fill();
-                enemies.forEach(en=>{ ctx.fillStyle=en.boss?"#ff0":"#f05"; ctx.beginPath(); ctx.arc(en.x,en.y,en.size,0,Math.PI*2); ctx.fill(); });
-                ctx.fillStyle="#ff0"; bullets.forEach(b=>{ctx.beginPath(); ctx.arc(b.x,b.y,5,0,Math.PI*2); ctx.fill();});
-                if (flashAlpha > 0) { ctx.fillStyle = `rgba(0, 204, 255, ${flashAlpha})`; ctx.fillRect(0,0,800,600); flashAlpha -= 0.04; }
-                update();
-            }
-            raf = requestAnimationFrame(draw);
+            puzzleItems.forEach(item => { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(item.x, item.y, 12, 0, Math.PI*2); ctx.fill(); });
+            powerups.forEach(p => { ctx.fillStyle = p.type==='OX'?'#fff':'#0f0'; ctx.fillRect(p.x-12, p.y-12, 24, 24); });
+            ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(player.x,player.y,10,0,Math.PI*2); ctx.fill();
+            enemies.forEach(en=>{ ctx.fillStyle=en.boss?"#ff0":"#f05"; ctx.beginPath(); ctx.arc(en.x,en.y,en.size,0,Math.PI*2); ctx.fill(); });
+            ctx.fillStyle="#ff0"; bullets.forEach(b=>{ctx.beginPath(); ctx.arc(b.x,b.y,5,0,Math.PI*2); ctx.fill();});
+            if (flashAlpha > 0) { ctx.fillStyle = `rgba(0, 204, 255, ${flashAlpha})`; ctx.fillRect(0,0,800,600); flashAlpha -= 0.04; }
+            update(); raf = requestAnimationFrame(draw);
         }
 
         function endScreen(msg, won = false) {
             gameActive = false; document.getElementById('game-container').style.display = 'none';
             document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('menu-title').innerText = msg;
-            document.getElementById('menu-title').style.color = won ? "#0cf" : "#f05";
-            
-            let btnText = won ? "REPLAY" : (currentLevel > 1 ? "RETRY SECTOR" : "START MISSION");
-            let html = `<h2 style="color:#fff">SECTOR: ${currentLevel}</h2>`;
-            if(won) html += `<a href="https://www.google.com/search?q=p+diddy+funny+face&tbm=isch" target="_blank" class="victory-link">CLICK FOR BABY OIL</a>`;
-            html += `<button class="start-btn" onclick="retry()">${btnText}</button>
-                     <button class="start-btn" style="border-color:#f05; color:#f05" onclick="location.reload()">MAIN MENU</button><br>
-                     <button class="secret-btn-bold" onclick="alert('diddy will oil u up tn')">SECRET MESSAGE</button>`;
-            document.getElementById('menu-content').innerHTML = html;
-        }
-
-        function retry() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('game-container').style.display = 'flex';
-            gameActive = true; initLevel(currentLevel);
+            document.getElementById('overlay').innerHTML = `<h1>${msg}</h1><a href="https://www.google.com/search?q=p+diddy+funny+face&tbm=isch" target="_blank" style="color:var(--gold); font-size:1.5rem;">CLICK FOR REWARD</a><br><button class="start-btn" onclick="location.reload()">RESTART</button>`;
         }
     </script>
 </body>
