@@ -8,59 +8,73 @@
         :root { --neon: #00ff41; --warp: #0cf; --danger: #f05; --gold: #ffd700; --bg: #000; }
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
-        .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); }
+        
+        /* Scanline Effect */
+        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none; }
+
+        .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: 0.3s; }
         #game-layer { display: none; background: radial-gradient(circle, #111, #000); }
-        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.1rem; z-index: 100; pointer-events: none; }
-        .boss-ui { position: absolute; bottom: 130px; width: 340px; height: 22px; border: 2px solid var(--gold); background: #000; display: none; z-index: 100; }
-        #boss-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: width 0.1s; }
-        .card { background: rgba(0, 255, 65, 0.03); border: 1px solid var(--neon); padding: 25px; border-radius: 12px; width: 320px; text-align: center; }
-        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 12px; margin: 6px; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: inherit; width: 100%; }
+        
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; font-weight: bold; }
+        #ox-bar-container { width: 150px; height: 10px; border: 1px solid var(--neon); margin-top: 5px; }
+        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
+
+        .boss-ui { position: absolute; bottom: 130px; width: 340px; height: 22px; border: 2px solid var(--gold); background: #000; display: none; z-index: 100; box-shadow: 0 0 20px var(--danger); }
+        #boss-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); }
+
+        .card { background: rgba(0, 255, 65, 0.05); border: 2px solid var(--neon); padding: 25px; border-radius: 12px; width: 340px; text-align: center; box-shadow: 0 0 15px rgba(0,255,65,0.2); }
+        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 12px; margin: 6px; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: inherit; width: 100%; text-transform: uppercase; }
+        .btn:active { background: var(--neon); color: #000; }
+
         #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; }
         .zone { position: absolute; bottom: 25px; width: 220px; height: 220px; pointer-events: auto; }
         .right { right: 20px; } .left { left: 20px; }
-        #j-base { width: 110px; height: 110px; border: 2px solid var(--neon); border-radius: 50%; margin: 55px auto; position: relative; }
-        #j-knob { width: 40px; height: 40px; background: var(--neon); border-radius: 50%; position: absolute; top: 35px; left: 35px; }
-        .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 12px; pointer-events: auto; }
+        #j-base { width: 110px; height: 110px; border: 3px solid var(--neon); border-radius: 50%; margin: 55px auto; position: relative; background: rgba(0,255,65,0.1); }
+        #j-knob { width: 45px; height: 45px; background: var(--neon); border-radius: 50%; position: absolute; top: 32.5px; left: 32.5px; box-shadow: 0 0 15px var(--neon); }
+        .act-btn { width: 90px; height: 90px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 15px; pointer-events: auto; background: rgba(0,204,255,0.1); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="ui-layer" class="layer">
-        <h1 style="font-size: 2.5rem; letter-spacing: 5px;">SPACE MAZE</h1>
+        <h1 style="font-size: 3rem; letter-spacing: 8px; margin-bottom: 5px; text-shadow: 0 0 10px var(--neon);">SPACE MAZE</h1>
+        <p style="color: var(--warp); margin-bottom: 20px;">v4.0 ETERNAL MASTERPIECE</p>
         <div class="card">
-            <button class="btn" onclick="Core.boot(false)">NEW MISSION</button>
-            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
-            <button class="btn" onclick="UI.toggleLB(true)">LEADERBOARD</button>
+            <button class="btn" onclick="Core.boot(false)">START MISSION</button>
+            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">CONTINUE</button>
         </div>
         <div class="card" style="margin-top:10px;">
-            <button class="btn active" id="p-pc" onclick="UI.setDev('pc')">MODE: PC</button>
-            <button class="btn" id="p-mo" onclick="UI.setDev('mobile')">MODE: MOBILE</button>
+            <button class="btn active" id="p-pc" onclick="UI.setDev('pc')">PC: WASD + SPACE</button>
+            <button class="btn" id="p-mo" onclick="UI.setDev('mobile')">MOBILE: JOYSTICK</button>
         </div>
     </div>
 
-    <div id="admin-layer" class="layer" style="display:none; z-index:2000;">
-        <div class="card">
+    <div id="admin-layer" class="layer" style="display:none; z-index:2000; background: rgba(0,0,0,0.9);">
+        <div class="card" style="border-color: var(--danger);">
             <h2 style="color:var(--danger)">SYS_OVERRIDE</h2>
-            <input type="number" id="warp-val" value="1" style="width:100%; padding:12px; background:#000; color:var(--neon); border:1px solid var(--neon); margin-bottom:10px;">
-            <button class="btn" onclick="Core.adminJump()">EXECUTE WARP</button>
-            <button class="btn" onclick="Core.player.ox=100; UI.toggleAdmin(false)">REFILL OX</button>
-            <button class="btn" style="border-color:var(--danger);" onclick="UI.toggleAdmin(false)">EXIT</button>
+            <button class="btn" onclick="Core.adminJump(202)">WARP TO BOSS (202)</button>
+            <button class="btn" onclick="Core.adminJump(21)">WARP TO MANSION (21)</button>
+            <button class="btn" onclick="Core.player.ox=999; UI.toggleAdmin(false)">INFINITE OX</button>
+            <button class="btn" style="border-color:var(--danger);" onclick="UI.toggleAdmin(false)">EXIT PANEL</button>
         </div>
-    </div>
-
-    <div id="lb-layer" class="layer" style="display:none; z-index:1500;">
-        <div class="card"><h2>RECORDS</h2><div id="lb-content"></div><button class="btn" onclick="UI.toggleLB(false)">CLOSE</button></div>
     </div>
 
     <div id="game-layer" class="layer">
-        <div id="hud"><div>SEC: <span id="v-sec">1</span></div><div>OX: <span id="v-ox">100</span>%</div></div>
+        <div id="hud">
+            <div>SEC: <span id="v-sec">1</span></div>
+            <div>
+                OX: <span id="v-ox">100</span>%
+                <div id="ox-bar-container"><div id="ox-bar"></div></div>
+            </div>
+        </div>
         <canvas id="stage"></canvas>
         <div class="boss-ui" id="boss-hud"><div id="boss-bar"></div></div>
+        
         <div id="mobile-controls">
             <div id="move-zone" class="zone right"><div id="j-base"><div id="j-knob"></div></div></div>
             <div id="act-zone" class="zone left">
-                <div class="act-btn" onpointerdown="Core.player.warp()">WARP</div>
-                <div class="act-btn" style="border-color:var(--danger); color:var(--danger)" onpointerdown="Core.player.shoot()">FIRE</div>
+                <div class="act-btn" onpointerdown="Core.player.warp(); Core.recordKey('W')">WARP</div>
+                <div class="act-btn" style="border-color:var(--danger); color:var(--danger)" onpointerdown="Core.player.shoot(); Core.recordKey('S')">FIRE</div>
             </div>
         </div>
     </div>
@@ -68,7 +82,7 @@
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
         const Core = {
-            sector: 1, active: false, entities: [], keys: {}, state: "PLAY", time: 0, seq: "",
+            sector: 1, active: false, entities: [], keys: {}, seq: "", shake: 0,
             boot(resume) {
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
@@ -78,20 +92,18 @@
             },
             init(n) {
                 if (n > 202) return;
-                this.sector = n; this.active = true; this.entities = []; this.state = "PLAY"; this.time = 0;
+                this.sector = n; this.active = true; this.entities = []; this.state = "PLAY";
                 localStorage.setItem('sm_save', n);
                 this.maze = this.createMaze();
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
                 document.getElementById('v-sec').innerText = n;
                 document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
                 
-                // Spawning Logic
                 if(n===21) this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
                 if(n===202) this.entities.push(new Boss(400, 300));
-                else if(n!==21) {
-                    for(let i=0; i<Math.min(3+n/12, 14); i++) this.entities.push(new Enemy());
-                    // 30% chance for a Speed or Health Powerup
-                    if(Math.random() < 0.3) this.entities.push(new PowerUp());
+                else {
+                    for(let i=0; i<Math.min(3+n/10, 15); i++) this.entities.push(new Enemy());
+                    if(Math.random() < 0.4) this.entities.push(new PowerUp());
                 }
             },
             createMaze() {
@@ -104,40 +116,52 @@
                 }
                 return m;
             },
-            run() { if(this.active) { this.update(); this.draw(); } requestAnimationFrame(() => this.run()); },
+            run() { 
+                if(this.active) { this.update(); this.draw(); } 
+                requestAnimationFrame(() => this.run()); 
+            },
             update() {
                 if(this.state === "WIN") return;
-                this.time += 1/60; this.player.tick();
+                if(this.shake > 0) this.shake--;
+                this.player.tick();
                 this.entities.forEach((e,i) => { e.tick(); if(e.dead) this.entities.splice(i,1); });
                 if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
                     if(this.sector===21 && this.player.invites < 3) return;
-                    if(this.sector===202 && this.entities.length > 0) return;
-                    this.record(); this.init(this.sector + 1);
+                    if(this.sector===202) { if(this.entities.length===0) this.state="WIN"; return; }
+                    this.init(this.sector + 1);
                 }
             },
             draw() {
+                this.ctx.save();
+                if(this.shake > 0) this.ctx.translate(Math.random()*5-2.5, Math.random()*5-2.5);
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
+                
                 if(this.state === "WIN") {
                     this.ctx.fillStyle = "gold"; this.ctx.textAlign = "center";
-                    this.ctx.font = "40px Courier New"; this.ctx.fillText("MISSION COMPLETE", 400, 300);
-                    return;
+                    this.ctx.font = "bold 50px Courier New"; this.ctx.fillText("MISSION COMPLETE", 400, 300);
+                    this.ctx.font = "20px Courier New"; this.ctx.fillText("YOU SURVIVED THE 202 SECTORS", 400, 350);
+                    this.ctx.restore(); return;
                 }
+
+                // Draw Walls
                 this.ctx.fillStyle = (this.sector===21) ? "#1a001a" : "#00ff41";
                 for(let r=0;r<MAP.R;r++) for(let c=0;c<MAP.C;c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW-1, MAP.TH-1);
+                
+                // Draw Exit
                 this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "#0cf";
                 this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
+                this.ctx.strokeStyle = "#fff"; this.ctx.strokeRect(MAP.W-MAP.TW+5, MAP.H-MAP.TH+5, MAP.TW-10, MAP.TH-10);
+
+                this.entities.forEach(e => e.draw(this.ctx));
+                this.player.draw(this.ctx);
+                this.ctx.restore();
             },
-            record() {
-                let lb = JSON.parse(localStorage.getItem('sm_lb') || "[]");
-                lb.push({s:this.sector, t:parseFloat(this.time.toFixed(1))});
-                lb.sort((a,b)=>a.t - b.t); localStorage.setItem('sm_lb', JSON.stringify(lb.slice(0,10)));
-            },
-            adminJump() { let v = parseInt(document.getElementById('warp-val').value); if(v>0) this.init(v); UI.toggleAdmin(false); }
+            recordKey(k) { this.seq += k; if(this.seq.length > 4) this.seq = this.seq.slice(1); if(this.seq === "SWWS") UI.toggleAdmin(true); },
+            adminJump(v) { this.init(v); UI.toggleAdmin(false); }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.trail=[]; this.speed=5.5; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.trail=[]; this.speed=5.5; this.triple=0; }
             tick() {
                 let mx=0, my=0;
                 if(Core.keys.ArrowUp || Core.keys.KeyW) my=-1;
@@ -149,63 +173,108 @@
                     let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                     if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
                 }
-                this.ox-=0.02; if(this.ox<=0) Core.init(Core.sector);
+                this.ox-=0.025; if(this.ox<=0) Core.init(Core.sector);
+                if(this.triple > 0) this.triple--;
+
                 document.getElementById('v-ox').innerText = Math.floor(this.ox);
-                this.trail.push({x:this.x, y:this.y}); if(this.trail.length > 10) this.trail.shift();
+                document.getElementById('ox-bar').style.width = this.ox+"%";
+                document.getElementById('ox-bar').style.background = this.ox < 25 ? "var(--danger)" : "var(--neon)";
+                
+                this.trail.push({x:this.x, y:this.y}); if(this.trail.length > 12) this.trail.shift();
             }
             isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
             draw(ctx) {
-                this.trail.forEach((t, i) => { ctx.fillStyle = `rgba(0,255,65,${i/20})`; ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI*2); ctx.fill(); });
-                ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill();
+                this.trail.forEach((t, i) => { ctx.fillStyle = `rgba(0,255,65,${i/25})`; ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI*2); ctx.fill(); });
+                ctx.fillStyle="#fff"; ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,11,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
             }
-            shoot() { recordKey("S"); if(this.ox>5) { Core.entities.push(new Bullet(this.x,this.y)); this.ox-=5; } }
-            warp() { recordKey("W"); if(this.ox>15) { let dx=(Core.keys.ArrowRight||Core.keys.KeyD?1:Core.keys.ArrowLeft||Core.keys.KeyA?-1:0), dy=(Core.keys.ArrowDown||Core.keys.KeyS?1:Core.keys.ArrowUp||Core.keys.KeyW?-1:0); if(dx===0&&dy===0)dx=1; let nx=this.x+dx*140, ny=this.y+dy*140; if(!this.isW(nx,ny)){this.x=nx;this.y=ny;this.ox-=15;} } }
+            shoot() { 
+                if(this.ox>4) { 
+                    Core.entities.push(new Bullet(this.x,this.y, 0));
+                    if(this.triple > 0) { Core.entities.push(new Bullet(this.x,this.y, 0.4), new Bullet(this.x,this.y, -0.4)); }
+                    this.ox-=4; Core.shake = 5;
+                } 
+            }
+            warp() { 
+                if(this.ox>15) { 
+                    let dx=joyOn?joyV.x:(Core.keys.ArrowRight?1:Core.keys.ArrowLeft?-1:0), dy=joyOn?joyV.y:(Core.keys.ArrowDown?1:Core.keys.ArrowUp?-1:0); 
+                    if(dx===0&&dy===0)dx=1; let nx=this.x+dx*150, ny=this.y+dy*150; 
+                    if(!this.isW(nx,ny)){this.x=nx;this.y=ny;this.ox-=15; Core.shake=10;} 
+                } 
+            }
         }
 
         class PowerUp {
             constructor() { 
                 let rx,ry; do{rx=Math.random()*700+50;ry=Math.random()*500+50;}while(Core.player.isW(rx,ry)); 
-                this.x=rx; this.y=ry; this.type = Math.random() > 0.5 ? 'SPEED' : 'OX'; 
+                this.x=rx; this.y=ry; 
+                let r = Math.random();
+                this.type = r < 0.4 ? 'SPEED' : r < 0.8 ? 'OX' : 'TRIPLE';
             }
-            tick() { if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < 20) { if(this.type==='SPEED') Core.player.speed=8; else Core.player.ox=Math.min(100, Core.player.ox+30); this.dead=true; } }
-            draw(ctx) { ctx.fillStyle = this.type==='SPEED'?'#f0f':'#0cf'; ctx.fillRect(this.x-10,this.y-10,20,20); }
+            tick() { 
+                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<25){ 
+                    if(this.type==='SPEED')Core.player.speed=9; 
+                    else if(this.type==='OX')Core.player.ox=Math.min(100,Core.player.ox+45);
+                    else Core.player.triple = 600; // 10 seconds of triple shot
+                    this.dead=true; 
+                } 
+            }
+            draw(ctx) { 
+                ctx.fillStyle=this.type==='SPEED'?'#f0f':this.type==='OX'?'#0cf':'#ffd700'; 
+                ctx.shadowBlur=10; ctx.shadowColor=ctx.fillStyle;
+                ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(Date.now()*0.005);
+                ctx.fillRect(-10,-10,20,20); ctx.restore(); ctx.shadowBlur=0;
+            }
+        }
+
+        class Bullet {
+            constructor(x,y, offset) {
+                this.x=x; this.y=y; this.trail=[];
+                let target=null, minDist=Infinity;
+                Core.entities.forEach(en=>{ if(!en.dead && (en instanceof Enemy || en instanceof Boss)){ let d=Math.hypot(en.x-x,en.y-y); if(d<minDist){minDist=d; target=en;} } });
+                let ang = target ? Math.atan2(target.y-y, target.x-x) + offset : offset;
+                this.vx=Math.cos(ang)*15; this.vy=Math.sin(ang)*15;
+            }
+            tick() {
+                this.trail.push({x:this.x, y:this.y}); if(this.trail.length > 6) this.trail.shift();
+                this.x+=this.vx; this.y+=this.vy;
+                if(Core.player.isW(this.x,this.y)) this.dead=true;
+                Core.entities.forEach(en=>{ if(!en.dead && (en instanceof Enemy || en instanceof Boss)){ if(Math.hypot(this.x-en.x,this.y-en.y)<(en.isBoss?45:25)){ if(en.isBoss)en.hp--; else en.dead=true; this.dead=true; Core.shake=3; } } });
+                if(this.x<0||this.x>800||this.y<0||this.y>600) this.dead=true;
+            }
+            draw(ctx) {
+                ctx.strokeStyle="yellow"; ctx.lineWidth=4; ctx.beginPath(); 
+                this.trail.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);}); ctx.stroke();
+                ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill();
+            }
         }
 
         class Boss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=12; this.vx=4.5; this.vy=4.5; this.isBoss=true; this.rad=45; }
+            constructor(x,y) { this.x=x; this.y=y; this.hp=20; this.vx=5; this.vy=5; this.isBoss=true; this.rad=45; }
             tick() {
                 let nx=this.x+this.vx, ny=this.y+this.vy;
                 if(this.hitW(nx, this.y)) this.vx*=-1; else this.x=nx;
                 if(this.hitW(this.x, ny)) this.vy*=-1; else this.y=ny;
-                document.getElementById('boss-bar').style.width = (this.hp/12*100)+"%";
-                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < this.rad) Core.init(Core.sector);
+                document.getElementById('boss-bar').style.width=(this.hp/20*100)+"%";
+                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<this.rad) Core.init(Core.sector);
             }
             hitW(nx,ny) { return [{x:nx-this.rad,y:ny},{x:nx+this.rad,y:ny},{x:nx,y:ny-this.rad},{x:nx,y:ny+this.rad}].some(p=>Core.player.isW(p.x,p.y)); }
-            draw(ctx) { ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,this.rad,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=4; ctx.stroke(); }
+            draw(ctx) { ctx.fillStyle="#a020f0"; ctx.shadowBlur=20; ctx.shadowColor="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,this.rad,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=4; ctx.stroke(); ctx.shadowBlur=0; }
         }
 
         class Enemy {
-            constructor() { let rx,ry; do{rx=Math.random()*700+50;ry=Math.random()*500+50;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1;this.vy*=-1;} if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<18) Core.init(Core.sector); }
-            draw(ctx) { ctx.fillStyle="#f05"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
+            constructor() { let rx,ry; do{rx=Math.random()*700+50;ry=Math.random()*500+50;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; }
+            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1;this.vy*=-1;} if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<20) Core.init(Core.sector); }
+            draw(ctx) { ctx.fillStyle="#f05"; ctx.beginPath(); ctx.arc(this.x,this.y,13,0,Math.PI*2); ctx.fill(); }
         }
 
-        class Bullet {
-            constructor(x,y) { this.x=x; this.y=y; let target=Core.entities[0]||{x:800,y:600}; let ang=Math.atan2(target.y-y,target.x-x); this.vx=Math.cos(ang)*16; this.vy=Math.sin(ang)*16; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)) this.dead=true; Core.entities.forEach(en=>{ if(Math.hypot(this.x-en.x,this.y-en.y)<(en.isBoss?45:25)){ if(en.isBoss)en.hp--; else en.dead=true; if(en.hp<=0)en.dead=true; this.dead=true; } }); }
-            draw(ctx) { ctx.fillStyle="#ff0"; ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2); ctx.fill(); }
-        }
+        class Invite { constructor(x,y) { this.x=x; this.y=y; } tick() { if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<30){Core.player.invites++; this.dead=true;} } draw(ctx) { ctx.fillStyle="#ffd700"; ctx.shadowBlur=15; ctx.shadowColor="#ffd700"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; } }
 
-        class Invite { constructor(x,y) { this.x=x; this.y=y; } tick() { if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<30) { Core.player.invites++; this.dead=true; } } draw(ctx) { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill(); } }
-
-        function recordKey(k) { Core.seq += k; if(Core.seq.length > 4) Core.seq = Core.seq.slice(1); if(Core.seq === "SWWS") UI.toggleAdmin(true); }
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==="Space") Core.player.shoot(); if(e.code==="ShiftLeft") Core.player.warp(); };
+        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==="Space") {Core.player.shoot(); Core.recordKey('S');} if(e.code==="KeyW") Core.recordKey('W'); };
         window.onkeyup=e=>Core.keys[e.code]=false;
 
         const UI = {
             setDev(d) { document.getElementById('p-pc').className=d==='pc'?'btn active':'btn'; document.getElementById('p-mo').className=d==='mobile'?'btn active':'btn'; document.getElementById('mobile-controls').style.display=d==='mobile'?'block':'none'; },
-            toggleAdmin(s) { Core.active=!s; document.getElementById('admin-layer').style.display=s?'flex':'none'; },
-            toggleLB(s) { document.getElementById('lb-layer').style.display=s?'flex':'none'; if(s){ let lb=JSON.parse(localStorage.getItem('sm_lb')||"[]"); let h="<table>"; lb.forEach(i=>h+=`<tr><td>SEC ${i.s}</td><td>${i.t}s</td></tr>`); document.getElementById('lb-content').innerHTML=h+"</table>"; } }
+            toggleAdmin(s) { Core.active=!s; document.getElementById('admin-layer').style.display=s?'flex':'none'; }
         };
 
         let joyOn=false, joyV={x:0,y:0};
