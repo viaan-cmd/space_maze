@@ -3,118 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | COMPLEX ENGINE</title>
+    <title>SPACE MAZE | SAVE & LEADERBOARD</title>
     <style>
-        :root { --neon: #00ff41; --warp: #0cf; --danger: #f05; --gold: #ffd700; --bg: #050505; }
+        :root { --neon: #00ff41; --warp: #0cf; --danger: #f05; --gold: #ffd700; --diddy: #a020f0; }
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background: #000; color: var(--neon); font-family: 'Segoe UI', 'Courier New', monospace; 
-            margin: 0; overflow: hidden; height: 100vh; width: 100vw;
-            display: flex; align-items: center; justify-content: center;
-        }
+        body { background: #000; color: var(--neon); font-family: 'Segoe UI', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
         
         /* UI LAYERS */
-        .layer { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .layer { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #000; }
         #ui-layer { z-index: 100; background: radial-gradient(circle, #111 0%, #000 100%); }
         #game-layer { z-index: 50; display: none; }
-        #admin-layer { z-index: 150; display: none; background: rgba(0, 10, 0, 0.9); backdrop-filter: blur(10px); }
-        #cutscene-layer { z-index: 120; display: none; background: #000; }
+        #leaderboard-layer { z-index: 200; display: none; background: rgba(0,0,0,0.95); }
 
         /* HUD */
-        #hud { 
-            position: absolute; top: 0; width: 100%; padding: 20px; 
-            display: flex; justify-content: space-between; font-size: 1.2rem;
-            text-shadow: 0 0 10px var(--neon); pointer-events: none;
-        }
-        .boss-container {
-            position: absolute; bottom: 100px; width: 400px; height: 30px;
-            border: 2px solid var(--gold); background: rgba(0,0,0,0.8); display: none;
-        }
-        #boss-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff0); transition: width 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-        #boss-name { position: absolute; width: 100%; text-align: center; font-weight: bold; color: white; line-height: 30px; text-transform: uppercase; }
+        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-around; font-size: 1.1rem; text-shadow: 0 0 10px var(--neon); pointer-events: none; z-index: 60; }
+        .boss-container { position: absolute; bottom: 120px; width: 300px; height: 20px; border: 2px solid var(--gold); display: none; z-index: 60; }
+        #boss-fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: 0.2s; }
 
-        /* SETTINGS & BUTTONS */
-        .menu-card { background: rgba(0, 255, 65, 0.05); border: 1px solid var(--neon); padding: 20px; border-radius: 15px; width: 340px; margin: 10px; }
-        .btn { 
-            background: transparent; border: 2px solid var(--neon); color: var(--neon); 
-            padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 8px;
-            font-family: inherit; transition: 0.3s;
-        }
-        .btn:active, .btn.active { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
-        .start-btn { font-size: 1.5rem; width: 100%; margin-top: 20px; }
+        /* TABLES & MENU */
+        .menu-card { background: rgba(0, 255, 65, 0.05); border: 1px solid var(--neon); padding: 15px; border-radius: 12px; width: 320px; margin: 8px; }
+        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 8px; margin: 4px; cursor: pointer; border-radius: 6px; font-family: inherit; transition: 0.2s; }
+        .btn.active { background: var(--neon); color: #000; }
+        .start-btn { font-size: 1.3rem; width: 240px; background: var(--neon); color: #000; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; color: var(--warp); }
+        th, td { border: 1px solid #333; padding: 8px; font-size: 0.9rem; }
+        th { color: var(--gold); }
 
         /* CONTROLS */
-        #mobile-controls { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
-        .zone { position: absolute; bottom: 20px; width: 220px; height: 220px; pointer-events: auto; }
-        .left-zone { left: 20px; } .right-zone { right: 20px; }
-        
-        #joystick-base { width: 120px; height: 120px; border: 2px solid var(--neon); border-radius: 50%; position: relative; margin: 50px auto; }
-        #joystick-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 35px; left: 35px; }
-        
-        #dpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 180px; height: 180px; }
-        .d-cell { border: 2px solid var(--neon); display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 10px; }
-        
-        .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 10px; }
+        #mobile-controls { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; display: none; }
+        .zone { position: absolute; bottom: 30px; width: 200px; height: 200px; pointer-events: auto; }
+        .side-right { right: 20px; } .side-left { left: 20px; }
+        #joy-base { width: 100px; height: 100px; border: 2px solid var(--neon); border-radius: 50%; position: relative; margin: 50px auto; background: rgba(0,255,65,0.1); }
+        #joy-knob { width: 40px; height: 40px; background: var(--neon); border-radius: 50%; position: absolute; top: 28px; left: 28px; }
+        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 10px; pointer-events: auto; }
     </style>
 </head>
 <body>
 
     <div id="ui-layer" class="layer">
-        <h1 style="font-size: 3rem; margin: 0; text-shadow: 0 0 20px var(--neon);">CORE_ENGINE.EXE</h1>
+        <h1 style="margin:0; letter-spacing:4px;">SPACE MAZE</h1>
+        <div id="save-info" style="color:var(--gold); margin-bottom:10px; font-size:0.9rem;"></div>
         <div class="menu-card">
-            <h3>INPUT CONFIG</h3>
-            <button class="btn active" id="pc-mode" onclick="setDevice('pc')">PC MASTER</button>
-            <button class="btn" id="mo-mode" onclick="setDevice('mobile')">MOBILE UNIT</button>
-            <div id="mo-settings" style="display:none; margin-top: 15px;">
-                <button class="btn active" id="r-hand" onclick="setHandedness('right')">R-DRIVE</button>
-                <button class="btn" id="l-hand" onclick="setHandedness('left')">L-DRIVE</button>
-                <hr style="border:0.5px solid #222">
-                <button class="btn active" id="j-type" onclick="setControl('joy')">JOYSTICK</button>
-                <button class="btn" id="d-type" onclick="setControl('dpad')">DIAMOND</button>
+            <button class="btn" id="res-btn" style="display:none; width:90%; border-color:var(--gold); color:var(--gold);" onclick="Engine.boot(true)">RESUME SECTOR</button>
+            <button class="btn start-btn" onclick="Engine.boot(false)">NEW MISSION</button>
+            <button class="btn" onclick="showLeaderboard()">LEADERBOARD</button>
+        </div>
+        <div class="menu-card">
+            <button class="btn active" id="p-opt" onclick="setDev('pc')">PC</button>
+            <button class="btn" id="m-opt" onclick="setDev('mobile')">MOBILE</button>
+            <div id="m-ext" style="display:none; margin-top:5px;">
+                <button class="btn active" id="h-r" onclick="setHand('right')">R-HAND</button>
+                <button class="btn" id="h-l" onclick="setHand('left')">L-HAND</button>
             </div>
         </div>
-        <button class="btn start-btn" onclick="Engine.boot()">INITIALIZE MISSION</button>
     </div>
 
-    <div id="admin-layer" class="layer">
-        <div class="menu-card">
-            <h2 style="color:var(--danger)">ADMIN OVERRIDE</h2>
-            <p>JUMP TO SECTOR:</p>
-            <input type="number" id="warp-input" min="1" max="202" value="1" style="width:100%; padding:10px; background:#000; border:1px solid var(--neon); color:var(--neon);">
-            <button class="btn start-btn" onclick="Engine.adminJump()">EXECUTE WARP</button>
-            <button class="btn" onclick="Engine.adminRefill()" style="width:100%">REFILL OXYGEN</button>
-            <button class="btn" onclick="Engine.adminGhost()" style="width:100%">GHOST_MODE: <span id="ghost-status">OFF</span></button>
-            <button class="btn" onclick="Engine.toggleAdmin(false)" style="width:100%; border-color:var(--danger); color:var(--danger)">CLOSE CONSOLE</button>
+    <div id="leaderboard-layer" class="layer">
+        <h2>TOP SECTOR CLEAR TIMES</h2>
+        <div class="menu-card" style="width:350px;">
+            <table id="lb-table">
+                <thead><tr><th>RANK</th><th>SECTOR</th><th>TIME</th></tr></thead>
+                <tbody id="lb-body"></tbody>
+            </table>
+            <button class="btn start-btn" style="margin-top:15px;" onclick="hideLeaderboard()">BACK</button>
         </div>
-    </div>
-
-    <div id="cutscene-layer" class="layer">
-        <div id="cutscene-content" style="max-width: 80%; font-size: 1.5rem; line-height: 1.6;"></div>
-        <button class="btn start-btn" onclick="Engine.closeCutscene()">PROCEED</button>
     </div>
 
     <div id="game-layer" class="layer">
         <div id="hud">
-            <div>SECTOR: <span id="sector-val">1</span></div>
-            <div>OXYGEN: <span id="ox-val">100</span>%</div>
+            <div>SEC: <span id="cur-sec">1</span></div>
+            <div>TIME: <span id="cur-timer">0.0</span>s</div>
+            <div>OX: <span id="cur-ox">100</span>%</div>
         </div>
-        <canvas id="main-canvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
         <div class="boss-container" id="boss-hud">
-            <div id="boss-name">DIDDY</div>
             <div id="boss-fill"></div>
         </div>
-        
         <div id="mobile-controls">
-            <div id="move-zone" class="zone right-zone">
-                <div id="joystick-base"><div id="joystick-knob"></div></div>
-                <div id="dpad" style="display:none;">
-                    <div class="d-cell" style="grid-column:2" ontouchstart="Engine.keys['ArrowUp']=true" ontouchend="Engine.keys['ArrowUp']=false">UP</div>
-                    <div class="d-cell" style="grid-column:1; grid-row:2" ontouchstart="Engine.keys['ArrowLeft']=true" ontouchend="Engine.keys['ArrowLeft']=false">LFT</div>
-                    <div class="d-cell" style="grid-column:3; grid-row:2" ontouchstart="Engine.keys['ArrowRight']=true" ontouchend="Engine.keys['ArrowRight']=false">RGT</div>
-                    <div class="d-cell" style="grid-column:2; grid-row:3" ontouchstart="Engine.keys['ArrowDown']=true" ontouchend="Engine.keys['ArrowDown']=false">DWN</div>
-                </div>
-            </div>
-            <div id="action-zone" class="zone left-zone" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div id="move-zone" class="zone side-right"><div id="joy-base"><div id="joy-knob"></div></div></div>
+            <div id="act-zone" class="zone side-left">
                 <div class="act-btn" ontouchstart="Engine.player.warp()">WARP</div>
                 <div class="act-btn" style="border-color:var(--danger); color:var(--danger)" ontouchstart="Engine.player.shoot()">FIRE</div>
             </div>
@@ -122,348 +90,145 @@
     </div>
 
     <script>
-        /**
-         * ENGINE CONSTANTS & CONFIG
-         */
-        const CONFIG = {
-            WIDTH: 800, HEIGHT: 600,
-            ROWS: 13, COLS: 19,
-            COLORS: { player: '#FFF', wall: '#00FF41', diddy: '#A020F0', enemy: '#FF0055', pwr: '#FFD700', bullet: '#FFFF00' },
-            CHEAT: "SWWS"
-        };
-
-        /**
-         * CORE GAME ENGINE
-         */
+        const CONFIG = { W: 800, H: 600, ROWS: 13, COLS: 19, CELL_W: 800/19, CELL_H: 600/13 };
+        
         const Engine = {
-            canvas: document.getElementById('main-canvas'),
-            ctx: null,
-            sector: 1,
-            active: false,
-            maze: [],
-            entities: [],
-            particles: [],
-            keys: {},
-            inputBuffer: "",
-            settings: { device: 'pc', hand: 'right', ctrl: 'joy' },
-
-            boot() {
+            canvas: document.getElementById('gameCanvas'), ctx: null,
+            sector: 1, active: false, entities: [], keys: {},
+            sectorStartTime: 0,
+            
+            boot(resume) {
                 this.ctx = this.canvas.getContext('2d');
-                this.canvas.width = CONFIG.WIDTH;
-                this.canvas.height = CONFIG.HEIGHT;
+                this.canvas.width = CONFIG.W; this.canvas.height = CONFIG.H;
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
-                this.initSector(1);
-                this.loop();
+                let startSec = resume ? parseInt(localStorage.getItem('mz_save')) : 1;
+                this.init(startSec); this.loop();
             },
 
-            initSector(n) {
-                this.sector = n;
-                this.active = true;
-                this.maze = this.generateMaze(CONFIG.ROWS, CONFIG.COLS);
-                this.player = new Player(40, 40);
+            init(n) {
+                this.sector = n; this.active = true;
+                this.sectorStartTime = Date.now();
+                localStorage.setItem('mz_save', n);
+                this.maze = this.genMaze(CONFIG.ROWS, CONFIG.COLS);
+                this.player = new Player(CONFIG.CELL_W/2, CONFIG.CELL_H/2);
                 this.entities = [];
-                this.particles = [];
-                
-                document.getElementById('sector-val').innerText = n;
+                document.getElementById('cur-sec').innerText = n;
                 document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
-
-                if(n === 21) {
-                    this.triggerCutscene("ENTERING DIDDY MANSION.<br>COLLECT THE INVITATIONS TO GAIN ACCESS.");
-                    this.entities.push(new Item(160, 160), new Item(640, 160), new Item(400, 480));
-                }
-
-                if(n === 202) {
-                    this.entities.push(new DiddyBoss(400, 300));
-                } else if (n !== 21) {
-                    for(let i=0; i<Math.min(2 + n/8, 12); i++) this.entities.push(new Enemy());
-                }
+                if(n === 21) this.entities.push(new Invite(120,120), new Invite(680,120), new Invite(400,480));
+                if(n === 202) this.entities.push(new DiddyBoss(400, 300));
+                else if(n !== 21) for(let i=0; i<Math.min(3+n/10, 15); i++) this.entities.push(new Enemy());
             },
 
-            generateMaze(r, c) {
+            genMaze(r, c) {
                 let m = Array.from({length:r}, () => Array(c).fill(1));
-                let stack = [[0,0]]; m[0][0] = 0;
-                while(stack.length > 0) {
-                    let [cr, cc] = stack[stack.length-1];
-                    let neighbors = [[cr-2,cc],[cr+2,cc],[cr,cc-2],[cr,cc+2]].filter(([nr,nc]) => 
-                        nr>=0 && nr<r && nc>=0 && nc<c && m[nr][nc] === 1);
-                    if(neighbors.length) {
-                        let [nr, nc] = neighbors[Math.floor(Math.random()*neighbors.length)];
-                        m[nr][nc] = 0; m[(cr+nr)/2][(cc+nc)/2] = 0; stack.push([nr,nc]);
-                    } else stack.pop();
+                let s = [[0,0]]; m[0][0] = 0;
+                while(s.length) {
+                    let [cr, cc] = s[s.length-1];
+                    let neighbors = [[cr-2,cc],[cr+2,cc],[cr,cc-2],[cr,cc+2]].filter(([nr,nc]) => nr>=0 && nr<r && nc>=0 && nc<c && m[nr][nc] === 1);
+                    if(neighbors.length) { let [nr, nc] = neighbors[Math.floor(Math.random()*neighbors.length)]; m[nr][nc] = 0; m[(cr+nr)/2][(cc+nc)/2] = 0; s.push([nr,nc]); } else s.pop();
                 }
                 return m;
             },
 
-            loop() {
-                if(this.active) {
-                    this.update();
-                    this.render();
-                }
-                requestAnimationFrame(() => this.loop());
-            },
-
             update() {
                 this.player.update();
-                this.entities.forEach((e, i) => {
-                    e.update();
-                    if(e.dead) this.entities.splice(i, 1);
-                });
-                this.particles = this.particles.filter(p => p.life > 0);
-                this.particles.forEach(p => p.update());
+                let elapsed = ((Date.now() - this.sectorStartTime)/1000).toFixed(1);
+                document.getElementById('cur-timer').innerText = elapsed;
 
-                // Sector Clear Check
-                if(this.player.x > CONFIG.WIDTH - 50 && this.player.y > CONFIG.HEIGHT - 50) {
+                this.entities.forEach((e, i) => {
+                    e.update(); if(e.dead) this.entities.splice(i, 1);
+                });
+
+                if(this.player.x > CONFIG.W - 40 && this.player.y > CONFIG.H - 40) {
                     if(this.sector === 21 && this.player.invites < 3) return;
                     if(this.sector === 202 && this.entities.length > 0) return;
-                    this.initSector(this.sector + 1);
+                    saveScore(this.sector, elapsed);
+                    this.init(this.sector + 1);
                 }
-                
-                document.getElementById('ox-val').innerText = Math.floor(this.player.ox);
+                document.getElementById('cur-ox').innerText = Math.floor(this.player.ox);
             },
 
-            render() {
-                this.ctx.clearRect(0,0,CONFIG.WIDTH, CONFIG.HEIGHT);
-                
-                // Draw Maze
-                this.ctx.fillStyle = (this.sector === 21) ? "#1a001a" : CONFIG.COLORS.wall;
-                let w = CONFIG.WIDTH/CONFIG.COLS, h = CONFIG.HEIGHT/CONFIG.ROWS;
-                for(let r=0; r<CONFIG.ROWS; r++) {
-                    for(let c=0; c<CONFIG.COLS; c++) {
-                        if(this.maze[r][c]) this.ctx.fillRect(c*w, r*h, w-0.5, h-0.5);
-                    }
-                }
-
-                // Exit
-                this.ctx.fillStyle = (this.sector === 21 && this.player.invites < 3) ? "#222" : varColor('--warp');
-                this.ctx.fillRect(CONFIG.WIDTH - w, CONFIG.HEIGHT - h, w, h);
-
-                this.entities.forEach(e => e.draw(this.ctx));
-                this.player.draw(this.ctx);
-                this.particles.forEach(p => p.draw(this.ctx));
+            draw() {
+                this.ctx.clearRect(0,0,CONFIG.W, CONFIG.H);
+                this.ctx.fillStyle = (this.sector === 21) ? "#150015" : "#00ff41";
+                for(let r=0; r<CONFIG.ROWS; r++) for(let c=0; c<CONFIG.COLS; c++) if(this.maze[r][c]) this.ctx.fillRect(c*CONFIG.CELL_W, r*CONFIG.CELL_H, CONFIG.CELL_W-1, CONFIG.CELL_H-1);
+                this.ctx.fillStyle = (this.sector === 21 && this.player.invites < 3) ? "#222" : "#0cf";
+                this.ctx.fillRect(CONFIG.W - CONFIG.CELL_W, CONFIG.H - CONFIG.CELL_H, CONFIG.CELL_W, CONFIG.CELL_H);
+                this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
             },
 
-            triggerCutscene(txt) {
-                this.active = false;
-                document.getElementById('cutscene-layer').style.display = 'flex';
-                document.getElementById('cutscene-content').innerHTML = txt;
-            },
-
-            closeCutscene() {
-                document.getElementById('cutscene-layer').style.display = 'none';
-                this.active = true;
-            },
-
-            toggleAdmin(show) {
-                this.active = !show;
-                document.getElementById('admin-layer').style.display = show ? 'flex' : 'none';
-            },
-
-            adminJump() {
-                let val = parseInt(document.getElementById('warp-input').value);
-                this.initSector(val);
-                this.toggleAdmin(false);
-            },
-
-            adminRefill() { this.player.ox = 100; this.toggleAdmin(false); },
-            adminGhost() { 
-                this.player.ghost = !this.player.ghost; 
-                document.getElementById('ghost-status').innerText = this.player.ghost ? "ON" : "OFF";
-            }
+            loop() { if(this.active) { this.update(); this.draw(); } requestAnimationFrame(() => this.loop()); }
         };
 
-        /**
-         * ENTITY CLASSES
-         */
         class Player {
-            constructor(x, y) {
-                this.x = x; this.y = y; this.ox = 100; this.invites = 0;
-                this.radius = 10; this.ghost = false; this.spd = 6;
-                this.trail = [];
-            }
+            constructor(x, y) { this.x = x; this.y = y; this.ox = 100; this.invites = 0; this.spd = 5.5; }
             update() {
                 let mx = 0, my = 0;
-                if(Engine.keys['ArrowUp'] || Engine.keys['KeyW']) my = -1;
-                if(Engine.keys['ArrowDown'] || Engine.keys['KeyS']) my = 1;
-                if(Engine.keys['ArrowLeft'] || Engine.keys['KeyA']) mx = -1;
-                if(Engine.keys['ArrowRight'] || Engine.keys['KeyD']) mx = 1;
-
-                if(joyActive) { mx = joyV.x; my = joyV.y; }
-
-                if(mx || my) {
-                    let nx = this.x + mx * this.spd, ny = this.y + my * this.spd;
-                    if(this.ghost || !this.checkWall(nx, ny)) {
-                        this.x = nx; this.y = ny;
-                    }
-                }
-                this.ox -= 0.015;
-                if(this.ox <= 0) Engine.initSector(Engine.sector);
+                if(Engine.keys['ArrowUp'] || Engine.keys['KeyW']) my = -1; if(Engine.keys['ArrowDown'] || Engine.keys['KeyS']) my = 1;
+                if(Engine.keys['ArrowLeft'] || Engine.keys['KeyA']) mx = -1; if(Engine.keys['ArrowRight'] || Engine.keys['KeyD']) mx = 1;
+                if(joyOn) { mx = joyV.x; my = joyV.y; }
+                if(mx || my) { let nx = this.x + mx * this.spd, ny = this.y + my * this.spd; if(!this.isW(nx, ny)) { this.x = nx; this.y = ny; } }
+                this.ox -= 0.02; if(this.ox <= 0) Engine.init(Engine.sector);
             }
-            checkWall(x, y) {
-                let c = Math.floor(x / (CONFIG.WIDTH/CONFIG.COLS));
-                let r = Math.floor(y / (CONFIG.HEIGHT/CONFIG.ROWS));
-                return r<0 || r>=CONFIG.ROWS || c<0 || c>=CONFIG.COLS || Engine.maze[r][c] === 1;
-            }
-            draw(ctx) {
-                ctx.fillStyle = CONFIG.COLORS.player;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
-            }
-            shoot() {
-                recordInput("S");
-                if(this.ox < 5) return;
-                Engine.entities.push(new Bullet(this.x, this.y));
-                this.ox -= 5;
-            }
-            warp() {
-                recordInput("W");
-                if(this.ox < 15) return;
-                this.x += (Engine.keys['ArrowRight']?1:Engine.keys['ArrowLeft']?-1:0) * 150;
-                this.y += (Engine.keys['ArrowDown']?1:Engine.keys['ArrowUp']?-1:0) * 150;
-                this.ox -= 15;
-            }
+            isW(x, y) { let c = Math.floor(x/CONFIG.CELL_W), r = Math.floor(y/CONFIG.CELL_H); return r<0 || r>=CONFIG.ROWS || c<0 || c>=CONFIG.COLS || Engine.maze[r][c] === 1; }
+            draw(ctx) { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(this.x, this.y, 10, 0, Math.PI*2); ctx.fill(); }
+            shoot() { if(this.ox > 5) { Engine.entities.push(new Bullet(this.x, this.y)); this.ox -= 5; } }
+            warp() { if(this.ox > 15) { let mx = (Engine.keys['ArrowRight']?1:Engine.keys['ArrowLeft']?-1:0), my = (Engine.keys['ArrowDown']?1:Engine.keys['ArrowUp']?-1:0); if(mx===0&&my===0)mx=1; let nx=this.x+mx*140, ny=this.y+my*140; if(!this.isW(nx,ny)){this.x=nx;this.y=ny;this.ox-=15;} } }
         }
 
         class DiddyBoss {
-            constructor(x, y) {
-                this.x = x; this.y = y; this.hp = 10; this.max = 10;
-                this.size = 50; this.vx = 3; this.vy = 3;
-            }
+            constructor(x, y) { this.x = x; this.y = y; this.hp = 10; this.vx = 4; this.vy = 4; this.boss = true; }
             update() {
-                this.x += this.vx; this.y += this.vy;
-                if(this.x < 50 || this.x > 750) this.vx *= -1;
-                if(this.y < 50 || this.y > 550) this.vy *= -1;
-                
-                let hpPercent = (this.hp / this.max) * 100;
-                document.getElementById('boss-fill').style.width = hpPercent + "%";
-                if(Math.hypot(Engine.player.x - this.x, Engine.player.y - this.y) < this.size) Engine.initSector(Engine.sector);
+                let nx = this.x + this.vx, ny = this.y + this.vy;
+                if(Engine.player.isW(nx, this.y)) this.vx *= -1; else this.x = nx;
+                if(Engine.player.isW(this.x, ny)) this.vy *= -1; else this.y = ny;
+                document.getElementById('boss-fill').style.width = (this.hp*10) + "%";
+                if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 45) Engine.init(Engine.sector);
             }
-            draw(ctx) {
-                ctx.fillStyle = CONFIG.COLORS.diddy;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-            }
+            draw(ctx) { ctx.fillStyle = "#a020f0"; ctx.beginPath(); ctx.arc(this.x, this.y, 45, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); }
         }
 
         class Enemy {
-            constructor() {
-                let rx, ry;
-                do { rx = Math.random()*800; ry = Math.random()*600; } while(Engine.player.checkWall(rx, ry));
-                this.x = rx; this.y = ry; this.vx = (Math.random()-0.5)*4; this.vy = (Math.random()-0.5)*4;
-                this.size = 12; this.hp = 1;
-            }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                if(Engine.player.checkWall(this.x, this.y)) { this.vx *= -1; this.vy *= -1; }
-                if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 20) Engine.initSector(Engine.sector);
-            }
-            draw(ctx) {
-                ctx.fillStyle = CONFIG.COLORS.enemy;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-            }
-        }
-
-        class Item {
-            constructor(x,y) { this.x=x; this.y=y; }
-            update() {
-                if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 30) {
-                    Engine.player.invites++;
-                    this.dead = true;
-                    if(Engine.player.invites === 3) {
-                        Engine.entities.push(new GhostDiddy());
-                    }
-                }
-            }
-            draw(ctx) {
-                ctx.fillStyle = CONFIG.COLORS.pwr;
-                ctx.beginPath(); ctx.arc(this.x, this.y, 15, 0, Math.PI*2); ctx.fill();
-            }
-        }
-
-        class GhostDiddy {
-            constructor() { this.x=400; this.y=300; this.alpha=1; }
-            update() { this.alpha -= 0.005; if(this.alpha <= 0) this.dead=true; }
-            draw(ctx) {
-                ctx.fillStyle = `rgba(160, 32, 240, ${this.alpha})`;
-                ctx.beginPath(); ctx.arc(this.x, this.y, 40, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "white"; ctx.fillText("SEE YOU AT 202", 350, 250);
-            }
+            constructor() { let rx, ry; do { rx = Math.random()*800; ry = Math.random()*600; } while(Engine.player.isW(rx, ry) || rx < 100); this.x = rx; this.y = ry; this.vx = (Math.random()-0.5)*5; this.vy = (Math.random()-0.5)*5; }
+            update() { this.x += this.vx; this.y += this.vy; if(Engine.player.isW(this.x, this.y)) { this.vx *= -1; this.vy *= -1; } if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 18) Engine.init(Engine.sector); }
+            draw(ctx) { ctx.fillStyle = "#f05"; ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI*2); ctx.fill(); }
         }
 
         class Bullet {
-            constructor(x,y) {
-                this.x=x; this.y=y; 
-                let en = Engine.entities[0] || {x:800, y:600};
-                let ang = Math.atan2(en.y-y, en.x-x);
-                this.vx = Math.cos(ang)*15; this.vy = Math.sin(ang)*15;
-            }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                if(Engine.player.checkWall(this.x, this.y)) this.dead=true;
-                Engine.entities.forEach(en => {
-                    if(en instanceof Enemy || en instanceof DiddyBoss) {
-                        if(Math.hypot(this.x-en.x, this.y-en.y) < 30) {
-                            en.hp--; if(en.hp<=0) en.dead=true;
-                            this.dead=true;
-                        }
-                    }
-                });
-            }
-            draw(ctx) {
-                ctx.fillStyle = CONFIG.COLORS.bullet;
-                ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill();
-            }
+            constructor(x, y) { this.x = x; this.y = y; let target = Engine.entities[0] || {x:800, y:600}; let ang = Math.atan2(target.y-y, target.x-x); this.vx = Math.cos(ang)*14; this.vy = Math.sin(ang)*14; }
+            update() { this.x += this.vx; this.y += this.vy; if(Engine.player.isW(this.x, this.y)) this.dead = true; Engine.entities.forEach(en => { if(Math.hypot(this.x-en.x, this.y-en.y) < (en.boss?45:20)) { if(en.boss) en.hp--; else en.dead = true; if(en.hp <= 0) en.dead = true; this.dead = true; } }); }
+            draw(ctx) { ctx.fillStyle = "#ff0"; ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, Math.PI*2); ctx.fill(); }
         }
 
-        /**
-         * INPUT UTILITIES
-         */
-        function recordInput(key) {
-            Engine.inputBuffer += key;
-            if(Engine.inputBuffer.length > 4) Engine.inputBuffer = Engine.inputBuffer.slice(1);
-            if(Engine.inputBuffer === CONFIG.CHEAT) Engine.toggleAdmin(true);
+        class Invite { constructor(x, y) { this.x = x; this.y = y; } update() { if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 25) { Engine.player.invites++; this.dead = true; } } draw(ctx) { ctx.fillStyle = "#ffd700"; ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI*2); ctx.fill(); } }
+
+        function saveScore(s, t) {
+            let scores = JSON.parse(localStorage.getItem('mz_lb') || "[]");
+            scores.push({sector: s, time: t});
+            scores.sort((a,b) => a.time - b.time);
+            localStorage.setItem('mz_lb', JSON.stringify(scores.slice(0, 10)));
         }
 
-        window.addEventListener('keydown', e => Engine.keys[e.code] = true);
-        window.addEventListener('keyup', e => Engine.keys[e.code] = false);
-
-        // Mobile Settings State
-        function setDevice(d) {
-            Engine.settings.device = d;
-            document.getElementById('mo-settings').style.display = d === 'mobile' ? 'block' : 'none';
+        function showLeaderboard() {
+            document.getElementById('leaderboard-layer').style.display = 'flex';
+            let scores = JSON.parse(localStorage.getItem('mz_lb') || "[]");
+            let body = document.getElementById('lb-body'); body.innerHTML = "";
+            scores.forEach((s, i) => { body.innerHTML += `<tr><td>${i+1}</td><td>${s.sector}</td><td>${s.time}s</td></tr>`; });
         }
-        function setHandedness(h) {
-            Engine.settings.hand = h;
-            let mZone = document.getElementById('move-zone');
-            let aZone = document.getElementById('action-zone');
-            mZone.className = `zone ${h}-zone`;
-            aZone.className = `zone ${h==='right'?'left':'right'}-zone`;
-        }
-        function setControl(c) {
-            Engine.settings.ctrl = c;
-            document.getElementById('joystick-base').style.display = c === 'joy' ? 'block' : 'none';
-            document.getElementById('dpad').style.display = c === 'dpad' ? 'grid' : 'none';
-        }
+        function hideLeaderboard() { document.getElementById('leaderboard-layer').style.display = 'none'; }
 
-        // Joystick Logic
-        let joyActive = false, joyV = {x:0, y:0};
-        const jBase = document.getElementById('joystick-base'), jKnob = document.getElementById('joystick-knob');
-        jBase.addEventListener('touchstart', () => joyActive = true);
-        window.addEventListener('touchmove', (e) => {
-            if(!joyActive) return;
-            let t = e.touches[0];
-            let rect = jBase.getBoundingClientRect();
-            let dx = t.clientX - (rect.left + 60), dy = t.clientY - (rect.top + 60);
-            let dist = Math.min(Math.hypot(dx, dy), 50);
-            let ang = Math.atan2(dy, dx);
-            joyV = { x: Math.cos(ang) * (dist/50), y: Math.sin(ang) * (dist/50) };
-            jKnob.style.transform = `translate(${Math.cos(ang)*dist}px, ${Math.sin(ang)*dist}px)`;
-        });
-        window.addEventListener('touchend', () => { 
-            joyActive = false; joyV = {x:0,y:0}; 
-            jKnob.style.transform = 'translate(0,0)';
-        });
+        window.onkeydown = e => Engine.keys[e.code] = true; window.onkeyup = e => Engine.keys[e.code] = false;
+        function setDev(d) { document.getElementById('m-ext').style.display = d==='mobile'?'block':'none'; document.getElementById('mobile-controls').style.display = d==='mobile'?'block':'none'; }
+        function setHand(h) { document.getElementById('move-zone').className = `zone side-${h}`; document.getElementById('act-zone').className = `zone side-${h==='right'?'left':'right'}`; }
 
-        function varColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name); }
+        let joyOn = false, joyV = {x:0, y:0};
+        const jK = document.getElementById('joy-knob'), jB = document.getElementById('joy-base');
+        jB.ontouchstart = () => joyOn = true;
+        window.ontouchmove = e => { if(!joyOn) return; let t = e.touches[0], r = jB.getBoundingClientRect(); let dx = t.clientX - (r.left+50), dy = t.clientY - (r.top+50); let d = Math.min(Math.hypot(dx,dy), 40); let a = Math.atan2(dy,dx); joyV = {x:Math.cos(a)*(d/40), y:Math.sin(a)*(d/40)}; jK.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`; };
+        window.ontouchend = () => { joyOn = false; joyV = {x:0,y:0}; jK.style.transform = 'translate(0,0)'; };
 
+        if(localStorage.getItem('mz_save')) { document.getElementById('res-btn').style.display = 'block'; document.getElementById('save-info').innerText = "LAST SAVED SECTOR: " + localStorage.getItem('mz_save'); }
     </script>
 </body>
 </html>
