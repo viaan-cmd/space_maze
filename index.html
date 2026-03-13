@@ -3,232 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | SAVE & LEADERBOARD</title>
+    <title>SPACE MAZE | COMPLETE LEGACY</title>
     <style>
         :root { --neon: #00ff41; --warp: #0cf; --danger: #f05; --gold: #ffd700; --diddy: #a020f0; }
-        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background: #000; color: var(--neon); font-family: 'Segoe UI', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
+        * { box-sizing: border-box; user-select: none; touch-action: none; }
+        body { background: #000; color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
         
         /* UI LAYERS */
-        .layer { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #000; }
-        #ui-layer { z-index: 100; background: radial-gradient(circle, #111 0%, #000 100%); }
-        #game-layer { z-index: 50; display: none; }
-        #leaderboard-layer { z-index: 200; display: none; background: rgba(0,0,0,0.95); }
+        .layer { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; transition: 0.3s; }
+        #ui-layer { z-index: 1000; background: radial-gradient(circle, #111, #000); }
+        #game-layer { z-index: 500; display: none; }
+        #admin-layer { z-index: 2000; display: none; background: rgba(0, 10, 0, 0.9); backdrop-filter: blur(8px); }
+        #leaderboard-layer { z-index: 1500; display: none; }
 
         /* HUD */
-        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-around; font-size: 1.1rem; text-shadow: 0 0 10px var(--neon); pointer-events: none; z-index: 60; }
-        .boss-container { position: absolute; bottom: 120px; width: 300px; height: 20px; border: 2px solid var(--gold); display: none; z-index: 60; }
-        #boss-fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: 0.2s; }
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; pointer-events: none; z-index: 600; text-shadow: 0 0 10px var(--neon); }
+        .boss-bar { position: absolute; bottom: 120px; width: 350px; height: 25px; border: 2px solid var(--gold); display: none; background: #000; z-index: 600; }
+        #boss-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: 0.2s; }
 
-        /* TABLES & MENU */
-        .menu-card { background: rgba(0, 255, 65, 0.05); border: 1px solid var(--neon); padding: 15px; border-radius: 12px; width: 320px; margin: 8px; }
-        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 8px; margin: 4px; cursor: pointer; border-radius: 6px; font-family: inherit; transition: 0.2s; }
-        .btn.active { background: var(--neon); color: #000; }
-        .start-btn { font-size: 1.3rem; width: 240px; background: var(--neon); color: #000; font-weight: bold; }
+        /* MENU COMPONENTS */
+        .card { background: rgba(0,255,65,0.05); border: 1px solid var(--neon); padding: 20px; border-radius: 10px; width: 340px; margin: 10px; }
+        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px; cursor: pointer; border-radius: 5px; font-family: inherit; font-weight: bold; }
+        .btn.active { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
+        .primary { font-size: 1.5rem; width: 280px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; color: var(--warp); }
-        th, td { border: 1px solid #333; padding: 8px; font-size: 0.9rem; }
-        th { color: var(--gold); }
-
-        /* CONTROLS */
-        #mobile-controls { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; display: none; }
-        .zone { position: absolute; bottom: 30px; width: 200px; height: 200px; pointer-events: auto; }
-        .side-right { right: 20px; } .side-left { left: 20px; }
-        #joy-base { width: 100px; height: 100px; border: 2px solid var(--neon); border-radius: 50%; position: relative; margin: 50px auto; background: rgba(0,255,65,0.1); }
-        #joy-knob { width: 40px; height: 40px; background: var(--neon); border-radius: 50%; position: absolute; top: 28px; left: 28px; }
-        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 10px; pointer-events: auto; }
+        /* MOBILE CONTROLS */
+        #mobile-ui { position: absolute; inset: 0; pointer-events: none; display: none; }
+        .control-zone { position: absolute; bottom: 30px; width: 220px; height: 220px; pointer-events: auto; }
+        .pos-right { right: 20px; } .pos-left { left: 20px; }
+        #joy-base { width: 120px; height: 120px; border: 2px solid var(--neon); border-radius: 50%; position: relative; margin: 50px auto; background: rgba(0,255,65,0.1); }
+        #joy-knob { width: 44px; height: 44px; background: var(--neon); border-radius: 50%; position: absolute; top: 38px; left: 38px; }
+        .dpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 180px; height: 180px; margin: auto; }
+        .d-btn { border: 2px solid var(--neon); background: rgba(0,255,65,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .action-btns { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .circle-btn { width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 10px; }
     </style>
 </head>
 <body>
 
     <div id="ui-layer" class="layer">
-        <h1 style="margin:0; letter-spacing:4px;">SPACE MAZE</h1>
-        <div id="save-info" style="color:var(--gold); margin-bottom:10px; font-size:0.9rem;"></div>
-        <div class="menu-card">
-            <button class="btn" id="res-btn" style="display:none; width:90%; border-color:var(--gold); color:var(--gold);" onclick="Engine.boot(true)">RESUME SECTOR</button>
-            <button class="btn start-btn" onclick="Engine.boot(false)">NEW MISSION</button>
-            <button class="btn" onclick="showLeaderboard()">LEADERBOARD</button>
+        <h1 style="letter-spacing: 10px;">SPACE MAZE</h1>
+        <div id="save-tag" style="color:var(--gold); font-size: 0.8rem; margin-bottom: 10px;"></div>
+        <div class="card">
+            <button class="btn primary" onclick="Engine.boot(false)">NEW GAME</button>
+            <button class="btn primary" id="resume-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Engine.boot(true)">RESUME</button>
+            <button class="btn" style="width:100%" onclick="UI.toggleLeaderboard(true)">LEADERBOARDS</button>
         </div>
-        <div class="menu-card">
-            <button class="btn active" id="p-opt" onclick="setDev('pc')">PC</button>
-            <button class="btn" id="m-opt" onclick="setDev('mobile')">MOBILE</button>
-            <div id="m-ext" style="display:none; margin-top:5px;">
-                <button class="btn active" id="h-r" onclick="setHand('right')">R-HAND</button>
-                <button class="btn" id="h-l" onclick="setHand('left')">L-HAND</button>
+        <div class="card">
+            <button class="btn active" id="pc-mode" onclick="UI.setDev('pc')">PC</button>
+            <button class="btn" id="mo-mode" onclick="UI.setDev('mobile')">MOBILE</button>
+            <div id="mo-opts" style="display:none; margin-top:10px;">
+                <button class="btn active" id="hand-r" onclick="UI.setHand('right')">R-HAND</button>
+                <button class="btn" id="hand-l" onclick="UI.setHand('left')">L-HAND</button>
+                <button class="btn active" id="ctrl-j" onclick="UI.setCtrl('joy')">JOY</button>
+                <button class="btn" id="ctrl-d" onclick="UI.setCtrl('dpad')">DPAD</button>
             </div>
         </div>
     </div>
 
     <div id="leaderboard-layer" class="layer">
-        <h2>TOP SECTOR CLEAR TIMES</h2>
-        <div class="menu-card" style="width:350px;">
-            <table id="lb-table">
-                <thead><tr><th>RANK</th><th>SECTOR</th><th>TIME</th></tr></thead>
-                <tbody id="lb-body"></tbody>
-            </table>
-            <button class="btn start-btn" style="margin-top:15px;" onclick="hideLeaderboard()">BACK</button>
+        <h2>TOP OPERATORS</h2>
+        <div class="card" id="lb-content" style="width:380px;"></div>
+        <button class="btn primary" onclick="UI.toggleLeaderboard(false)">CLOSE</button>
+    </div>
+
+    <div id="admin-layer" class="layer">
+        <div class="card">
+            <h2 style="color:var(--danger)">ADMIN_OVERRIDE</h2>
+            <input type="number" id="warp-sec" placeholder="Sector (1-202)" style="width:100%; padding:10px; background:#000; color:var(--neon); border:1px solid var(--neon);">
+            <button class="btn" style="width:100%" onclick="Engine.adminWarp()">EXECUTE JUMP</button>
+            <button class="btn" style="width:100%" onclick="Engine.player.ox=100; Engine.toggleAdmin(false)">REFILL OXYGEN</button>
+            <button class="btn" style="width:100%" onclick="Engine.player.ghost=!Engine.player.ghost; Engine.toggleAdmin(false)">GHOST MODE</button>
+            <button class="btn" style="width:100%; border-color:var(--danger)" onclick="Engine.toggleAdmin(false)">CANCEL</button>
         </div>
     </div>
 
     <div id="game-layer" class="layer">
         <div id="hud">
-            <div>SEC: <span id="cur-sec">1</span></div>
-            <div>TIME: <span id="cur-timer">0.0</span>s</div>
-            <div>OX: <span id="cur-ox">100</span>%</div>
+            <div>SEC:<span id="h-sec">1</span></div>
+            <div>TIME:<span id="h-time">0.0</span>s</div>
+            <div>OX:<span id="h-ox">100</span>%</div>
         </div>
-        <canvas id="gameCanvas"></canvas>
-        <div class="boss-container" id="boss-hud">
-            <div id="boss-fill"></div>
-        </div>
-        <div id="mobile-controls">
-            <div id="move-zone" class="zone side-right"><div id="joy-base"><div id="joy-knob"></div></div></div>
-            <div id="act-zone" class="zone side-left">
-                <div class="act-btn" ontouchstart="Engine.player.warp()">WARP</div>
-                <div class="act-btn" style="border-color:var(--danger); color:var(--danger)" ontouchstart="Engine.player.shoot()">FIRE</div>
+        <canvas id="c"></canvas>
+        <div class="boss-bar" id="b-hud"><div id="boss-fill"></div></div>
+        
+        <div id="mobile-ui">
+            <div id="m-zone" class="control-zone pos-right">
+                <div id="joy-base"><div id="joy-knob"></div></div>
+                <div id="dpad" class="dpad" style="display:none;">
+                    <div style="grid-column:2" class="d-btn" ontouchstart="Engine.keys.ArrowUp=true" ontouchend="Engine.keys.ArrowUp=false">UP</div>
+                    <div style="grid-column:1; grid-row:2" class="d-btn" ontouchstart="Engine.keys.ArrowLeft=true" ontouchend="Engine.keys.ArrowLeft=false">LFT</div>
+                    <div style="grid-column:3; grid-row:2" class="d-btn" ontouchstart="Engine.keys.ArrowRight=true" ontouchend="Engine.keys.ArrowRight=false">RGT</div>
+                    <div style="grid-column:2; grid-row:3" class="d-btn" ontouchstart="Engine.keys.ArrowDown=true" ontouchend="Engine.keys.ArrowDown=false">DWN</div>
+                </div>
+            </div>
+            <div id="a-zone" class="control-zone pos-left">
+                <div class="action-btns">
+                    <div class="circle-btn" ontouchstart="Engine.player.warp()">WARP</div>
+                    <div class="circle-btn" style="border-color:var(--danger); color:var(--danger)" ontouchstart="Engine.player.shoot()">FIRE</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const CONFIG = { W: 800, H: 600, ROWS: 13, COLS: 19, CELL_W: 800/19, CELL_H: 600/13 };
+        const CONFIG = { W:800, H:600, R:13, C:19, CW:800/19, CH:600/13 };
         
         const Engine = {
-            canvas: document.getElementById('gameCanvas'), ctx: null,
-            sector: 1, active: false, entities: [], keys: {},
-            sectorStartTime: 0,
-            
+            sector: 1, active: false, keys: {}, entities: [], sequence: "", timer: 0,
             boot(resume) {
-                this.ctx = this.canvas.getContext('2d');
-                this.canvas.width = CONFIG.W; this.canvas.height = CONFIG.H;
+                this.ctx = document.getElementById('c').getContext('2d');
+                document.getElementById('c').width = CONFIG.W;
+                document.getElementById('c').height = CONFIG.H;
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
-                let startSec = resume ? parseInt(localStorage.getItem('mz_save')) : 1;
-                this.init(startSec); this.loop();
+                this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
+                this.loop();
             },
-
             init(n) {
-                this.sector = n; this.active = true;
-                this.sectorStartTime = Date.now();
-                localStorage.setItem('mz_save', n);
-                this.maze = this.genMaze(CONFIG.ROWS, CONFIG.COLS);
-                this.player = new Player(CONFIG.CELL_W/2, CONFIG.CELL_H/2);
-                this.entities = [];
-                document.getElementById('cur-sec').innerText = n;
-                document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
-                if(n === 21) this.entities.push(new Invite(120,120), new Invite(680,120), new Invite(400,480));
-                if(n === 202) this.entities.push(new DiddyBoss(400, 300));
-                else if(n !== 21) for(let i=0; i<Math.min(3+n/10, 15); i++) this.entities.push(new Enemy());
+                this.sector = n; this.active = true; this.timer = 0; this.entities = [];
+                localStorage.setItem('sm_save', n);
+                this.maze = this.genMaze();
+                this.player = new Player(CONFIG.CW/2, CONFIG.CH/2);
+                document.getElementById('h-sec').innerText = n;
+                document.getElementById('b-hud').style.display = (n===202) ? 'block' : 'none';
+                
+                if(n === 21) {
+                    this.entities.push(new Invite(150,150), new Invite(650,150), new Invite(400,450));
+                }
+                if(n === 202) {
+                    this.entities.push(new DiddyBoss(400, 300));
+                } else if(n !== 21) {
+                    for(let i=0; i<Math.min(3+n/10, 15); i++) this.entities.push(new Enemy());
+                }
             },
-
-            genMaze(r, c) {
-                let m = Array.from({length:r}, () => Array(c).fill(1));
+            genMaze() {
+                let m = Array.from({length:CONFIG.R},()=>Array(CONFIG.C).fill(1));
                 let s = [[0,0]]; m[0][0] = 0;
                 while(s.length) {
-                    let [cr, cc] = s[s.length-1];
-                    let neighbors = [[cr-2,cc],[cr+2,cc],[cr,cc-2],[cr,cc+2]].filter(([nr,nc]) => nr>=0 && nr<r && nc>=0 && nc<c && m[nr][nc] === 1);
-                    if(neighbors.length) { let [nr, nc] = neighbors[Math.floor(Math.random()*neighbors.length)]; m[nr][nc] = 0; m[(cr+nr)/2][(cc+nc)/2] = 0; s.push([nr,nc]); } else s.pop();
+                    let [r,c] = s[s.length-1];
+                    let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<CONFIG.R&&nc>=0&&nc<CONFIG.C&&m[nr][nc]===1);
+                    if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
                 return m;
             },
-
+            loop() {
+                if(this.active) {
+                    this.update(); this.draw();
+                }
+                requestAnimationFrame(() => this.loop());
+            },
             update() {
+                this.timer += 1/60;
+                document.getElementById('h-time').innerText = this.timer.toFixed(1);
                 this.player.update();
-                let elapsed = ((Date.now() - this.sectorStartTime)/1000).toFixed(1);
-                document.getElementById('cur-timer').innerText = elapsed;
-
-                this.entities.forEach((e, i) => {
-                    e.update(); if(e.dead) this.entities.splice(i, 1);
+                this.entities.forEach((e,i) => {
+                    e.update(); if(e.dead) this.entities.splice(i,1);
                 });
-
-                if(this.player.x > CONFIG.W - 40 && this.player.y > CONFIG.H - 40) {
-                    if(this.sector === 21 && this.player.invites < 3) return;
-                    if(this.sector === 202 && this.entities.length > 0) return;
-                    saveScore(this.sector, elapsed);
+                if(this.player.x > CONFIG.W-40 && this.player.y > CONFIG.H-40) {
+                    if(this.sector===21 && this.player.invites < 3) return;
+                    if(this.sector===202 && this.entities.length > 0) return;
+                    this.recordTime();
                     this.init(this.sector + 1);
                 }
-                document.getElementById('cur-ox').innerText = Math.floor(this.player.ox);
             },
-
             draw() {
-                this.ctx.clearRect(0,0,CONFIG.W, CONFIG.H);
-                this.ctx.fillStyle = (this.sector === 21) ? "#150015" : "#00ff41";
-                for(let r=0; r<CONFIG.ROWS; r++) for(let c=0; c<CONFIG.COLS; c++) if(this.maze[r][c]) this.ctx.fillRect(c*CONFIG.CELL_W, r*CONFIG.CELL_H, CONFIG.CELL_W-1, CONFIG.CELL_H-1);
-                this.ctx.fillStyle = (this.sector === 21 && this.player.invites < 3) ? "#222" : "#0cf";
-                this.ctx.fillRect(CONFIG.W - CONFIG.CELL_W, CONFIG.H - CONFIG.CELL_H, CONFIG.CELL_W, CONFIG.CELL_H);
-                this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
+                this.ctx.clearRect(0,0,CONFIG.W,CONFIG.H);
+                this.ctx.fillStyle = (this.sector===21) ? "#150015" : "#00ff41";
+                for(let r=0;r<CONFIG.R;r++) for(let c=0;c<CONFIG.C;c++) if(this.maze[r][c]) this.ctx.fillRect(c*CONFIG.CW, r*CONFIG.CH, CONFIG.CW-1, CONFIG.CH-1);
+                this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "#0cf";
+                this.ctx.fillRect(CONFIG.W-CONFIG.CW, CONFIG.H-CONFIG.CH, CONFIG.CW, CONFIG.CH);
+                this.entities.forEach(e => e.draw(this.ctx));
+                this.player.draw(this.ctx);
             },
-
-            loop() { if(this.active) { this.update(); this.draw(); } requestAnimationFrame(() => this.loop()); }
+            recordTime() {
+                let lb = JSON.parse(localStorage.getItem('sm_lb') || "[]");
+                lb.push({s:this.sector, t:this.timer.toFixed(1)});
+                lb.sort((a,b)=>a.t - b.t);
+                localStorage.setItem('sm_lb', JSON.stringify(lb.slice(0,10)));
+            },
+            toggleAdmin(s) { this.active=!s; document.getElementById('admin-layer').style.display=s?'flex':'none'; },
+            adminWarp() { let v = parseInt(document.getElementById('warp-sec').value); if(v>0) this.init(v); this.toggleAdmin(false); }
         };
 
         class Player {
-            constructor(x, y) { this.x = x; this.y = y; this.ox = 100; this.invites = 0; this.spd = 5.5; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.ghost=false; }
             update() {
-                let mx = 0, my = 0;
-                if(Engine.keys['ArrowUp'] || Engine.keys['KeyW']) my = -1; if(Engine.keys['ArrowDown'] || Engine.keys['KeyS']) my = 1;
-                if(Engine.keys['ArrowLeft'] || Engine.keys['KeyA']) mx = -1; if(Engine.keys['ArrowRight'] || Engine.keys['KeyD']) mx = 1;
-                if(joyOn) { mx = joyV.x; my = joyV.y; }
-                if(mx || my) { let nx = this.x + mx * this.spd, ny = this.y + my * this.spd; if(!this.isW(nx, ny)) { this.x = nx; this.y = ny; } }
-                this.ox -= 0.02; if(this.ox <= 0) Engine.init(Engine.sector);
+                let mx=0, my=0;
+                if(Engine.keys.ArrowUp || Engine.keys.KeyW) my=-1;
+                if(Engine.keys.ArrowDown || Engine.keys.KeyS) my=1;
+                if(Engine.keys.ArrowLeft || Engine.keys.KeyA) mx=-1;
+                if(Engine.keys.ArrowRight || Engine.keys.KeyD) mx=1;
+                if(joyA) { mx=joyV.x; my=joyV.y; }
+                if(mx||my) {
+                    let nx=this.x+mx*5.5, ny=this.y+my*5.5;
+                    if(this.ghost || !this.isW(nx, ny)) { this.x=nx; this.y=ny; }
+                }
+                this.ox-=0.02; if(this.ox<=0) Engine.init(Engine.sector);
+                document.getElementById('h-ox').innerText = Math.floor(this.ox);
             }
-            isW(x, y) { let c = Math.floor(x/CONFIG.CELL_W), r = Math.floor(y/CONFIG.CELL_H); return r<0 || r>=CONFIG.ROWS || c<0 || c>=CONFIG.COLS || Engine.maze[r][c] === 1; }
-            draw(ctx) { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(this.x, this.y, 10, 0, Math.PI*2); ctx.fill(); }
-            shoot() { if(this.ox > 5) { Engine.entities.push(new Bullet(this.x, this.y)); this.ox -= 5; } }
-            warp() { if(this.ox > 15) { let mx = (Engine.keys['ArrowRight']?1:Engine.keys['ArrowLeft']?-1:0), my = (Engine.keys['ArrowDown']?1:Engine.keys['ArrowUp']?-1:0); if(mx===0&&my===0)mx=1; let nx=this.x+mx*140, ny=this.y+my*140; if(!this.isW(nx,ny)){this.x=nx;this.y=ny;this.ox-=15;} } }
+            isW(x,y) { let c=Math.floor(x/CONFIG.CW), r=Math.floor(y/CONFIG.CH); return r<0||r>=CONFIG.R||c<0||c>=CONFIG.C||Engine.maze[r][c]===1; }
+            draw(ctx) { ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
+            shoot() { record("S"); if(this.ox>5) { Engine.entities.push(new Bullet(this.x,this.y)); this.ox-=5; } }
+            warp() { record("W"); if(this.ox>15) { let mx=(Engine.keys.ArrowRight?1:Engine.keys.ArrowLeft?-1:0), my=(Engine.keys.ArrowDown?1:Engine.keys.ArrowUp?-1:0); if(mx===0&&my===0)mx=1; let nx=this.x+mx*150, ny=this.y+my*150; if(this.ghost||!this.isW(nx,ny)){this.x=nx;this.y=ny;this.ox-=15;} } }
         }
 
         class DiddyBoss {
-            constructor(x, y) { this.x = x; this.y = y; this.hp = 10; this.vx = 4; this.vy = 4; this.boss = true; }
+            constructor(x,y) { this.x=x; this.y=y; this.hp=10; this.vx=4.5; this.vy=4.5; this.boss=true; this.size=45; }
             update() {
-                let nx = this.x + this.vx, ny = this.y + this.vy;
-                if(Engine.player.isW(nx, this.y)) this.vx *= -1; else this.x = nx;
-                if(Engine.player.isW(this.x, ny)) this.vy *= -1; else this.y = ny;
-                document.getElementById('boss-fill').style.width = (this.hp*10) + "%";
-                if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 45) Engine.init(Engine.sector);
+                let nx=this.x+this.vx, ny=this.y+this.vy;
+                if(this.hitW(nx, this.y)) this.vx*=-1; else this.x=nx;
+                if(this.hitW(this.x, ny)) this.vy*=-1; else this.y=ny;
+                document.getElementById('boss-fill').style.width = (this.hp*10)+"%";
+                if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < this.size) Engine.init(Engine.sector);
             }
-            draw(ctx) { ctx.fillStyle = "#a020f0"; ctx.beginPath(); ctx.arc(this.x, this.y, 45, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); }
+            hitW(nx,ny) { return [ {x:nx-this.size,y:ny},{x:nx+this.size,y:ny},{x:nx,y:ny-this.size},{x:nx,y:ny+this.size} ].some(p=>Engine.player.isW(p.x,p.y)); }
+            draw(ctx) { ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=3; ctx.stroke(); }
         }
 
         class Enemy {
-            constructor() { let rx, ry; do { rx = Math.random()*800; ry = Math.random()*600; } while(Engine.player.isW(rx, ry) || rx < 100); this.x = rx; this.y = ry; this.vx = (Math.random()-0.5)*5; this.vy = (Math.random()-0.5)*5; }
-            update() { this.x += this.vx; this.y += this.vy; if(Engine.player.isW(this.x, this.y)) { this.vx *= -1; this.vy *= -1; } if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 18) Engine.init(Engine.sector); }
-            draw(ctx) { ctx.fillStyle = "#f05"; ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI*2); ctx.fill(); }
+            constructor() { let rx,ry; do{rx=Math.random()*800;ry=Math.random()*600;}while(Engine.player.isW(rx,ry)||rx<100); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; }
+            update() { this.x+=this.vx; this.y+=this.vy; if(Engine.player.isW(this.x,this.y)){this.vx*=-1;this.vy*=-1;} if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y)<18) Engine.init(Engine.sector); }
+            draw(ctx) { ctx.fillStyle="#f05"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
         }
 
         class Bullet {
-            constructor(x, y) { this.x = x; this.y = y; let target = Engine.entities[0] || {x:800, y:600}; let ang = Math.atan2(target.y-y, target.x-x); this.vx = Math.cos(ang)*14; this.vy = Math.sin(ang)*14; }
-            update() { this.x += this.vx; this.y += this.vy; if(Engine.player.isW(this.x, this.y)) this.dead = true; Engine.entities.forEach(en => { if(Math.hypot(this.x-en.x, this.y-en.y) < (en.boss?45:20)) { if(en.boss) en.hp--; else en.dead = true; if(en.hp <= 0) en.dead = true; this.dead = true; } }); }
-            draw(ctx) { ctx.fillStyle = "#ff0"; ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, Math.PI*2); ctx.fill(); }
+            constructor(x,y) { this.x=x; this.y=y; let target=Engine.entities[0]||{x:800,y:600}; let ang=Math.atan2(target.y-y,target.x-x); this.vx=Math.cos(ang)*14; this.vy=Math.sin(ang)*14; }
+            update() { this.x+=this.vx; this.y+=this.vy; if(Engine.player.isW(this.x,this.y)) this.dead=true; Engine.entities.forEach(en=>{ if(Math.hypot(this.x-en.x,this.y-en.y)<(en.boss?45:25)){ if(en.boss)en.hp--; else en.dead=true; if(en.hp<=0)en.dead=true; this.dead=true; } }); }
+            draw(ctx) { ctx.fillStyle="#ff0"; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill(); }
         }
 
-        class Invite { constructor(x, y) { this.x = x; this.y = y; } update() { if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y) < 25) { Engine.player.invites++; this.dead = true; } } draw(ctx) { ctx.fillStyle = "#ffd700"; ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI*2); ctx.fill(); } }
+        class Invite { constructor(x,y) { this.x=x; this.y=y; } update() { if(Math.hypot(Engine.player.x-this.x, Engine.player.y-this.y)<30){ Engine.player.invites++; this.dead=true; if(Engine.player.invites===3) Engine.entities.push(new GhostDiddy()); } } draw(ctx) { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill(); } }
+        class GhostDiddy { constructor() { this.x=400; this.y=300; this.a=1; } update() { this.a-=0.005; if(this.a<=0)this.dead=true; } draw(ctx) { ctx.fillStyle=`rgba(160,32,240,${this.a})`; ctx.beginPath(); ctx.arc(this.x,this.y,40,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillText("SEE YOU AT 202",350,250); } }
 
-        function saveScore(s, t) {
-            let scores = JSON.parse(localStorage.getItem('mz_lb') || "[]");
-            scores.push({sector: s, time: t});
-            scores.sort((a,b) => a.time - b.time);
-            localStorage.setItem('mz_lb', JSON.stringify(scores.slice(0, 10)));
-        }
+        function record(k) { Engine.sequence+=k; if(Engine.sequence.length>4) Engine.sequence=Engine.sequence.slice(1); if(Engine.sequence==="SWWS") Engine.toggleAdmin(true); }
+        window.onkeydown=e=>{ Engine.keys[e.code]=true; if(e.code==="Space") Engine.player.shoot(); if(e.code==="ShiftLeft") Engine.player.warp(); };
+        window.onkeyup=e=>Engine.keys[e.code]=false;
 
-        function showLeaderboard() {
-            document.getElementById('leaderboard-layer').style.display = 'flex';
-            let scores = JSON.parse(localStorage.getItem('mz_lb') || "[]");
-            let body = document.getElementById('lb-body'); body.innerHTML = "";
-            scores.forEach((s, i) => { body.innerHTML += `<tr><td>${i+1}</td><td>${s.sector}</td><td>${s.time}s</td></tr>`; });
-        }
-        function hideLeaderboard() { document.getElementById('leaderboard-layer').style.display = 'none'; }
+        const UI = {
+            setDev(d) { document.getElementById('pc-mode').className=d==='pc'?'btn active':'btn'; document.getElementById('mo-mode').className=d==='mobile'?'btn active':'btn'; document.getElementById('mo-opts').style.display=d==='mobile'?'block':'none'; document.getElementById('mobile-ui').style.display=d==='mobile'?'block':'none'; },
+            setHand(h) { document.getElementById('hand-r').className=h==='right'?'btn active':'btn'; document.getElementById('hand-l').className=h==='left'?'btn active':'btn'; document.getElementById('m-zone').className=`control-zone pos-${h}`; document.getElementById('a-zone').className=`control-zone pos-${h==='right'?'left':'right'}`; },
+            setCtrl(c) { document.getElementById('ctrl-j').className=c==='joy'?'btn active':'btn'; document.getElementById('ctrl-d').className=c==='dpad'?'btn active':'btn'; document.getElementById('joy-base').style.display=c==='joy'?'block':'none'; document.getElementById('dpad').style.display=c==='dpad'?'grid':'none'; },
+            toggleLeaderboard(s) {
+                document.getElementById('leaderboard-layer').style.display=s?'flex':'none';
+                if(s) {
+                    let lb = JSON.parse(localStorage.getItem('sm_lb') || "[]");
+                    let h = "<table><tr><th>SEC</th><th>TIME</th></tr>";
+                    lb.forEach(i=> h+=`<tr><td>${i.s}</td><td>${i.t}s</td></tr>`);
+                    document.getElementById('lb-content').innerHTML = h + "</table>";
+                }
+            }
+        };
 
-        window.onkeydown = e => Engine.keys[e.code] = true; window.onkeyup = e => Engine.keys[e.code] = false;
-        function setDev(d) { document.getElementById('m-ext').style.display = d==='mobile'?'block':'none'; document.getElementById('mobile-controls').style.display = d==='mobile'?'block':'none'; }
-        function setHand(h) { document.getElementById('move-zone').className = `zone side-${h}`; document.getElementById('act-zone').className = `zone side-${h==='right'?'left':'right'}`; }
+        let joyA=false, joyV={x:0,y:0};
+        const jB=document.getElementById('joy-base'), jK=document.getElementById('joy-knob');
+        jB.ontouchstart=()=>joyA=true;
+        window.ontouchmove=e=>{ if(!joyA)return; let t=e.touches[0], r=jB.getBoundingClientRect(); let dx=t.clientX-(r.left+60), dy=t.clientY-(r.top+60); let d=Math.min(Math.hypot(dx,dy),50); let a=Math.atan2(dy,dx); joyV={x:Math.cos(a)*(d/50),y:Math.sin(a)*(d/50)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
+        window.ontouchend=()=>{ joyA=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)'; };
 
-        let joyOn = false, joyV = {x:0, y:0};
-        const jK = document.getElementById('joy-knob'), jB = document.getElementById('joy-base');
-        jB.ontouchstart = () => joyOn = true;
-        window.ontouchmove = e => { if(!joyOn) return; let t = e.touches[0], r = jB.getBoundingClientRect(); let dx = t.clientX - (r.left+50), dy = t.clientY - (r.top+50); let d = Math.min(Math.hypot(dx,dy), 40); let a = Math.atan2(dy,dx); joyV = {x:Math.cos(a)*(d/40), y:Math.sin(a)*(d/40)}; jK.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`; };
-        window.ontouchend = () => { joyOn = false; joyV = {x:0,y:0}; jK.style.transform = 'translate(0,0)'; };
-
-        if(localStorage.getItem('mz_save')) { document.getElementById('res-btn').style.display = 'block'; document.getElementById('save-info').innerText = "LAST SAVED SECTOR: " + localStorage.getItem('mz_save'); }
+        if(localStorage.getItem('sm_save')) { document.getElementById('resume-btn').style.display='block'; document.getElementById('save-tag').innerText="SECTOR "+localStorage.getItem('sm_save')+" DETECTED"; }
     </script>
 </body>
 </html>
