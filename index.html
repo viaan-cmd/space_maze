@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | FIXED WARP</title>
+    <title>SPACE MAZE | COMPLETE EDITION</title>
     <style>
         body { 
             background: #000; color: #00ff41; font-family: 'Courier New', monospace; 
@@ -16,7 +16,7 @@
             width: 100%; height: 100%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
-        .title { font-size: 3rem; font-weight: bold; text-shadow: 0 0 20px #00ff41; margin-bottom: 10px; }
+        .title { font-size: 3.5rem; font-weight: bold; text-shadow: 0 0 20px #00ff41; margin-bottom: 10px; }
         .settings-box { background: rgba(0,255,65,0.1); border: 1px solid #00ff41; padding: 15px; border-radius: 10px; margin: 10px; width: 320px; }
         
         button {
@@ -25,9 +25,15 @@
             cursor: pointer; transition: 0.3s; border-radius: 5px; margin: 5px;
         }
         button.active { background: #00ff41; color: #000; box-shadow: 0 0 10px #00ff41; }
-        .start-btn { margin-top: 15px; background: #00ff41 !important; color: #000 !important; font-weight: bold; width: 200px; font-size: 1.5rem; }
-        .leave-btn { border-color: #ff0055; color: #ff0055; }
-        .secret-btn-bold { font-weight: 900; border: 3px solid gold; color: gold; text-transform: uppercase; margin-top: 10px; background: rgba(255,215,0,0.1); }
+        
+        /* ACTION BUTTONS */
+        .start-btn { margin-top: 15px; background: #00ff41 !important; color: #000 !important; font-weight: bold; width: 220px; font-size: 1.5rem; }
+        .leave-btn { border-color: #ff0055; color: #ff0055; margin-top: 10px; }
+        .secret-btn-bold { 
+            font-weight: 900; border: 4px solid gold; color: gold; 
+            text-transform: uppercase; margin-top: 20px; padding: 15px;
+            background: rgba(255,215,0,0.1); box-shadow: 0 0 15px gold;
+        }
 
         /* MOBILE UI */
         #mobile-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; z-index: 50; }
@@ -35,18 +41,19 @@
         .side-left { left: 20px; }
         .side-right { right: 20px; }
 
-        #dpad { display: grid; grid-template-columns: repeat(3, 55px); grid-template-rows: repeat(2, 55px); gap: 5px; }
-        .m-btn { width: 55px; height: 55px; border: 2px solid #00ff41; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #00ff41; font-weight: bold; background: rgba(0,255,65,0.1); font-size: 1.5rem; }
+        #dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 60px); gap: 5px; }
+        .m-btn { width: 60px; height: 60px; border: 2px solid #00ff41; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #00ff41; font-weight: bold; background: rgba(0,255,65,0.1); font-size: 1.5rem; }
         
         .action-btns { display: flex; flex-direction: column; gap: 25px; align-items: center; }
-        .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #f05; color: #f05; display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); }
+        .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 3px solid #f05; color: #f05; display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(255,0,85,0.1); }
         .dash-btn { border-color: #0cf; color: #0cf; background: rgba(0,204,255,0.1); }
 
+        /* GAME ELEMENTS */
         #game-container { position: relative; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; }
         canvas { background: #010101; border: 1px solid #00ff41; max-width: 95vw; max-height: 55vh; }
-        #stats { position: absolute; top: 15px; font-size: 1.2rem; width: 100%; text-align: center; color: #00ff41; }
+        #stats { position: absolute; top: 15px; font-size: 1.4rem; width: 100%; text-align: center; color: #00ff41; text-shadow: 0 0 10px #00ff41; }
         
-        .tut-box { font-size: 0.85rem; margin-top: 10px; color: #0cf; background: rgba(0,204,255,0.05); padding: 8px; border-radius: 5px; }
+        .tut-box { font-size: 0.9rem; margin-top: 10px; color: #0cf; background: rgba(0,204,255,0.1); padding: 10px; border-radius: 5px; border: 1px solid #0cf; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -57,28 +64,29 @@
         <div id="menu-content">
             <div id="settings-area">
                 <div class="settings-box">
-                    <p style="margin-top:0">1. DEVICE</p>
-                    <button id="dev-pc" class="active" onclick="setDevice('pc')">PC</button>
+                    <p style="margin:0 0 10px 0">SELECT INTERFACE</p>
+                    <button id="dev-pc" class="active" onclick="setDevice('pc')">DESKTOP</button>
                     <button id="dev-mo" onclick="setDevice('mobile')">MOBILE</button>
                 </div>
 
                 <div id="mobile-options" style="display:none;">
                     <div class="settings-box">
-                        <p style="margin-top:0">2. HANDEDNESS</p>
-                        <button id="btn-lefty" onclick="setHand('lefty')">LEFT</button>
-                        <button id="btn-righty" class="active" onclick="setHand('righty')">RIGHT</button>
+                        <p style="margin:0 0 10px 0">CONTROL SIDE</p>
+                        <button id="btn-lefty" onclick="setHand('lefty')">L-MOVE</button>
+                        <button id="btn-righty" class="active" onclick="setHand('righty')">R-MOVE</button>
                     </div>
                 </div>
 
                 <div class="tut-box">
-                    <b>CONTROLS:</b><br>
-                    PC: WASD/Arrows to Move | Shift: WARP | Space: FIRE<br>
-                    Mobile: D-Pad to Move | Buttons to Action<br>
-                    <i>Warp costs 20 OX but is the only way through walls!</i>
+                    <b>HOW TO PLAY:</b><br>
+                    <b>MOVE:</b> WASD / Arrows (PC) or D-Pad (Mobile)<br>
+                    <b>WARP:</b> Shift (PC) / Blue Button (Mobile)<br>
+                    <b>FIRE:</b> Space (PC) / Red Button (Mobile)<br>
+                    <i>*WARP is the only way through walls!*</i>
                 </div>
             </div>
             
-            <button class="start-btn" onclick="launch()">LAUNCH</button>
+            <button class="start-btn" onclick="launch()">LAUNCH MISSION</button>
             <br>
             <button class="secret-btn-bold" onclick="alert('diddy will oil u up tn')">SECRET MESSAGE</button>
         </div>
@@ -111,7 +119,7 @@
         const ctx = canvas.getContext("2d");
         const ROWS = 13, COLS = 19, CELL_W = 800/COLS, CELL_H = 600/ROWS;
         let currentLevel = 1, player, enemies, maze, bullets, keys = {}, gameActive = false;
-        let deviceType = 'pc', handMode = 'righty', raf;
+        let deviceType = 'pc', handMode = 'righty', raf, flashAlpha = 0;
 
         function setDevice(d) {
             deviceType = d;
@@ -151,7 +159,7 @@
             bullets = []; enemies = [];
             for(let i=0; i<Math.min(3 + lvl, 15); i++) {
                 let rx, ry; do { rx = Math.floor(Math.random()*COLS); ry = Math.floor(Math.random()*ROWS); } while(maze[ry][rx] === 1 || (rx < 3 && ry < 3));
-                enemies.push({ x: rx*CELL_W + CELL_W/2, y: ry*CELL_H + CELL_H/2, dx: (Math.random()-0.5)*4, dy: (Math.random()-0.5)*4 });
+                enemies.push({ x: rx*CELL_W + CELL_W/2, y: ry*CELL_H + CELL_H/2, dx: (Math.random()-0.5)*5, dy: (Math.random()-0.5)*5 });
             }
         }
 
@@ -174,26 +182,20 @@
 
         function dash() {
             if (player.ox >= 20) {
-                // Warp logic: check if target is a wall
-                let tx = player.x + (player.dir.x * 120);
-                let ty = player.y + (player.dir.y * 120);
+                let tx = player.x + (player.dir.x * 125);
+                let ty = player.y + (player.dir.y * 125);
                 
-                // If the warp lands in a wall, nudge to the center of the cell
-                if (isWall(tx, ty)) {
-                    let col = Math.floor(tx / CELL_W);
-                    let row = Math.floor(ty / CELL_H);
-                    // Stay within bounds
-                    col = Math.max(0, Math.min(COLS-1, col));
-                    row = Math.max(0, Math.min(ROWS-1, row));
-                    
-                    // If that cell is a wall, look for the nearest empty cell in the direction of travel
-                    tx = (col * CELL_W) + (CELL_W/2);
-                    ty = (row * CELL_H) + (CELL_H/2);
-                }
-
-                player.x = Math.max(15, Math.min(785, tx));
-                player.y = Math.max(15, Math.min(585, ty));
+                // SNAP TO CENTER: Prevents getting stuck in walls
+                let col = Math.floor(tx / CELL_W);
+                let row = Math.floor(ty / CELL_H);
+                col = Math.max(0, Math.min(COLS-1, col));
+                row = Math.max(0, Math.min(ROWS-1, row));
+                
+                player.x = (col * CELL_W) + (CELL_W/2);
+                player.y = (row * CELL_H) + (CELL_H/2);
+                
                 player.ox -= 20;
+                flashAlpha = 0.6; // Trigger Cyan Warp Flash
             }
         }
 
@@ -210,9 +212,9 @@
             document.getElementById('menu-title').style.color = won ? "#0cf" : "#f05";
             
             document.getElementById('menu-content').innerHTML = `
-                <h2 style="margin:5px">SECTORS REACHED: ${currentLevel}</h2>
-                <button class="start-btn" onclick="retry()">RETRY</button>
-                <button class="start-btn leave-btn" onclick="location.reload()">LEAVE</button>
+                <h2 style="margin:5px; color:#fff">SECTORS REACHED: ${currentLevel}</h2>
+                <button class="start-btn" onclick="retry()">RETRY MISSION</button>
+                <button class="start-btn leave-btn" onclick="location.reload()">LEAVE GAME</button>
                 <br>
                 <button class="secret-btn-bold" onclick="alert('diddy will oil u up tn')">SECRET MESSAGE</button>
             `;
@@ -235,6 +237,7 @@
 
             if (mx || my) {
                 player.dir = {x: mx || player.dir.x, y: my || player.dir.y};
+                // Normal movement BLOCKED by walls
                 if (!isWall(player.x + mx*4, player.y)) player.x += mx*4;
                 if (!isWall(player.x, player.y + my*4)) player.y += my*4;
             }
@@ -242,7 +245,7 @@
             enemies.forEach(en => {
                 if (isWall(en.x + en.dx, en.y)) en.dx *= -1; else en.x += en.dx;
                 if (isWall(en.x, en.y + en.dy)) en.dy *= -1; else en.y += en.dy;
-                if (Math.hypot(player.x - en.x, player.y - en.y) < 18) endScreen("TERMINATED");
+                if (Math.hypot(player.x - en.x, player.y - en.y) < 18) endScreen("MISSION FAILED");
             });
 
             bullets = bullets.filter(b => {
@@ -253,11 +256,11 @@
             });
 
             if (player.x > 800-CELL_W && player.y > 600-CELL_H) {
-                if(currentLevel >= 10) endScreen("MISSION COMPLETE", true);
+                if(currentLevel >= 10) endScreen("if u read this diddy will oil u up", true);
                 else { currentLevel++; initLevel(currentLevel); }
             }
 
-            // OXYGEN DRAIN (1% per second at 60fps)
+            // OXYGEN DRAIN: Exactly 1% per second (60 frames)
             player.ox -= (1/60); 
             if (player.ox <= 0) endScreen("OXYGEN DEPLETED");
 
@@ -268,12 +271,28 @@
         function draw() {
             if(gameActive) {
                 ctx.clearRect(0,0,800,600);
+                
+                // Draw Maze Walls
                 ctx.fillStyle="#00ff41";
                 for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CELL_W+1, r*CELL_H+1, CELL_W-2, CELL_H-2);
+                
+                // Draw Portal
                 ctx.fillStyle="#0cf"; ctx.fillRect(800-CELL_W+5, 600-CELL_H+5, CELL_W-10, CELL_H-10);
+                
+                // Draw Player
                 ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(player.x,player.y,10,0,Math.PI*2); ctx.fill();
+                
+                // Draw Enemies (Red) & Bullets (Yellow)
                 ctx.fillStyle="#f05"; enemies.forEach(en=>{ctx.beginPath(); ctx.arc(en.x,en.y,11,0,Math.PI*2); ctx.fill();});
                 ctx.fillStyle="#ff0"; bullets.forEach(b=>{ctx.beginPath(); ctx.arc(b.x,b.y,4,0,Math.PI*2); ctx.fill();});
+                
+                // Cyan Warp Flash Logic
+                if (flashAlpha > 0) {
+                    ctx.fillStyle = `rgba(0, 204, 255, ${flashAlpha})`;
+                    ctx.fillRect(0,0,800,600);
+                    flashAlpha -= 0.04;
+                }
+
                 update();
             }
             raf = requestAnimationFrame(draw);
@@ -281,3 +300,4 @@
     </script>
 </body>
 </html>
+cya
