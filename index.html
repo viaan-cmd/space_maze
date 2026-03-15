@@ -2,210 +2,277 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE</title>
+    <title>SPACE MAZE | ULTIMATE PRO 3.5</title>
     <style>
-        :root { --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --mansion: #a020f0; }
-        * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        
-        /* CRT SCANLINES */
-        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); z-index: 1000; background-size: 100% 3px; pointer-events: none; opacity: 0.15; }
-
-        .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
-        #game-layer { display: none; }
-
-        .neon-text { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }
-        .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon); }
-
-        /* MOBILE CONTROLS */
-        #controls { position: absolute; bottom: 20px; left: 0; width: 100%; display: none; justify-content: space-between; padding: 0 30px; z-index: 500; pointer-events: none; }
-        .dpad, .actions { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; pointer-events: auto; }
-        .t-btn { width: 60px; height: 60px; background: rgba(0,0,0,0.6); border: 2px solid var(--neon); color: var(--neon); display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 10px; }
-        .t-btn:active { background: var(--neon); color: #000; }
-
-        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; font-size: 1rem; z-index: 100; pointer-events: none; }
-        #ox-bar-container { width: 120px; height: 10px; border: 1px solid var(--neon); margin-top: 5px; }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
-
-        .card { background: rgba(0,0,0,0.95); padding: 25px; border-radius: 4px; width: 320px; text-align: center; }
-        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 12px; margin: 8px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; }
-
-        #admin-layer, #shop-layer { display:none; z-index: 2000; }
+        :root { --neon: #00ff41; --danger: #ff0033; --warp: #00ccff; --gold: #ffd700; --shield: #ffff00; }
+        body { background: #000; color: var(--neon); font-family: 'Courier New', monospace; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #game-container { position: relative; border: 4px solid #111; box-shadow: 0 0 60px rgba(0,255,65,0.2); }
+        canvas { display: block; background: #000; cursor: crosshair; }
+        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .hud { position: absolute; top: 15px; width: 100%; display: flex; justify-content: space-around; font-weight: 900; pointer-events: none; text-shadow: 0 0 5px #000; }
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 12px 35px; margin: 8px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s; letter-spacing: 1px; }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
+        #ox-bar { height: 14px; width: 180px; border: 1px solid var(--neon); background: #111; position: relative; overflow: hidden; }
+        #ox-fill { height: 100%; width: 100%; background: var(--neon); transition: width 0.1s linear; }
+        #hall-of-fame { font-size: 0.85rem; color: var(--warp); margin-top: 20px; line-height: 1.6; text-align: center; border-top: 1px solid #222; padding-top: 10px; width: 80%; }
+        #boss-ui { display: none; position: absolute; top: 65px; width: 100%; text-align: center; color: var(--danger); font-weight: bold; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer" class="layer">
-        <h1 class="neon-text" style="font-size: 2.5rem;">SPACE MAZE</h1>
-        <div class="card neon-border">
-            <input type="text" id="username" placeholder="NAME" style="width:100%; background:#000; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:10px; font-family:inherit; text-align:center;">
-            <button class="btn" onclick="UI.playCutscene('intro')">START</button>
-            <button class="btn" style="border-color:var(--warp); color:var(--warp);" onclick="UI.toggleShop(true)">UPGRADES</button>
-            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
-            <div id="leaderboard" style="font-size: 0.7rem; text-align: left; margin-top:10px; color:var(--warp);"></div>
-        </div>
-    </div>
-
-    <div id="shop-layer" class="layer">
-        <div class="card neon-border" style="border-color: var(--warp);">
-            <h2 style="color:var(--warp);">SHOP</h2>
-            <p>Credits: <span id="shop-credits">0</span></p>
-            <button class="btn" onclick="UI.buyUpgrade('speed')">LUNGS (Speed) - 10 Cr</button>
-            <button class="btn" onclick="UI.buyUpgrade('tank')">TANK (Max OX) - 15 Cr</button>
-            <button class="btn" onclick="UI.toggleShop(false)">EXIT</button>
-        </div>
-    </div>
-
-    <div id="admin-layer" class="layer">
-        <div class="card neon-border" style="border-color: var(--danger);">
-            <h2 style="color:var(--danger);">ROOT</h2>
-            <button class="btn" onclick="Core.adminJump(21)">SEC 21</button>
-            <button class="btn" onclick="Core.adminJump(202)">SEC 202</button>
-            <button class="btn" onclick="UI.toggleAdmin(false)">BACK</button>
-        </div>
-    </div>
-
-    <div id="game-layer" class="layer">
-        <div id="hud">
-            <div>SEC: <span id="v-sec">1</span></div>
-            <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
-            <div onclick="UI.togglePause()" style="pointer-events: auto; border: 1px solid var(--neon); padding: 5px 10px;">||</div>
+    <div id="game-container">
+        <div class="hud">
+            <div>SECTOR: <span id="v-sec">1</span></div>
+            <div>OXYGEN <div id="ox-bar"><div id="ox-fill"></div></div></div>
         </div>
         
-        <canvas id="stage"></canvas>
+        <div id="boss-ui">DADDY_CORE INTEGRITY: <span id="v-bhp">100</span>%</div>
 
-        <div id="controls">
-            <div class="dpad">
-                <div></div><div class="t-btn" ontouchstart="Core.keys.ArrowUp=true" ontouchend="Core.keys.ArrowUp=false">↑</div><div></div>
-                <div class="t-btn" ontouchstart="Core.keys.ArrowLeft=true" ontouchend="Core.keys.ArrowLeft=false">←</div>
-                <div class="t-btn" ontouchstart="Core.keys.ArrowDown=true" ontouchend="Core.keys.ArrowDown=false">↓</div>
-                <div class="t-btn" ontouchstart="Core.keys.ArrowRight=true" ontouchend="Core.keys.ArrowRight=false">→</div>
-            </div>
-            <div class="actions">
-                <div class="t-btn" style="grid-column: span 3; border-color:var(--warp);" onclick="Core.player.warp()">WARP</div>
-                <div class="t-btn" style="grid-column: span 3; margin-top:10px; border-color:#fff;" onclick="Core.player.shoot()">SHOOT</div>
-            </div>
+        <div id="menu-layer" class="overlay">
+            <h1 style="font-size: 4rem; margin: 0; text-shadow: 0 0 20px var(--neon); letter-spacing: 5px;">SPACE MAZE</h1>
+            <p style="color:var(--warp); font-size: 0.8rem; margin-bottom: 20px;">[ NEURAL INTERFACE PRO 3.5 ]</p>
+            <input type="text" id="uname" placeholder="ENTER_PILOT_ID" maxlength="10" style="background:#000; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:15px; text-align:center; font-family:inherit; outline: none;">
+            <button class="btn" onclick="UI.playCutscene('intro')">INITIATE RUN</button>
+            <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="UI.showShop()">BLACK MARKET</button>
+            <div id="hall-of-fame"></div>
         </div>
-    </div>
 
-    <div id="cutscene-layer" class="layer" style="display:none; z-index: 3000;">
-        <div id="typewriter" class="card neon-border" style="text-align:left; width:90%;"></div>
-        <button class="btn" id="proceed-btn" style="width:200px; margin-top:20px;">PROCEED</button>
+        <div id="shop-layer" class="overlay" style="display:none;">
+            <h2 style="color:var(--gold)">// SYSTEM_UPGRADES</h2>
+            <button class="btn" onclick="UI.buy('speed')">TURBO-INJECTORS (5 Cr)</button>
+            <button class="btn" onclick="UI.buy('tank')">O2 COMPRESSOR (10 Cr)</button>
+            <button class="btn" onclick="UI.hideShop()">EXIT MARKET</button>
+        </div>
+
+        <div id="cutscene-layer" class="overlay" style="display:none; padding:50px;">
+            <div id="typewriter" style="font-size: 1.2rem; line-height: 1.6; max-width: 650px; color: #fff; border-left: 2px solid var(--neon); padding-left: 20px;"></div>
+            <button class="btn" id="pro-btn" style="display:none; margin-top:35px;" onclick="UI.close()">PROCEED ></button>
+        </div>
+
+        <canvas id="stage" width="800" height="600"></canvas>
     </div>
 
     <script>
-        const MAP = { W:window.innerWidth, H:window.innerHeight, R:13, C:13, TW:window.innerWidth/13, TH:window.innerHeight/13 };
+        const CFG = { W: 800, H: 600, R: 13, C: 19, TW: 800/19, TH: 600/13 };
         
-        const Core = {
-            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", credits: 0, 
-            upgrades: JSON.parse(localStorage.getItem('sm_upgrades')) || { speed: 5, tank: 100 },
-            boot(resume) {
-                document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('game-layer').style.display = 'flex';
-                document.getElementById('controls').style.display = 'flex';
-                this.ctx = document.getElementById('stage').getContext('2d');
-                document.getElementById('stage').width = MAP.W;
-                document.getElementById('stage').height = MAP.H;
-                this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
-                if(!this.running) { this.run(); this.running = true; }
+        // --- PRO AUDIO SYNTH ---
+        const Sound = (freq, type, dur) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + dur);
+        };
+
+        const Scores = {
+            save(name, sec) {
+                let list = JSON.parse(localStorage.getItem('sm_scores') || '[]');
+                list.push({ name: name || 'UNKNOWN', sec });
+                list.sort((a,b) => b.sec - a.sec);
+                localStorage.setItem('sm_scores', JSON.stringify(list.slice(0, 5)));
             },
+            show() {
+                let list = JSON.parse(localStorage.getItem('sm_scores') || '[]');
+                document.getElementById('hall-of-fame').innerHTML = "HALL OF FAME:<br>" + list.map(s => `${s.name}: SECTOR ${s.sec}`).join(' | ');
+            }
+        };
+
+        const Engine = {
+            sec: 1, run: false, ents: [], keys: {}, shake: 0,
+            up: { spd: 5.8, ox: 100 },
             init(n) {
-                this.sector = n; this.active = true; this.entities = [];
-                localStorage.setItem('sm_save', n);
-                if(n === 21 && !this.s21Seen) { UI.playCutscene('mansion'); this.s21Seen = true; return; }
-                this.maze = (n === 202) ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
-                this.player = new Player(MAP.TW/2, MAP.TH/2);
+                this.sec = n; this.run = true; this.ents = []; this.boss = null;
+                document.getElementById('boss-ui').style.display = (n === 202) ? 'block' : 'none';
+                
+                if(n === 21) UI.playCutscene('mansion');
+                if(n === 202) {
+                    UI.playCutscene('boss');
+                    this.maze = Array.from({length:CFG.R},()=>Array(CFG.C).fill(0));
+                    this.boss = new Daddy();
+                    this.ents.push(this.boss);
+                } else {
+                    this.maze = this.gen();
+                    for(let i=0; i < Math.min(3 + n, 18); i++) this.ents.push(new NME());
+                }
+
+                this.plr = new Plr(CFG.TW/2, CFG.TH/2);
                 document.getElementById('v-sec').innerText = n;
+                if(Math.random() > 0.3) this.ents.push(new Mod());
+                if(n === 21) this.ents.push(new Item(120,120), new Item(680,120), new Item(400,480));
             },
-            createMaze() {
-                let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
+            gen() {
+                let m = Array.from({length:CFG.R},()=>Array(CFG.C).fill(1));
                 let s = [[0,0]]; m[0][0] = 0;
                 while(s.length) {
                     let [r,c] = s[s.length-1];
-                    let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<MAP.R&&nc>=0&&nc<MAP.C&&m[nr][nc]===1);
+                    let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<CFG.R&&nc>=0&&nc<CFG.C&&m[nr][nc]===1);
                     if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
                 return m;
             },
-            update() {
-                if(!this.active || this.paused) return;
-                this.player.tick();
-                this.entities.forEach((e, i) => { e.tick(); if(e.dead) this.entities.splice(i, 1); });
-                if(this.player.x > MAP.W - MAP.TW && this.player.y > MAP.H - MAP.TH) {
-                    if(this.sector === 21 && this.player.invites < 3) return;
-                    this.credits++;
-                    localStorage.setItem('sm_creds', this.credits);
-                    this.init(this.sector + 1);
+            tick() {
+                if(!this.run) return;
+                if(this.shake > 0) this.shake *= 0.88;
+                this.plr.tick();
+                this.ents.forEach((e,i) => { e.tick(); if(e.dead) this.ents.splice(i,1); });
+                if(this.plr.x > CFG.W-CFG.TW && this.plr.y > CFG.H-CFG.TH && this.sec !== 202) {
+                    if(this.sec === 21 && this.plr.inv < 3) return;
+                    this.init(this.sec + 1);
                 }
             },
             draw() {
-                this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.ctx.fillStyle = (this.sector >= 21 && this.sector < 30) ? "var(--mansion)" : "var(--neon)";
-                for(let r=0; r<MAP.R; r++) {
-                    for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW-2, MAP.TH-2);
+                const ctx = document.getElementById('stage').getContext('2d');
+                ctx.save();
+                if(this.shake > 0.2) ctx.translate(Math.random()*this.shake-this.shake/2, Math.random()*this.shake-this.shake/2);
+                ctx.clearRect(0,0,CFG.W,CFG.H);
+                ctx.fillStyle = (this.sec >= 21) ? "#a020f0" : "#00ff41";
+                for(let r=0; r<CFG.R; r++) for(let c=0; c<CFG.C; c++) if(this.maze[r][c]) ctx.fillRect(c*CFG.TW+1, r*CFG.TH+1, CFG.TW-2, CFG.TH-2);
+                if(this.sec !== 202) {
+                    ctx.fillStyle = (this.sec===21 && this.plr.inv < 3) ? "#111" : "#0cf";
+                    ctx.shadowBlur = 10; ctx.shadowColor = "#0cf";
+                    ctx.fillRect(CFG.W-CFG.TW+12, CFG.H-CFG.TH+12, CFG.TW-24, CFG.TH-24);
+                    ctx.shadowBlur = 0;
                 }
-                this.ctx.fillStyle = "var(--warp)";
-                this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                this.entities.forEach(e => e.draw(this.ctx));
-                this.player.draw(this.ctx);
+                this.ents.forEach(e => e.draw(ctx));
+                this.plr.draw(ctx);
+                ctx.restore();
             },
-            run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
-            registerAction(a) {
-                this.cheatSeq = (this.cheatSeq + a).slice(-4);
-                if(this.cheatSeq === "SWWS") UI.toggleAdmin(true);
-            },
-            adminJump(v) { this.init(v); UI.toggleAdmin(false); }
+            loop() { this.tick(); this.draw(); requestAnimationFrame(()=>this.loop()); }
         };
 
-        class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=Core.upgrades.tank; this.speed=Core.upgrades.speed; this.invites=0; }
+        class Plr {
+            constructor(x,y) {
+                this.x=x; this.y=y; this.ox=Engine.up.ox; this.spd=Engine.up.spd;
+                this.inv=0; this.tm = { spd: 0, rpd: 0, shd: 0 }; this.p = 0;
+            }
             tick() {
+                this.p += 0.1;
+                let s = this.tm.spd > 0 ? 10.5 : this.spd;
+                Object.keys(this.tm).forEach(k => { if(this.tm[k]>0) this.tm[k]--; });
                 let mx=0, my=0;
-                if(Core.keys.ArrowUp) my=-1; if(Core.keys.ArrowDown) my=1;
-                if(Core.keys.ArrowLeft) mx=-1; if(Core.keys.ArrowRight) mx=1;
-                let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
+                if(Engine.keys.ArrowUp || Engine.keys.KeyW) my=-1; if(Engine.keys.ArrowDown || Engine.keys.KeyS) my=1;
+                if(Engine.keys.ArrowLeft || Engine.keys.KeyA) mx=-1; if(Engine.keys.ArrowRight || Engine.keys.KeyD) mx=1;
+                let nx=this.x+mx*s, ny=this.y+my*s;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
-                this.ox -= 0.05; if(this.ox <= 0) location.reload();
-                document.getElementById('v-ox').innerText = Math.floor(this.ox);
-                document.getElementById('ox-bar').style.width = (this.ox/Core.upgrades.tank*100) + "%";
+                this.ox -= 0.048; if(this.ox <= 0) this.die();
+                document.getElementById('ox-fill').style.width = (this.ox/Engine.up.ox*100) + "%";
             }
-            isW(x,y) {
-                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH);
-                return x<0||x>MAP.W||y<0||y>MAP.H||(r>=0&&r<MAP.R&&c>=0&&c<MAP.C&&Core.maze[r][c]===1);
+            isW(x,y) { let c=Math.floor(x/CFG.TW), r=Math.floor(y/CFG.TH); return x<0||x>CFG.W||y<0||y>CFG.H||(r>=0&&r<CFG.R&&c>=0&&c<CFG.C&&Engine.maze[r][c]===1); }
+            draw(ctx) {
+                if(this.tm.shd > 0) {
+                    ctx.strokeStyle = "#ff0"; ctx.lineWidth = 3; ctx.shadowBlur = 15; ctx.shadowColor = "#ff0";
+                    ctx.beginPath(); ctx.arc(this.x, this.y, 18 + Math.sin(this.p)*2, 0, Math.PI*2); ctx.stroke(); ctx.shadowBlur = 0;
+                }
+                ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill();
             }
-            draw(ctx) { ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,8,0,Math.PI*2); ctx.fill(); }
-            shoot() { if(this.ox > 5) { this.ox -= 5; Core.registerAction('S'); } }
-            warp() { if(this.ox > 10) { this.x += 100; this.ox -= 10; Core.registerAction('W'); } }
+            hit() { 
+                if(this.tm.shd > 0) { 
+                    this.tm.shd = 0; Engine.shake = 25; 
+                    Sound(150, 'sawtooth', 0.4); // SHIELD BREAK SFX
+                } else this.die(); 
+            }
+            die() { Scores.save(document.getElementById('uname').value, Engine.sec); location.reload(); }
+            shoot() { 
+                let c = this.tm.rpd > 0 ? 0 : 5; 
+                if(this.ox > c) { 
+                    Engine.ents.push(new Blt(this.x, this.y)); this.ox -= c; Engine.shake = 3; 
+                    Sound(400, 'square', 0.05); // BLASTER SFX
+                } 
+            }
+            warp() { if(this.ox > 15) { this.x += 140; this.ox -= 15; Engine.shake = 18; Sound(100, 'sine', 0.3); } }
+        }
+
+        class NME {
+            constructor() { 
+                let rx, ry; do { rx=Math.random()*CFG.W; ry=Math.random()*CFG.H; } while(Engine.plr.isW(rx,ry));
+                this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6.5; this.vy=(Math.random()-0.5)*6.5;
+            }
+            tick() {
+                this.x+=this.vx; this.y+=this.vy;
+                if(Engine.plr.isW(this.x, this.y)) { this.vx*=-1; this.vy*=-1; }
+                if(Math.hypot(this.x-Engine.plr.x, this.y-Engine.plr.y) < 22) Engine.plr.hit();
+            }
+            draw(ctx) { ctx.fillStyle="#ff0033"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
+        }
+
+        class Daddy {
+            constructor() { this.x = CFG.W/2; this.y = CFG.H/2; this.hp = 100; this.spd = 3.2; this.p = 0; }
+            tick() {
+                this.p += 0.2;
+                let dx = Engine.plr.x - this.x, dy = Engine.plr.y - this.y, d = Math.hypot(dx,dy);
+                this.x += (dx/d)*this.spd; this.y += (dy/d)*this.spd;
+                if(d < 45) Engine.plr.hit();
+                if(this.hp <= 0) { this.dead = true; UI.playCutscene('win'); }
+            }
+            draw(ctx) {
+                let s = 45 + Math.sin(this.p)*5;
+                ctx.fillStyle = "#ff0033"; ctx.shadowBlur = 30; ctx.shadowColor = "#ff0033";
+                ctx.beginPath(); ctx.arc(this.x, this.y, s, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+            }
+        }
+
+        class Mod {
+            constructor() {
+                let rx, ry; do { rx=Math.random()*CFG.W; ry=Math.random()*CFG.H; } while(Engine.plr.isW(rx,ry));
+                this.x=rx; this.y=ry; this.t = ["OX", "SPD", "RPD", "SHD"][Math.floor(Math.random()*4)];
+            }
+            tick() {
+                if(Math.hypot(this.x-Engine.plr.x, this.y-Engine.plr.y) < 25) {
+                    if(this.t === "OX") Engine.plr.ox = Engine.up.ox;
+                    if(this.t === "SPD") Engine.plr.tm.spd = 1500;
+                    if(this.t === "RPD") Engine.plr.tm.rpd = 1500;
+                    if(this.t === "SHD") Engine.plr.tm.shd = 99999;
+                    Sound(600, 'sine', 0.2); this.dead = true;
+                }
+            }
+            draw(ctx) {
+                const c = { OX: "#00ff41", SPD: "#0cf", RPD: "#fff", SHD: "#ff0" };
+                ctx.fillStyle = c[this.t]; ctx.shadowBlur = 10; ctx.shadowColor = c[this.t];
+                ctx.fillRect(this.x-10, this.y-10, 20, 20); ctx.shadowBlur = 0;
+            }
+        }
+
+        class Blt {
+            constructor(x,y) { this.x=x; this.y=y; }
+            tick() {
+                this.x += 16; if(Engine.plr.isW(this.x, this.y)) this.dead=true;
+                if(Engine.boss && Math.hypot(this.x-Engine.boss.x, this.y-Engine.boss.y) < 45) {
+                    Engine.boss.hp -= 2; document.getElementById('v-bhp').innerText = Engine.boss.hp; 
+                    this.dead = true; Engine.shake = 5; Sound(200, 'square', 0.05);
+                }
+                Engine.ents.forEach(e => { if(e instanceof NME && Math.hypot(this.x-e.x, this.y-e.y)<22) { e.dead=true; this.dead=true; } });
+            }
+            draw(ctx) { ctx.fillStyle="#fff"; ctx.fillRect(this.x, this.y, 12, 4); }
+        }
+
+        class Item {
+            constructor(x,y) { this.x=x; this.y=y; }
+            tick() { if(Math.hypot(this.x-Engine.plr.x, this.y-Engine.plr.y) < 25) { Engine.plr.inv++; this.dead=true; Sound(800, 'sine', 0.1); } }
+            draw(ctx) { ctx.fillStyle="#ffd700"; ctx.shadowBlur = 15; ctx.shadowColor = "#ffd700"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
         }
 
         const UI = {
-            toggleShop(s) { 
-                document.getElementById('shop-layer').style.display = s?'flex':'none'; 
-                document.getElementById('shop-credits').innerText = localStorage.getItem('sm_creds') || 0;
+            showShop() { document.getElementById('shop-layer').style.display='flex'; },
+            hideShop() { document.getElementById('shop-layer').style.display='none'; },
+            buy(t) {
+                if(t==='speed' && Engine.sec >= 5) { Engine.up.spd = 8.8; this.hideShop(); }
+                if(t==='tank' && Engine.sec >= 10) { Engine.up.ox = 200; this.hideShop(); }
             },
-            buyUpgrade(type) {
-                let cr = parseInt(localStorage.getItem('sm_creds') || 0);
-                if(type==='speed' && cr >= 10) { Core.upgrades.speed = 8; cr -= 10; }
-                if(type==='tank' && cr >= 15) { Core.upgrades.tank = 200; cr -= 15; }
-                localStorage.setItem('sm_creds', cr);
-                localStorage.setItem('sm_upgrades', JSON.stringify(Core.upgrades));
-                this.toggleShop(false);
+            playCutscene(t) {
+                Engine.run = false; const l = document.getElementById('cutscene-layer'); const b = document.getElementById('typewriter');
+                l.style.display = 'flex'; b.innerHTML = "";
+                let txt = t === 'intro' ? "> NEURAL_LINK STARTING...\n> MISSION: REACH TERMINAL SECTOR 202.\n> OXYGEN IS FINITE.\n> STATUS: SHEILA_SHIELD INTEGRATED." : t === 'mansion' ? "> WARNING: SECTOR 21 DETECTED.\n> THE MANSION PROTOCOL IS ACTIVE.\n> COLLECT 3 GOLDEN SUB-ROUTINES TO BYPASS GATE." : t === 'boss' ? "> ERROR: TERMINAL SECTOR COMPROMISED.\n> DADDY_CORE IDENTIFIED.\n> DESTROY THE SOURCE." : "> SYSTEM OVERRIDE SUCCESSFUL.\n> NEURAL LINK TERMINATED.\n> YOU HAVE REACHED THE END OF THE MAZE.\n> STATUS: FREE.";
+                let i = 0; let iv = setInterval(() => { if(i < txt.length) { b.innerHTML += txt[i]==="\n"?"<br>":txt[i]; i++; } else { clearInterval(iv); document.getElementById('pro-btn').style.display='block'; } }, 30);
             },
-            playCutscene(type) {
-                Core.paused = true;
-                const layer = document.getElementById('cutscene-layer');
-                const box = document.getElementById('typewriter');
-                layer.style.display = 'flex';
-                box.innerText = type === 'intro' ? "> MISSION: REACH SECTOR 202. WATCH YOUR OXYGEN." : "> SECTOR 21: THE MANSION. COLLECT INVITES.";
-                document.getElementById('proceed-btn').onclick = () => { layer.style.display = 'none'; Core.paused = false; if(!Core.player) Core.boot(); };
-            },
-            toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; }
+            close() { document.getElementById('cutscene-layer').style.display='none'; document.getElementById('menu-layer').style.display='none'; document.getElementById('pro-btn').style.display='none'; if(!Engine.plr) Engine.init(1); else Engine.run = true; }
         };
 
-        window.onkeydown=e=>Core.keys[e.code]=true;
-        window.onkeyup=e=>Core.keys[e.code]=false;
-        if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
+        window.onkeydown = e => { Engine.keys[e.code] = true; if(e.code==='Space') Engine.plr.shoot(); if(e.code==='ShiftLeft') Engine.plr.warp(); };
+        window.onkeyup = e => Engine.keys[e.code] = false;
+        Scores.show(); Engine.loop();
     </script>
 </body>
 </html>
