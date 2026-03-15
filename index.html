@@ -79,7 +79,7 @@
         <div id="boss-hud"><div id="boss-bar"></div></div>
         <div id="mobile-controls">
             <div class="zone right"><div id="j-base"><div id="j-knob"></div></div></div>
-            <div class="zone left"><div class="act-btn" onpointerdown="Core.player.warp()">WARP</div><div class="act-btn" style="border-color:var(--danger); font-size:0.6rem; text-align:center;">AUTO AIM ON</div></div>
+            <div class="zone left"><div class="act-btn" onpointerdown="Core.player.warp()">WARP</div><div class="act-btn" onpointerdown="Core.player.shoot()">SHOOT</div></div>
         </div>
     </div>
 
@@ -152,21 +152,28 @@
             constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.speedBase=5.5; this.speed=5.5; this.cd=0; }
             tick() {
                 let mx=0, my=0; this.speed = this.speedBase;
-                // Check Oil contact
                 Core.entities.forEach(e => { if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) this.speed = 1.5; });
                 if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
                 if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
+                
                 if(this.cd > 0) this.cd--;
-                if(this.cd <= 0) {
-                    let target = Core.entities.find(e => (e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(e.x-this.x, e.y-this.y) < 350);
-                    if(target) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(target.y-this.y, target.x-this.x), "#fff", true)); if(!Core.infOx) this.ox -= 0.8; this.cd = 18; }
-                }
+                if(Core.keys.Space) this.shoot();
+
                 if(!Core.infOx) this.ox -= 0.035; if(this.ox <= 0) Core.init(Core.sector);
                 document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
                 document.getElementById('ox-bar').style.width = Math.min(100, this.ox)+"%";
+            }
+            shoot() {
+                if(this.cd <= 0) {
+                    let target = Core.entities.find(e => (e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(e.x-this.x, e.y-this.y) < 400);
+                    let angle = target ? Math.atan2(target.y-this.y, target.x-this.x) : 0;
+                    Core.entities.push(new Bullet(this.x, this.y, angle, "#fff", true)); 
+                    if(!Core.infOx) this.ox -= 1.5; 
+                    this.cd = 15; 
+                }
             }
             isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
             draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
@@ -174,7 +181,7 @@
         }
 
         class Bullet {
-            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*10; this.vy=Math.sin(a)*10; this.c=c; this.isPlayer=p; }
+            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*12; this.vy=Math.sin(a)*12; this.c=c; this.isPlayer=p; }
             tick() { 
                 this.x+=this.vx; this.y+=this.vy; 
                 if(Core.player.isW(this.x,this.y)) this.dead=true;
@@ -197,9 +204,7 @@
             constructor(x,y) { this.x=x; this.y=y; this.hp=120; this.max=120; this.vx=3.5; this.vy=3.5; this.oilCd=100; this.shootCd=90; }
             tick() {
                 this.x+=this.vx; this.y+=this.vy; if(this.x<50 || this.x>MAP.W-50) this.vx*=-1; if(this.y<50 || this.y>MAP.H-50) this.vy*=-1;
-                // Spill Oil
                 this.oilCd--; if(this.oilCd<=0) { Core.entities.push(new Oil(this.x, this.y)); this.oilCd=120; }
-                // Shoot Player
                 this.shootCd--; if(this.shootCd<=0) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(Core.player.y-this.y, Core.player.x-this.x), "#a020f0", false)); this.shootCd=80; }
                 document.getElementById('boss-bar').style.width = (this.hp/this.max*100) + "%";
                 if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45) Core.init(Core.sector);
@@ -217,7 +222,7 @@
 
         const UI = {
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; },
-            startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> MISSION START: SECTOR 1\n> OBJECTIVE: REACH SECTOR 202\n> CAUTION: OIL SLICKS DETECTED NEAR BOSS SIGHTINGS"); },
+            startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> MISSION START: SECTOR 1\n> OBJECTIVE: REACH SECTOR 202\n> CONTROLS: SPACE TO SHOOT | SHIFT TO WARP"); },
             playGlitchCutscene() { document.getElementById('game-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; document.getElementById('typewriter').style.color = "var(--glitch)"; this.type("CRITICAL ERROR: BYPASSING SECTOR...\n\n[DIDDY]: See you at sector 202... I hope you like oil."); },
             type(t) {
                 let i = 0; const c = document.getElementById('typewriter'); c.innerHTML = ""; document.getElementById('skip-btn').style.display = 'none';
