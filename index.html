@@ -25,7 +25,7 @@
             justify-content: center; 
         }
 
-        /* CRT SCANLINE OVERLAY - Lightened for better visibility */
+        /* CRT SCANLINE OVERLAY */
         body::after { 
             content: " "; position: absolute; inset: 0; 
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); 
@@ -35,15 +35,12 @@
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
         #game-layer { display: none; }
 
-        /* INTENSE NEON EFFECTS */
         .neon-text { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }
         .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon), inset 0 0 5px var(--neon); }
 
-        /* CUTSCENE STYLE */
         #cutscene-layer { display: none; background: #000; color: var(--neon); padding: 40px; text-align: left; justify-content: flex-start; overflow: hidden; }
         #typewriter { font-size: 1.2rem; line-height: 1.6; max-width: 600px; text-shadow: 0 0 5px var(--neon); }
 
-        /* HUD & UI */
         #hud { 
             position: absolute; top: 0; width: 100%; padding: 20px; 
             display: flex; justify-content: space-between; font-size: 1.2rem; 
@@ -69,7 +66,6 @@
         }
         .btn:active { background: var(--neon); color: #000; }
 
-        /* MOBILE OVERLAY */
         #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 500; }
         .zone { position: absolute; bottom: 30px; width: 220px; height: 220px; pointer-events: auto; }
         .right { right: 20px; } .left { left: 20px; }
@@ -152,11 +148,15 @@
             init(n) {
                 this.sector = n; this.active = true; this.entities = []; this.state = "PLAY";
                 localStorage.setItem('sm_save', n);
-                this.maze = this.createMaze();
+                
+                if (n === 202) {
+                    this.maze = Array.from({length:MAP.R},()=>Array(MAP.C).fill(0));
+                } else {
+                    this.maze = this.createMaze();
+                }
+
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
                 document.getElementById('v-sec').innerText = n;
-                
-                // Reset Boss HUD
                 document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
 
                 if(n===21) this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
@@ -187,7 +187,6 @@
                     this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
-                // Sector Exit
                 if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
                     if(this.sector===21 && this.player.invites < 3) return;
                     if(this.sector===202 && this.entities.some(e => e instanceof DiddyBoss)) return; 
@@ -200,7 +199,6 @@
                 if(this.shake > 0) this.ctx.translate(Math.random()*10-5, Math.random()*10-5);
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
 
-                // NEON WALLS - TRUE NEON GREEN
                 this.ctx.shadowBlur = 18;
                 this.ctx.shadowColor = (this.sector===21) ? "#500050" : "#00ff41";
                 this.ctx.fillStyle = this.ctx.shadowColor;
@@ -212,7 +210,6 @@
                     }
                 }
 
-                // EXIT PORTAL
                 this.ctx.shadowBlur = 15;
                 this.ctx.shadowColor = (this.sector===21 && this.player.invites < 3) ? "#222" : "#0cf";
                 this.ctx.fillStyle = this.ctx.shadowColor;
@@ -254,9 +251,12 @@
                 
                 document.getElementById('v-ox').innerText = Math.floor(this.ox);
                 document.getElementById('ox-bar').style.width = Math.min(100, this.ox)+"%";
-                document.getElementById('ox-bar').style.background = this.ox < 25 ? "var(--danger)" : "var(--neon)";
             }
-            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
+            isW(x,y) { 
+                if (x < 0 || x > MAP.W || y < 0 || y > MAP.H) return true;
+                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
+                return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; 
+            }
             draw(ctx) {
                 ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.fillStyle="#fff";
                 ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill();
@@ -305,9 +305,8 @@
             constructor(x,y) { this.x=x; this.y=y; this.hp=30; this.maxHp=30; this.vx=5; this.vy=5; this.rad=40; }
             tick() {
                 this.x+=this.vx; this.y+=this.vy;
-                if(Core.player.isW(this.x-this.rad,this.y)||Core.player.isW(this.x+this.rad,this.y)) this.vx*=-1;
-                if(Core.player.isW(this.x,this.y-this.rad)||Core.player.isW(this.x,this.y+this.rad)) this.vy*=-1;
-                
+                if(this.x-this.rad < 0 || this.x+this.rad > MAP.W) this.vx*=-1;
+                if(this.y-this.rad < 0 || this.y+this.rad > MAP.H) this.vy*=-1;
                 document.getElementById('boss-bar').style.width = (this.hp/this.maxHp*100) + "%";
                 if(this.hp<=0) this.dead=true;
                 if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<this.rad) Core.init(Core.sector);
@@ -345,7 +344,7 @@
             startCutscene() {
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('cutscene-layer').style.display = 'flex';
-                const text = "> INCOMING TRANSMISSION...\n> MISSION: INFILTRATE SECTOR 1-202.\n> OBJECTIVE A: RECOVER 3 MANSION INVITES IN SECTOR 21.\n> OBJECTIVE B: ELIMINATE TARGET 'DIDDY' IN SECTOR 202.\n> WARNING: OXYGEN DEPLETES ON EVERY ACTION.\n> SHOOT (S) AND WARP (W) TO SURVIVE.\n> GOOD LUCK, OPERATIVE.";
+                const text = "> INCOMING TRANSMISSION...\n> MISSION: INFILTRATE SECTOR 1-202.\n> OBJECTIVE A: RECOVER 3 MANSION INVITES IN SECTOR 21.\n> OBJECTIVE B: ELIMINATE TARGET 'DIDDY' IN SECTOR 202.\n> WARNING: OXYGEN DEPLETES ON EVERY ACTION.\n> SHOOT (SPACE) AND WARP (SHIFT) TO SURVIVE.\n> GOOD LUCK, OPERATIVE.";
                 let i = 0; const container = document.getElementById('typewriter');
                 function type() {
                     if (i < text.length) {
@@ -358,7 +357,7 @@
         };
 
         window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp(); };
-        window.onkeyup=e=>Core.keys[e.code]=false;
+        window.onkeyup=e=>Core.keys[e.code]-false;
         
         let joyOn=false, joyV={x:0,y:0};
         const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
