@@ -152,6 +152,16 @@ function startGame() {
     requestAnimationFrame(loop);
 }
 
+// Helper to find an open floor tile for spawning
+function getOpenSpot() {
+    let r, c;
+    do {
+        r = Math.floor(Math.random() * ROWS);
+        c = Math.floor(Math.random() * COLS);
+    } while (maze[r][c] === 1 || (r === 0 && c === 0)); // Don't spawn exactly on top of player's start (0,0)
+    return { x: (c * CW) + (CW / 2), y: (r * CH) + (CH / 2) };
+}
+
 // Level Generation
 function loadSector(n) {
     sec = n; ens = []; bult = []; items = []; boss = null;
@@ -160,7 +170,7 @@ function loadSector(n) {
     saveScore();
 
     maze = Array.from({length: ROWS}, () => Array(COLS).fill(1));
-    p = {x: CW*1.5, y: CH*1.5, ox: 100, spd: 4, shd: false, rpd: false};
+    p = {x: CW/2, y: CH/2, ox: 100, spd: 4, shd: false, rpd: false}; // Force player start at top left open cell
 
     if(n === 21) {
         // Sector 21: Mansion / Story
@@ -184,13 +194,25 @@ function loadSector(n) {
     else {
         // Normal Mazes
         genMaze(0,0);
-        let enemyCount = Math.min(3 + n, 15);
-        for(let i=0; i<enemyCount; i++) ens.push({x: Math.random()*700+50, y: Math.random()*500+50, dx: 3, dy: 3});
         
-        // Spawn Random Powerups
+        // Guarantee the exit area is open
+        maze[ROWS-1][COLS-1] = 0;
+        maze[ROWS-1][COLS-2] = 0;
+        maze[ROWS-2][COLS-1] = 0;
+
+        let enemyCount = Math.min(3 + n, 15);
+        for(let i=0; i<enemyCount; i++) {
+            let spot = getOpenSpot();
+            ens.push({x: spot.x, y: spot.y, dx: 3, dy: 3});
+        }
+        
+        // Spawn Random Powerups in open spots
         let pTypes = ['shd', 'ox', 'spd', 'rpd'];
         pTypes.forEach(t => {
-            if(Math.random() > 0.3) items.push({x: Math.random()*700+50, y: Math.random()*500+50, type: t});
+            if(Math.random() > 0.3) {
+                let spot = getOpenSpot();
+                items.push({x: spot.x, y: spot.y, type: t});
+            }
         });
     }
 }
@@ -200,7 +222,7 @@ function genMaze(r, c) {
     let ds = [[0,2],[0,-2],[2,0],[-2,0]].sort(()=>Math.random()-0.5);
     ds.forEach(([dr, dc]) => {
         let nr=r+dr, nc=c+dc;
-        if(nr>=0 && nr<ROWS && nc>=0 && nc<COLS && maze[nr][nc]==1) {
+        if(nr>=0 && nr<ROWS && nc>=0 && nc<COLS && maze[nr][nc]===1) {
             maze[r+dr/2][c+dc/2]=0; genMaze(nr, nc);
         }
     });
