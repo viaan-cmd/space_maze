@@ -9,53 +9,62 @@
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
         
-        /* Scanline Effect */
+        /* Retro Scanlines */
         body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none; }
 
-        .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: 0.3s; }
+        .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: opacity 0.3s; }
         #game-layer { display: none; background: radial-gradient(circle, #111, #000); }
         
+        /* HUD & UI */
         #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; font-weight: bold; }
-        #ox-bar-container { width: 150px; height: 10px; border: 1px solid var(--neon); margin-top: 5px; }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
+        #ox-bar-container { width: 150px; height: 12px; border: 2px solid var(--neon); margin-top: 5px; background: rgba(0,255,65,0.1); }
+        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.1s, background-color 0.3s; }
 
         .boss-ui { position: absolute; bottom: 130px; width: 340px; height: 22px; border: 2px solid var(--gold); background: #000; display: none; z-index: 100; box-shadow: 0 0 20px var(--danger); }
-        #boss-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); }
+        #boss-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: width 0.1s; }
 
-        .card { background: rgba(0, 255, 65, 0.05); border: 2px solid var(--neon); padding: 25px; border-radius: 12px; width: 340px; text-align: center; box-shadow: 0 0 15px rgba(0,255,65,0.2); }
-        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 12px; margin: 6px; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: inherit; width: 100%; text-transform: uppercase; }
-        .btn:active { background: var(--neon); color: #000; }
+        .card { background: rgba(0, 255, 65, 0.05); border: 2px solid var(--neon); padding: 25px; border-radius: 12px; width: 340px; text-align: center; box-shadow: 0 0 20px rgba(0,255,65,0.15); z-index: 1000;}
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 14px; margin: 8px 0; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: inherit; width: 100%; text-transform: uppercase; transition: 0.2s; }
+        .btn:active, .btn.active { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
 
-        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; }
+        /* Mobile Controls */
+        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 200; }
         .zone { position: absolute; bottom: 25px; width: 220px; height: 220px; pointer-events: auto; }
         .right { right: 20px; } .left { left: 20px; }
-        #j-base { width: 110px; height: 110px; border: 3px solid var(--neon); border-radius: 50%; margin: 55px auto; position: relative; background: rgba(0,255,65,0.1); }
-        #j-knob { width: 45px; height: 45px; background: var(--neon); border-radius: 50%; position: absolute; top: 32.5px; left: 32.5px; box-shadow: 0 0 15px var(--neon); }
-        .act-btn { width: 90px; height: 90px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 15px; pointer-events: auto; background: rgba(0,204,255,0.1); }
+        
+        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 50px auto; position: relative; background: rgba(0,255,65,0.05); }
+        #j-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 32px; left: 32px; box-shadow: 0 0 15px var(--neon); }
+        
+        .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 15px; pointer-events: auto; background: rgba(0,204,255,0.1); text-shadow: 0 0 5px var(--warp); box-shadow: 0 0 15px rgba(0,204,255,0.2); }
+        .act-btn.fire { border-color: var(--danger); color: var(--danger); background: rgba(255,0,85,0.1); text-shadow: 0 0 5px var(--danger); box-shadow: 0 0 15px rgba(255,0,85,0.2); }
+        .act-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="ui-layer" class="layer">
-        <h1 style="font-size: 3rem; letter-spacing: 8px; margin-bottom: 5px; text-shadow: 0 0 10px var(--neon);">SPACE MAZE</h1>
-        <p style="color: var(--warp); margin-bottom: 20px;">v4.0 ETERNAL MASTERPIECE</p>
+        <h1 style="font-size: 3rem; letter-spacing: 8px; margin-bottom: 0; text-shadow: 0 0 15px var(--neon);">SPACE MAZE</h1>
+        <p style="color: var(--warp); margin-bottom: 30px; letter-spacing: 2px;">THE MASTERPIECE</p>
+        
         <div class="card">
             <button class="btn" onclick="Core.boot(false)">START MISSION</button>
-            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">CONTINUE</button>
+            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME SECTOR</button>
         </div>
-        <div class="card" style="margin-top:10px;">
-            <button class="btn active" id="p-pc" onclick="UI.setDev('pc')">PC: WASD + SPACE</button>
-            <button class="btn" id="p-mo" onclick="UI.setDev('mobile')">MOBILE: JOYSTICK</button>
+        
+        <div class="card" style="margin-top:20px;">
+            <p style="margin-top:0; font-size:0.9rem;">SELECT INTERFACE</p>
+            <button class="btn active" id="p-pc" onclick="UI.setDev('pc')">PC (WASD + SPACE/SHIFT)</button>
+            <button class="btn" id="p-mo" onclick="UI.setDev('mobile')">MOBILE (JOYSTICK)</button>
         </div>
     </div>
 
-    <div id="admin-layer" class="layer" style="display:none; z-index:2000; background: rgba(0,0,0,0.9);">
-        <div class="card" style="border-color: var(--danger);">
-            <h2 style="color:var(--danger)">SYS_OVERRIDE</h2>
-            <button class="btn" onclick="Core.adminJump(202)">WARP TO BOSS (202)</button>
-            <button class="btn" onclick="Core.adminJump(21)">WARP TO MANSION (21)</button>
-            <button class="btn" onclick="Core.player.ox=999; UI.toggleAdmin(false)">INFINITE OX</button>
-            <button class="btn" style="border-color:var(--danger);" onclick="UI.toggleAdmin(false)">EXIT PANEL</button>
+    <div id="admin-layer" class="layer" style="display:none; z-index:2000; background: rgba(0,0,0,0.85);">
+        <div class="card" style="border-color: var(--danger); box-shadow: 0 0 30px rgba(255,0,85,0.4);">
+            <h2 style="color:var(--danger); text-shadow: 0 0 10px var(--danger);">SYS_OVERRIDE</h2>
+            <button class="btn" style="border-color:var(--warp); color:var(--warp);" onclick="Core.adminJump(202)">WARP TO BOSS (202)</button>
+            <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="Core.adminJump(21)">WARP TO MANSION (21)</button>
+            <button class="btn" onclick="Core.player.ox=9999; UI.toggleAdmin(false)">INFINITE OXYGEN</button>
+            <button class="btn" style="border-color:var(--danger); color:var(--danger); margin-top:20px;" onclick="UI.toggleAdmin(false)">CLOSE PANEL</button>
         </div>
     </div>
 
@@ -67,222 +76,425 @@
                 <div id="ox-bar-container"><div id="ox-bar"></div></div>
             </div>
         </div>
+        
         <canvas id="stage"></canvas>
         <div class="boss-ui" id="boss-hud"><div id="boss-bar"></div></div>
         
         <div id="mobile-controls">
-            <div id="move-zone" class="zone right"><div id="j-base"><div id="j-knob"></div></div></div>
+            <div id="move-zone" class="zone right">
+                <div id="j-base"><div id="j-knob"></div></div>
+            </div>
             <div id="act-zone" class="zone left">
-                <div class="act-btn" onpointerdown="Core.player.warp(); Core.recordKey('W')">WARP</div>
-                <div class="act-btn" style="border-color:var(--danger); color:var(--danger)" onpointerdown="Core.player.shoot(); Core.recordKey('S')">FIRE</div>
+                <div class="act-btn" onpointerdown="Core.player.warp()">WARP</div>
+                <div class="act-btn fire" onpointerdown="Core.player.shoot()">FIRE</div>
             </div>
         </div>
     </div>
 
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
+        
         const Core = {
-            sector: 1, active: false, entities: [], keys: {}, seq: "", shake: 0,
+            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", shake: 0,
+            
             boot(resume) {
                 this.ctx = document.getElementById('stage').getContext('2d');
-                document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
-                document.getElementById('ui-layer').style.display = 'none'; document.getElementById('game-layer').style.display = 'flex';
+                document.getElementById('stage').width = MAP.W; 
+                document.getElementById('stage').height = MAP.H;
+                document.getElementById('ui-layer').style.display = 'none'; 
+                document.getElementById('game-layer').style.display = 'flex';
                 this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
                 this.run();
             },
+            
             init(n) {
                 if (n > 202) return;
                 this.sector = n; this.active = true; this.entities = []; this.state = "PLAY";
                 localStorage.setItem('sm_save', n);
+                
                 this.maze = this.createMaze();
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
+                
                 document.getElementById('v-sec').innerText = n;
                 document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
                 
-                if(n===21) this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
-                if(n===202) this.entities.push(new Boss(400, 300));
-                else {
-                    for(let i=0; i<Math.min(3+n/10, 15); i++) this.entities.push(new Enemy());
-                    if(Math.random() < 0.4) this.entities.push(new PowerUp());
+                // Spawn Logic
+                if(n===21) {
+                    this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
+                } else if(n===202) {
+                    this.entities.push(new Boss(400, 300));
+                } else {
+                    let enemyCount = Math.min(3 + Math.floor(n/8), 16);
+                    for(let i=0; i<enemyCount; i++) this.entities.push(new Enemy());
+                    // 45% chance for a Power-Up to spawn
+                    if(Math.random() < 0.45) this.entities.push(new PowerUp());
                 }
             },
+            
             createMaze() {
                 let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
                 let s = [[0,0]]; m[0][0] = 0;
                 while(s.length) {
                     let [r,c] = s[s.length-1];
                     let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<MAP.R&&nc>=0&&nc<MAP.C&&m[nr][nc]===1);
-                    if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
+                    if(ns.length) { 
+                        let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; 
+                        m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; 
+                        s.push([nr,nc]); 
+                    } else s.pop();
                 }
                 return m;
             },
+            
             run() { 
                 if(this.active) { this.update(); this.draw(); } 
                 requestAnimationFrame(() => this.run()); 
             },
+            
             update() {
                 if(this.state === "WIN") return;
                 if(this.shake > 0) this.shake--;
+                
                 this.player.tick();
                 this.entities.forEach((e,i) => { e.tick(); if(e.dead) this.entities.splice(i,1); });
+                
+                // Sector Exit Logic (Bottom Right)
                 if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
-                    if(this.sector===21 && this.player.invites < 3) return;
-                    if(this.sector===202) { if(this.entities.length===0) this.state="WIN"; return; }
+                    if(this.sector===21 && this.player.invites < 3) return; // Need invites for mansion
+                    if(this.sector===202) { 
+                        if(this.entities.length===0) this.state="WIN"; 
+                        return; 
+                    }
                     this.init(this.sector + 1);
                 }
             },
+            
             draw() {
                 this.ctx.save();
-                if(this.shake > 0) this.ctx.translate(Math.random()*5-2.5, Math.random()*5-2.5);
+                // Screen Shake Application
+                if(this.shake > 0) this.ctx.translate((Math.random()-0.5)*10, (Math.random()-0.5)*10);
+                
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
                 
                 if(this.state === "WIN") {
-                    this.ctx.fillStyle = "gold"; this.ctx.textAlign = "center";
-                    this.ctx.font = "bold 50px Courier New"; this.ctx.fillText("MISSION COMPLETE", 400, 300);
-                    this.ctx.font = "20px Courier New"; this.ctx.fillText("YOU SURVIVED THE 202 SECTORS", 400, 350);
+                    this.ctx.fillStyle = "var(--gold)"; this.ctx.textAlign = "center";
+                    this.ctx.font = "bold 45px Courier New"; this.ctx.fillText("MISSION COMPLETE", 400, 280);
+                    this.ctx.font = "20px Courier New"; this.ctx.fillText("YOU DEFEATED DIDDY AND ESCAPED THE 202 SECTORS.", 400, 330);
                     this.ctx.restore(); return;
                 }
 
                 // Draw Walls
-                this.ctx.fillStyle = (this.sector===21) ? "#1a001a" : "#00ff41";
-                for(let r=0;r<MAP.R;r++) for(let c=0;c<MAP.C;c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW-1, MAP.TH-1);
+                this.ctx.fillStyle = (this.sector===21) ? "#1a001a" : "var(--neon)";
+                for(let r=0;r<MAP.R;r++) {
+                    for(let c=0;c<MAP.C;c++) {
+                        if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW-1, MAP.TH-1);
+                    }
+                }
                 
-                // Draw Exit
-                this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "#0cf";
+                // Draw Exit Portal
+                this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "var(--warp)";
                 this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                this.ctx.strokeStyle = "#fff"; this.ctx.strokeRect(MAP.W-MAP.TW+5, MAP.H-MAP.TH+5, MAP.TW-10, MAP.TH-10);
-
+                
+                // Draw all entities and player
                 this.entities.forEach(e => e.draw(this.ctx));
                 this.player.draw(this.ctx);
+                
                 this.ctx.restore();
             },
-            recordKey(k) { this.seq += k; if(this.seq.length > 4) this.seq = this.seq.slice(1); if(this.seq === "SWWS") UI.toggleAdmin(true); },
-            adminJump(v) { this.init(v); UI.toggleAdmin(false); }
+
+            // NEW CHEAT LOGIC: Strictly tied to action execution, not key presses
+            registerAction(act) {
+                this.cheatSeq += act;
+                if(this.cheatSeq.length > 4) this.cheatSeq = this.cheatSeq.slice(-4);
+                if(this.cheatSeq === "SWWS") {
+                    UI.toggleAdmin(true);
+                    this.cheatSeq = ""; // Clear to prevent spam
+                }
+            },
+            
+            adminJump(v) { 
+                this.init(v); 
+                UI.toggleAdmin(false); 
+            }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.trail=[]; this.speed=5.5; this.triple=0; }
+            constructor(x,y) { 
+                this.x=x; this.y=y; 
+                this.ox=100; this.invites=0; 
+                this.trail=[]; 
+                this.speed=5.5; 
+                this.triple=0; 
+            }
+            
             tick() {
                 let mx=0, my=0;
+                
+                // Keyboard Input
                 if(Core.keys.ArrowUp || Core.keys.KeyW) my=-1;
                 if(Core.keys.ArrowDown || Core.keys.KeyS) my=1;
                 if(Core.keys.ArrowLeft || Core.keys.KeyA) mx=-1;
                 if(Core.keys.ArrowRight || Core.keys.KeyD) mx=1;
+                
+                // Joystick Override
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
+                
+                // Apply Movement
                 if(mx||my) {
                     let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                     if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
                 }
-                this.ox-=0.025; if(this.ox<=0) Core.init(Core.sector);
-                if(this.triple > 0) this.triple--;
-
-                document.getElementById('v-ox').innerText = Math.floor(this.ox);
-                document.getElementById('ox-bar').style.width = this.ox+"%";
-                document.getElementById('ox-bar').style.background = this.ox < 25 ? "var(--danger)" : "var(--neon)";
                 
-                this.trail.push({x:this.x, y:this.y}); if(this.trail.length > 12) this.trail.shift();
+                // Oxygen Mechanics
+                this.ox -= 0.025; 
+                if(this.ox<=0) Core.init(Core.sector); // Restart level on suffocation
+                
+                // Update HUD
+                document.getElementById('v-ox').innerText = Math.floor(this.ox);
+                let oxBar = document.getElementById('ox-bar');
+                oxBar.style.width = Math.min(100, this.ox) + "%";
+                oxBar.style.background = this.ox < 25 ? "var(--danger)" : "var(--neon)";
+                
+                // Powerup Timers
+                if(this.triple > 0) this.triple--;
+                
+                // Visual Trail
+                this.trail.push({x:this.x, y:this.y}); 
+                if(this.trail.length > 10) this.trail.shift();
             }
-            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
+            
+            isW(x,y) { 
+                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
+                return r<0 || r>=MAP.R || c<0 || c>=MAP.C || Core.maze[r][c]===1; 
+            }
+            
             draw(ctx) {
-                this.trail.forEach((t, i) => { ctx.fillStyle = `rgba(0,255,65,${i/25})`; ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI*2); ctx.fill(); });
-                ctx.fillStyle="#fff"; ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,11,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+                // Draw Trail
+                this.trail.forEach((t, i) => { 
+                    ctx.fillStyle = `rgba(0,255,65,${i/20})`; 
+                    ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI*2); ctx.fill(); 
+                });
+                // Draw Player Body
+                ctx.fillStyle="#fff"; 
+                ctx.shadowBlur=15; ctx.shadowColor="var(--neon)"; 
+                ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); 
+                ctx.shadowBlur=0;
             }
+            
             shoot() { 
-                if(this.ox>4) { 
-                    Core.entities.push(new Bullet(this.x,this.y, 0));
-                    if(this.triple > 0) { Core.entities.push(new Bullet(this.x,this.y, 0.4), new Bullet(this.x,this.y, -0.4)); }
-                    this.ox-=4; Core.shake = 5;
+                if(this.ox > 4) { 
+                    Core.entities.push(new Bullet(this.x, this.y, 0));
+                    if(this.triple > 0) { 
+                        Core.entities.push(new Bullet(this.x, this.y, 0.35));
+                        Core.entities.push(new Bullet(this.x, this.y, -0.35));
+                    }
+                    this.ox -= 4; 
+                    Core.shake = 4;
+                    Core.registerAction('S'); // Register shoot for cheat code
                 } 
             }
+            
             warp() { 
-                if(this.ox>15) { 
-                    let dx=joyOn?joyV.x:(Core.keys.ArrowRight?1:Core.keys.ArrowLeft?-1:0), dy=joyOn?joyV.y:(Core.keys.ArrowDown?1:Core.keys.ArrowUp?-1:0); 
-                    if(dx===0&&dy===0)dx=1; let nx=this.x+dx*150, ny=this.y+dy*150; 
-                    if(!this.isW(nx,ny)){this.x=nx;this.y=ny;this.ox-=15; Core.shake=10;} 
+                if(this.ox > 15) { 
+                    // Calculate facing direction based on current input
+                    let dx = joyOn ? joyV.x : (Core.keys.ArrowRight||Core.keys.KeyD ? 1 : Core.keys.ArrowLeft||Core.keys.KeyA ? -1 : 0);
+                    let dy = joyOn ? joyV.y : (Core.keys.ArrowDown||Core.keys.KeyS ? 1 : Core.keys.ArrowUp||Core.keys.KeyW ? -1 : 0);
+                    
+                    if(dx===0 && dy===0) dx=1; // Default warp right if standing still
+                    
+                    // Normalize and apply warp distance
+                    let mag = Math.hypot(dx,dy);
+                    let nx = this.x + (dx/mag)*140;
+                    let ny = this.y + (dy/mag)*140;
+                    
+                    if(!this.isW(nx,ny)) { 
+                        this.x = nx; this.y = ny; 
+                        this.ox -= 15; 
+                        Core.shake = 8; 
+                        Core.registerAction('W'); // Register warp for cheat code
+                    } 
                 } 
             }
         }
 
         class PowerUp {
             constructor() { 
-                let rx,ry; do{rx=Math.random()*700+50;ry=Math.random()*500+50;}while(Core.player.isW(rx,ry)); 
+                let rx,ry; 
+                // Ensure it doesn't spawn in a wall
+                do { rx=Math.random()*700+50; ry=Math.random()*500+50; } while(Core.player.isW(rx,ry)); 
                 this.x=rx; this.y=ry; 
+                
                 let r = Math.random();
                 this.type = r < 0.4 ? 'SPEED' : r < 0.8 ? 'OX' : 'TRIPLE';
             }
             tick() { 
-                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<25){ 
-                    if(this.type==='SPEED')Core.player.speed=9; 
-                    else if(this.type==='OX')Core.player.ox=Math.min(100,Core.player.ox+45);
-                    else Core.player.triple = 600; // 10 seconds of triple shot
-                    this.dead=true; 
+                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < 25) { 
+                    if(this.type === 'SPEED') Core.player.speed = 8.5; 
+                    else if(this.type === 'OX') Core.player.ox = Math.min(100, Core.player.ox + 45);
+                    else Core.player.triple = 600; // 10 seconds (at 60fps)
+                    this.dead = true; 
                 } 
             }
             draw(ctx) { 
-                ctx.fillStyle=this.type==='SPEED'?'#f0f':this.type==='OX'?'#0cf':'#ffd700'; 
-                ctx.shadowBlur=10; ctx.shadowColor=ctx.fillStyle;
-                ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(Date.now()*0.005);
-                ctx.fillRect(-10,-10,20,20); ctx.restore(); ctx.shadowBlur=0;
+                ctx.fillStyle = this.type==='SPEED' ? '#f0f' : this.type==='OX' ? 'var(--warp)' : 'var(--gold)'; 
+                ctx.shadowBlur=15; ctx.shadowColor=ctx.fillStyle;
+                
+                ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(Date.now()*0.003);
+                ctx.fillRect(-10,-10,20,20); 
+                ctx.restore(); ctx.shadowBlur=0;
             }
         }
 
         class Bullet {
-            constructor(x,y, offset) {
+            constructor(x,y, angleOffset) {
                 this.x=x; this.y=y; this.trail=[];
-                let target=null, minDist=Infinity;
-                Core.entities.forEach(en=>{ if(!en.dead && (en instanceof Enemy || en instanceof Boss)){ let d=Math.hypot(en.x-x,en.y-y); if(d<minDist){minDist=d; target=en;} } });
-                let ang = target ? Math.atan2(target.y-y, target.x-x) + offset : offset;
-                this.vx=Math.cos(ang)*15; this.vy=Math.sin(ang)*15;
+                
+                // Smart Targeting Logic
+                let target = null, minDist = Infinity;
+                Core.entities.forEach(en => { 
+                    if(!en.dead && (en instanceof Enemy || en instanceof Boss)) { 
+                        let d = Math.hypot(en.x-x, en.y-y); 
+                        if(d < minDist) { minDist=d; target=en; } 
+                    } 
+                });
+                
+                // Calculate trajectory
+                let baseAngle = target ? Math.atan2(target.y-y, target.x-x) : 0;
+                let finalAngle = baseAngle + angleOffset;
+                this.vx = Math.cos(finalAngle)*15; 
+                this.vy = Math.sin(finalAngle)*15;
             }
+            
             tick() {
-                this.trail.push({x:this.x, y:this.y}); if(this.trail.length > 6) this.trail.shift();
-                this.x+=this.vx; this.y+=this.vy;
+                this.trail.push({x:this.x, y:this.y}); 
+                if(this.trail.length > 5) this.trail.shift();
+                
+                this.x += this.vx; this.y += this.vy;
+                
                 if(Core.player.isW(this.x,this.y)) this.dead=true;
-                Core.entities.forEach(en=>{ if(!en.dead && (en instanceof Enemy || en instanceof Boss)){ if(Math.hypot(this.x-en.x,this.y-en.y)<(en.isBoss?45:25)){ if(en.isBoss)en.hp--; else en.dead=true; this.dead=true; Core.shake=3; } } });
-                if(this.x<0||this.x>800||this.y<0||this.y>600) this.dead=true;
+                
+                Core.entities.forEach(en => { 
+                    if(!en.dead && (en instanceof Enemy || en instanceof Boss)) { 
+                        let hitRadius = en.isBoss ? 45 : 20;
+                        if(Math.hypot(this.x-en.x, this.y-en.y) < hitRadius) { 
+                            if(en.isBoss) en.hp--; 
+                            else en.dead=true; 
+                            this.dead=true; 
+                            Core.shake=3; 
+                        } 
+                    } 
+                });
+                
+                if(this.x<0 || this.x>MAP.W || this.y<0 || this.y>MAP.H) this.dead=true;
             }
+            
             draw(ctx) {
-                ctx.strokeStyle="yellow"; ctx.lineWidth=4; ctx.beginPath(); 
-                this.trail.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);}); ctx.stroke();
+                ctx.strokeStyle="var(--gold)"; ctx.lineWidth=3; ctx.lineCap="round";
+                ctx.beginPath(); 
+                this.trail.forEach((p,i) => { if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); 
+                ctx.stroke();
+                
                 ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill();
             }
         }
 
         class Boss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=20; this.vx=5; this.vy=5; this.isBoss=true; this.rad=45; }
+            constructor(x,y) { this.x=x; this.y=y; this.hp=25; this.vx=5; this.vy=5; this.isBoss=true; this.rad=45; }
             tick() {
                 let nx=this.x+this.vx, ny=this.y+this.vy;
+                
                 if(this.hitW(nx, this.y)) this.vx*=-1; else this.x=nx;
                 if(this.hitW(this.x, ny)) this.vy*=-1; else this.y=ny;
-                document.getElementById('boss-bar').style.width=(this.hp/20*100)+"%";
-                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<this.rad) Core.init(Core.sector);
+                
+                document.getElementById('boss-bar').style.width = (this.hp/25*100) + "%";
+                
+                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < this.rad) Core.init(Core.sector);
             }
-            hitW(nx,ny) { return [{x:nx-this.rad,y:ny},{x:nx+this.rad,y:ny},{x:nx,y:ny-this.rad},{x:nx,y:ny+this.rad}].some(p=>Core.player.isW(p.x,p.y)); }
-            draw(ctx) { ctx.fillStyle="#a020f0"; ctx.shadowBlur=20; ctx.shadowColor="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,this.rad,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=4; ctx.stroke(); ctx.shadowBlur=0; }
+            hitW(nx,ny) { 
+                return [{x:nx-this.rad,y:ny},{x:nx+this.rad,y:ny},{x:nx,y:ny-this.rad},{x:nx,y:ny+this.rad}].some(p=>Core.player.isW(p.x,p.y)); 
+            }
+            draw(ctx) { 
+                ctx.fillStyle="#8a2be2"; ctx.shadowBlur=25; ctx.shadowColor="#8a2be2"; 
+                ctx.beginPath(); ctx.arc(this.x,this.y,this.rad,0,Math.PI*2); ctx.fill(); 
+                ctx.strokeStyle="#fff"; ctx.lineWidth=4; ctx.stroke(); 
+                ctx.shadowBlur=0; 
+            }
         }
 
         class Enemy {
-            constructor() { let rx,ry; do{rx=Math.random()*700+50;ry=Math.random()*500+50;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1;this.vy*=-1;} if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<20) Core.init(Core.sector); }
-            draw(ctx) { ctx.fillStyle="#f05"; ctx.beginPath(); ctx.arc(this.x,this.y,13,0,Math.PI*2); ctx.fill(); }
+            constructor() { 
+                let rx,ry; 
+                do { rx=Math.random()*700+50; ry=Math.random()*500+50; } while(Core.player.isW(rx,ry)); 
+                this.x=rx; this.y=ry; 
+                this.vx=(Math.random()-0.5)*7; this.vy=(Math.random()-0.5)*7; 
+            }
+            tick() { 
+                this.x += this.vx; this.y += this.vy; 
+                if(Core.player.isW(this.x,this.y)) { this.vx*=-1; this.vy*=-1; } 
+                if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < 22) Core.init(Core.sector); 
+            }
+            draw(ctx) { 
+                ctx.fillStyle="var(--danger)"; 
+                ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); 
+            }
         }
 
-        class Invite { constructor(x,y) { this.x=x; this.y=y; } tick() { if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y)<30){Core.player.invites++; this.dead=true;} } draw(ctx) { ctx.fillStyle="#ffd700"; ctx.shadowBlur=15; ctx.shadowColor="#ffd700"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; } }
+        class Invite { 
+            constructor(x,y) { this.x=x; this.y=y; } 
+            tick() { if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < 30) { Core.player.invites++; this.dead=true; } } 
+            draw(ctx) { 
+                ctx.fillStyle="var(--gold)"; ctx.shadowBlur=15; ctx.shadowColor="var(--gold)"; 
+                ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill(); 
+                ctx.shadowBlur=0; 
+            } 
+        }
 
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==="Space") {Core.player.shoot(); Core.recordKey('S');} if(e.code==="KeyW") Core.recordKey('W'); };
-        window.onkeyup=e=>Core.keys[e.code]=false;
+        // KEYBOARD LISTENERS
+        window.addEventListener('keydown', e => { 
+            Core.keys[e.code] = true; 
+            // Execute actions but DO NOT touch the cheat string here. Let the Player methods handle it.
+            if(e.code === "Space" && Core.active && Core.state === "PLAY") Core.player.shoot();
+            if(e.code === "ShiftLeft" && Core.active && Core.state === "PLAY") Core.player.warp();
+        });
+        window.addEventListener('keyup', e => Core.keys[e.code] = false);
 
+        // UI MANAGER
         const UI = {
-            setDev(d) { document.getElementById('p-pc').className=d==='pc'?'btn active':'btn'; document.getElementById('p-mo').className=d==='mobile'?'btn active':'btn'; document.getElementById('mobile-controls').style.display=d==='mobile'?'block':'none'; },
-            toggleAdmin(s) { Core.active=!s; document.getElementById('admin-layer').style.display=s?'flex':'none'; }
+            setDev(d) { 
+                document.getElementById('p-pc').className = d==='pc' ? 'btn active' : 'btn'; 
+                document.getElementById('p-mo').className = d==='mobile' ? 'btn active' : 'btn'; 
+                document.getElementById('mobile-controls').style.display = d==='mobile' ? 'block' : 'none'; 
+            },
+            toggleAdmin(show) { 
+                Core.active = !show; // Pause game while in admin menu
+                document.getElementById('admin-layer').style.display = show ? 'flex' : 'none'; 
+            }
         };
 
+        // VIRTUAL JOYSTICK LOGIC
         let joyOn=false, joyV={x:0,y:0};
-        const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.addEventListener('pointerdown', (e)=> { joyOn=true; e.preventDefault(); });
-        window.addEventListener('pointermove', (e)=>{ if(!joyOn) return; let r=jB.getBoundingClientRect(); let dx=e.clientX-(r.left+55), dy=e.clientY-(r.top+55); let d=Math.min(Math.hypot(dx,dy), 50); let a=Math.atan2(dy,dx); joyV={x:Math.cos(a)*(d/50),y:Math.sin(a)*(d/50)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; });
-        window.addEventListener('pointerup', ()=>{ joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)'; });
+        const jB = document.getElementById('j-base'), jK = document.getElementById('j-knob');
+        
+        jB.addEventListener('pointerdown', (e) => { joyOn = true; e.preventDefault(); });
+        window.addEventListener('pointermove', (e) => { 
+            if(!joyOn) return; 
+            let r = jB.getBoundingClientRect(); 
+            let dx = e.clientX - (r.left + 60); // 60 is half width
+            let dy = e.clientY - (r.top + 60); 
+            let d = Math.min(Math.hypot(dx,dy), 50); 
+            let a = Math.atan2(dy,dx); 
+            joyV = { x: Math.cos(a)*(d/50), y: Math.sin(a)*(d/50) }; 
+            jK.style.transform = `translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; 
+        });
+        window.addEventListener('pointerup', resetJoy);
+        window.addEventListener('pointercancel', resetJoy);
+        
+        function resetJoy() { 
+            joyOn=false; joyV={x:0,y:0}; 
+            jK.style.transform='translate(0,0)'; 
+        }
 
+        // Show Resume button if saved data exists
         if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
     </script>
 </body>
