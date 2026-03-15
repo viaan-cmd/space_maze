@@ -9,22 +9,22 @@
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
         
-        /* Retro Scanlines */
-        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none; }
+        /* Retro Scanlines (Lightened so it doesn't darken the game too much) */
+        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none; }
 
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: opacity 0.3s; }
-        #game-layer { display: none; background: radial-gradient(circle, #111, #000); }
+        #game-layer { display: none; background: var(--bg); }
         
         /* HUD & UI */
-        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; font-weight: bold; }
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; font-weight: bold; text-shadow: 0 0 5px var(--neon); }
         #ox-bar-container { width: 150px; height: 12px; border: 2px solid var(--neon); margin-top: 5px; background: rgba(0,255,65,0.1); }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.1s, background-color 0.3s; }
+        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.1s, background-color 0.3s; box-shadow: 0 0 10px var(--neon); }
 
         .boss-ui { position: absolute; bottom: 130px; width: 340px; height: 22px; border: 2px solid var(--gold); background: #000; display: none; z-index: 100; box-shadow: 0 0 20px var(--danger); }
         #boss-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: width 0.1s; }
 
         .card { background: rgba(0, 255, 65, 0.05); border: 2px solid var(--neon); padding: 25px; border-radius: 12px; width: 340px; text-align: center; box-shadow: 0 0 20px rgba(0,255,65,0.15); z-index: 1000;}
-        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 14px; margin: 8px 0; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: inherit; width: 100%; text-transform: uppercase; transition: 0.2s; }
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 14px; margin: 8px 0; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: inherit; width: 100%; text-transform: uppercase; transition: 0.2s; box-shadow: inset 0 0 5px rgba(0,255,65,0.2); }
         .btn:active, .btn.active { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
 
         /* Mobile Controls */
@@ -32,7 +32,7 @@
         .zone { position: absolute; bottom: 25px; width: 220px; height: 220px; pointer-events: auto; }
         .right { right: 20px; } .left { left: 20px; }
         
-        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 50px auto; position: relative; background: rgba(0,255,65,0.05); }
+        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 50px auto; position: relative; background: rgba(0,255,65,0.05); box-shadow: 0 0 10px var(--neon); }
         #j-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 32px; left: 32px; box-shadow: 0 0 15px var(--neon); }
         
         .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 4px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 15px; pointer-events: auto; background: rgba(0,204,255,0.1); text-shadow: 0 0 5px var(--warp); box-shadow: 0 0 15px rgba(0,204,255,0.2); }
@@ -43,8 +43,8 @@
 <body oncontextmenu="return false;">
 
     <div id="ui-layer" class="layer">
-        <h1 style="font-size: 3rem; letter-spacing: 8px; margin-bottom: 0; text-shadow: 0 0 15px var(--neon);">SPACE MAZE</h1>
-        <p style="color: var(--warp); margin-bottom: 30px; letter-spacing: 2px;">THE MASTERPIECE</p>
+        <h1 style="font-size: 3.5rem; letter-spacing: 8px; margin-bottom: 0; text-shadow: 0 0 20px var(--neon);">SPACE MAZE</h1>
+        <p style="color: var(--warp); margin-bottom: 30px; letter-spacing: 2px;">NEON EDITION</p>
         
         <div class="card">
             <button class="btn" onclick="Core.boot(false)">START MISSION</button>
@@ -96,6 +96,7 @@
         
         const Core = {
             sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", shake: 0,
+            stats: { kills: 0, shots: 0, items: 0 },
             
             boot(resume) {
                 this.ctx = document.getElementById('stage').getContext('2d');
@@ -118,7 +119,7 @@
                 document.getElementById('v-sec').innerText = n;
                 document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
                 
-                // Spawn Logic
+                // Spawn Logic: Boss at 202, Mansion invites at 21, regular enemies elsewhere
                 if(n===21) {
                     this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
                 } else if(n===202) {
@@ -126,7 +127,7 @@
                 } else {
                     let enemyCount = Math.min(3 + Math.floor(n/8), 16);
                     for(let i=0; i<enemyCount; i++) this.entities.push(new Enemy());
-                    // 45% chance for a Power-Up to spawn
+                    // 45% chance for a Power-Up
                     if(Math.random() < 0.45) this.entities.push(new PowerUp());
                 }
             },
@@ -156,7 +157,17 @@
                 if(this.shake > 0) this.shake--;
                 
                 this.player.tick();
-                this.entities.forEach((e,i) => { e.tick(); if(e.dead) this.entities.splice(i,1); });
+                
+                // Update entities and remove dead ones
+                for(let i = this.entities.length - 1; i >= 0; i--) {
+                    let e = this.entities[i];
+                    e.tick();
+                    if(e.dead) {
+                        if(e instanceof Enemy || e instanceof Boss) this.stats.kills++;
+                        if(e instanceof PowerUp || e instanceof Invite) this.stats.items++;
+                        this.entities.splice(i, 1);
+                    }
+                }
                 
                 // Sector Exit Logic (Bottom Right)
                 if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
@@ -178,18 +189,28 @@
                 
                 if(this.state === "WIN") {
                     this.ctx.fillStyle = "var(--gold)"; this.ctx.textAlign = "center";
-                    this.ctx.font = "bold 45px Courier New"; this.ctx.fillText("MISSION COMPLETE", 400, 280);
-                    this.ctx.font = "20px Courier New"; this.ctx.fillText("YOU DEFEATED DIDDY AND ESCAPED THE 202 SECTORS.", 400, 330);
+                    this.ctx.font = "bold 45px Courier New"; this.ctx.fillText("MISSION COMPLETE", 400, 220);
+                    this.ctx.font = "20px Courier New"; this.ctx.fillText("YOU DEFEATED DIDDY AND ESCAPED THE 202 SECTORS.", 400, 270);
+                    
+                    // Stats Breakdown
+                    this.ctx.fillStyle = "var(--warp)";
+                    this.ctx.fillText(`ENEMIES DESTROYED: ${this.stats.kills}`, 400, 330);
+                    this.ctx.fillText(`SHOTS FIRED: ${this.stats.shots}`, 400, 360);
+                    this.ctx.fillText(`ITEMS COLLECTED: ${this.stats.items}`, 400, 390);
                     this.ctx.restore(); return;
                 }
 
-                // Draw Walls
-                this.ctx.fillStyle = (this.sector===21) ? "#1a001a" : "var(--neon)";
+                // Draw Neon Walls
+                this.ctx.fillStyle = (this.sector===21) ? "#2a002a" : "var(--neon)";
+                this.ctx.shadowBlur = 8; // Restored the glow
+                this.ctx.shadowColor = this.ctx.fillStyle;
+                
                 for(let r=0;r<MAP.R;r++) {
                     for(let c=0;c<MAP.C;c++) {
                         if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW-1, MAP.TH-1);
                     }
                 }
+                this.ctx.shadowBlur = 0; // Reset blur for other objects
                 
                 // Draw Exit Portal
                 this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "var(--warp)";
@@ -202,13 +223,13 @@
                 this.ctx.restore();
             },
 
-            // NEW CHEAT LOGIC: Strictly tied to action execution, not key presses
+            // Flawless action-based cheat tracker
             registerAction(act) {
                 this.cheatSeq += act;
                 if(this.cheatSeq.length > 4) this.cheatSeq = this.cheatSeq.slice(-4);
                 if(this.cheatSeq === "SWWS") {
                     UI.toggleAdmin(true);
-                    this.cheatSeq = ""; // Clear to prevent spam
+                    this.cheatSeq = ""; 
                 }
             },
             
@@ -247,13 +268,14 @@
                 
                 // Oxygen Mechanics
                 this.ox -= 0.025; 
-                if(this.ox<=0) Core.init(Core.sector); // Restart level on suffocation
+                if(this.ox<=0) Core.init(Core.sector); 
                 
                 // Update HUD
                 document.getElementById('v-ox').innerText = Math.floor(this.ox);
                 let oxBar = document.getElementById('ox-bar');
                 oxBar.style.width = Math.min(100, this.ox) + "%";
                 oxBar.style.background = this.ox < 25 ? "var(--danger)" : "var(--neon)";
+                oxBar.style.boxShadow = this.ox < 25 ? "0 0 10px var(--danger)" : "0 0 10px var(--neon)";
                 
                 // Powerup Timers
                 if(this.triple > 0) this.triple--;
@@ -284,13 +306,15 @@
             shoot() { 
                 if(this.ox > 4) { 
                     Core.entities.push(new Bullet(this.x, this.y, 0));
+                    Core.stats.shots++;
                     if(this.triple > 0) { 
                         Core.entities.push(new Bullet(this.x, this.y, 0.35));
                         Core.entities.push(new Bullet(this.x, this.y, -0.35));
+                        Core.stats.shots += 2;
                     }
                     this.ox -= 4; 
                     Core.shake = 4;
-                    Core.registerAction('S'); // Register shoot for cheat code
+                    Core.registerAction('S'); // Register for SWWS cheat
                 } 
             }
             
@@ -311,7 +335,7 @@
                         this.x = nx; this.y = ny; 
                         this.ox -= 15; 
                         Core.shake = 8; 
-                        Core.registerAction('W'); // Register warp for cheat code
+                        Core.registerAction('W'); // Register for SWWS cheat
                     } 
                 } 
             }
@@ -331,7 +355,7 @@
                 if(Math.hypot(Core.player.x-this.x, Core.player.y-this.y) < 25) { 
                     if(this.type === 'SPEED') Core.player.speed = 8.5; 
                     else if(this.type === 'OX') Core.player.ox = Math.min(100, Core.player.ox + 45);
-                    else Core.player.triple = 600; // 10 seconds (at 60fps)
+                    else Core.player.triple = 600; // 10 seconds of Triple Shot
                     this.dead = true; 
                 } 
             }
@@ -349,7 +373,7 @@
             constructor(x,y, angleOffset) {
                 this.x=x; this.y=y; this.trail=[];
                 
-                // Smart Targeting Logic
+                // Smart Targeting Auto-Aim
                 let target = null, minDist = Infinity;
                 Core.entities.forEach(en => { 
                     if(!en.dead && (en instanceof Enemy || en instanceof Boss)) { 
@@ -452,7 +476,6 @@
         // KEYBOARD LISTENERS
         window.addEventListener('keydown', e => { 
             Core.keys[e.code] = true; 
-            // Execute actions but DO NOT touch the cheat string here. Let the Player methods handle it.
             if(e.code === "Space" && Core.active && Core.state === "PLAY") Core.player.shoot();
             if(e.code === "ShiftLeft" && Core.active && Core.state === "PLAY") Core.player.warp();
         });
@@ -479,7 +502,7 @@
         window.addEventListener('pointermove', (e) => { 
             if(!joyOn) return; 
             let r = jB.getBoundingClientRect(); 
-            let dx = e.clientX - (r.left + 60); // 60 is half width
+            let dx = e.clientX - (r.left + 60); 
             let dy = e.clientY - (r.top + 60); 
             let d = Math.min(Math.hypot(dx,dy), 50); 
             let a = Math.atan2(dy,dx); 
