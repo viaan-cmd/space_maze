@@ -5,32 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SPACE MAZE</title>
     <style>
-        :root { 
-            --neon: #00ff41; 
-            --warp: #00ccff; 
-            --danger: #ff0033; 
-            --gold: #ffd700; 
-            --bg: #000; 
-        }
-        * { box-sizing: border-box; user-select: none; touch-action: none; }
-        body { 
-            background: var(--bg); 
-            color: var(--neon); 
-            font-family: 'Courier New', monospace; 
-            margin: 0; 
-            overflow: hidden; 
-            height: 100vh; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-
-        /* CRT SCANLINE */
-        body::after { 
-            content: " "; position: absolute; inset: 0; 
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); 
-            z-index: 1000; background-size: 100% 3px; pointer-events: none; opacity: 0.2;
-        }
+        :root { --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --mansion: #a020f0; }
+        * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        
+        /* CRT SCANLINES */
+        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); z-index: 1000; background-size: 100% 3px; pointer-events: none; opacity: 0.15; }
 
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
         #game-layer { display: none; }
@@ -38,94 +18,105 @@
         .neon-text { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }
         .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon); }
 
-        #cutscene-layer { display: none; padding: 40px; text-align: left; justify-content: flex-start; }
-        #typewriter { font-size: 1.2rem; line-height: 1.6; max-width: 600px; }
+        /* MOBILE CONTROLS */
+        #controls { position: absolute; bottom: 20px; left: 0; width: 100%; display: none; justify-content: space-between; padding: 0 30px; z-index: 500; pointer-events: none; }
+        .dpad, .actions { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; pointer-events: auto; }
+        .t-btn { width: 60px; height: 60px; background: rgba(0,0,0,0.6); border: 2px solid var(--neon); color: var(--neon); display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 10px; }
+        .t-btn:active { background: var(--neon); color: #000; }
 
-        #hud { 
-            position: absolute; top: 0; width: 100%; padding: 20px; 
-            display: flex; justify-content: space-between; font-size: 1.2rem; 
-            z-index: 100; pointer-events: none;
-        }
-        #ox-bar-container { width: 150px; height: 12px; border: 2px solid var(--neon); margin-top: 5px; }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); }
+        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; font-size: 1rem; z-index: 100; pointer-events: none; }
+        #ox-bar-container { width: 120px; height: 10px; border: 1px solid var(--neon); margin-top: 5px; }
+        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
 
-        .card { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 4px; width: 340px; text-align: center; }
-        .btn { 
-            background: #000; border: 2px solid var(--neon); color: var(--neon); 
-            padding: 15px; margin: 10px 0; cursor: pointer; width: 100%; 
-            font-family: inherit; font-weight: bold; text-transform: uppercase;
-        }
+        .card { background: rgba(0,0,0,0.95); padding: 25px; border-radius: 4px; width: 320px; text-align: center; }
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 12px; margin: 8px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; }
 
-        #leaderboard { margin-top: 10px; font-size: 0.8rem; text-align: left; max-height: 120px; overflow-y: auto; color: var(--warp); }
-        .lb-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding: 2px 0; }
-
-        #pause-btn { position: absolute; top: 20px; right: 20px; z-index: 600; width: 50px; cursor: pointer; }
+        #admin-layer, #shop-layer { display:none; z-index: 2000; }
     </style>
 </head>
 <body>
 
     <div id="ui-layer" class="layer">
-        <h1 class="neon-text" style="font-size: 3.5rem;">SPACE MAZE</h1>
+        <h1 class="neon-text" style="font-size: 2.5rem;">SPACE MAZE</h1>
         <div class="card neon-border">
-            <input type="text" id="username" placeholder="ENTER USERNAME" style="width:100%; background:#000; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:10px; font-family:inherit;">
-            <button class="btn" onclick="UI.startCutscene()">START MISSION</button>
+            <input type="text" id="username" placeholder="NAME" style="width:100%; background:#000; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:10px; font-family:inherit; text-align:center;">
+            <button class="btn" onclick="UI.playCutscene('intro')">START</button>
+            <button class="btn" style="border-color:var(--warp); color:var(--warp);" onclick="UI.toggleShop(true)">UPGRADES</button>
             <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
-            <div id="leaderboard"></div>
+            <div id="leaderboard" style="font-size: 0.7rem; text-align: left; margin-top:10px; color:var(--warp);"></div>
         </div>
     </div>
 
-    <div id="pause-layer" class="layer" style="display:none; background:rgba(0,0,0,0.8); z-index:700;">
-        <div class="card neon-border">
-            <h2 class="neon-text">PAUSED</h2>
-            <button class="btn" onclick="UI.togglePause()">RESUME</button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="location.reload()">LEAVE</button>
+    <div id="shop-layer" class="layer">
+        <div class="card neon-border" style="border-color: var(--warp);">
+            <h2 style="color:var(--warp);">SHOP</h2>
+            <p>Credits: <span id="shop-credits">0</span></p>
+            <button class="btn" onclick="UI.buyUpgrade('speed')">LUNGS (Speed) - 10 Cr</button>
+            <button class="btn" onclick="UI.buyUpgrade('tank')">TANK (Max OX) - 15 Cr</button>
+            <button class="btn" onclick="UI.toggleShop(false)">EXIT</button>
         </div>
     </div>
 
-    <div id="cutscene-layer" class="layer">
-        <div id="typewriter"></div>
-        <button class="btn" id="skip-btn" style="width:200px; margin-top:50px; display:none;" onclick="Core.boot(false)">PROCEED ></button>
+    <div id="admin-layer" class="layer">
+        <div class="card neon-border" style="border-color: var(--danger);">
+            <h2 style="color:var(--danger);">ROOT</h2>
+            <button class="btn" onclick="Core.adminJump(21)">SEC 21</button>
+            <button class="btn" onclick="Core.adminJump(202)">SEC 202</button>
+            <button class="btn" onclick="UI.toggleAdmin(false)">BACK</button>
+        </div>
     </div>
 
     <div id="game-layer" class="layer">
         <div id="hud">
-            <div class="neon-text">SEC: <span id="v-sec">1</span> | <span id="v-time">0</span>s</div>
+            <div>SEC: <span id="v-sec">1</span></div>
             <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
+            <div onclick="UI.togglePause()" style="pointer-events: auto; border: 1px solid var(--neon); padding: 5px 10px;">||</div>
         </div>
-        <button id="pause-btn" class="btn" onclick="UI.togglePause()">||</button>
+        
         <canvas id="stage"></canvas>
-        <div id="boss-hud" style="position:absolute; bottom:50px; width:400px; height:15px; border:2px solid var(--danger); display:none;"><div id="boss-bar" style="height:100%; background:var(--danger); width:100%;"></div></div>
+
+        <div id="controls">
+            <div class="dpad">
+                <div></div><div class="t-btn" ontouchstart="Core.keys.ArrowUp=true" ontouchend="Core.keys.ArrowUp=false">↑</div><div></div>
+                <div class="t-btn" ontouchstart="Core.keys.ArrowLeft=true" ontouchend="Core.keys.ArrowLeft=false">←</div>
+                <div class="t-btn" ontouchstart="Core.keys.ArrowDown=true" ontouchend="Core.keys.ArrowDown=false">↓</div>
+                <div class="t-btn" ontouchstart="Core.keys.ArrowRight=true" ontouchend="Core.keys.ArrowRight=false">→</div>
+            </div>
+            <div class="actions">
+                <div class="t-btn" style="grid-column: span 3; border-color:var(--warp);" onclick="Core.player.warp()">WARP</div>
+                <div class="t-btn" style="grid-column: span 3; margin-top:10px; border-color:#fff;" onclick="Core.player.shoot()">SHOOT</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cutscene-layer" class="layer" style="display:none; z-index: 3000;">
+        <div id="typewriter" class="card neon-border" style="text-align:left; width:90%;"></div>
+        <button class="btn" id="proceed-btn" style="width:200px; margin-top:20px;">PROCEED</button>
     </div>
 
     <script>
-        const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
+        const MAP = { W:window.innerWidth, H:window.innerHeight, R:13, C:13, TW:window.innerWidth/13, TH:window.innerHeight/13 };
         
         const Core = {
-            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", time: 0, paused: false,
+            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", credits: 0, 
+            upgrades: JSON.parse(localStorage.getItem('sm_upgrades')) || { speed: 5, tank: 100 },
             boot(resume) {
-                const user = document.getElementById('username').value || "PLAYER";
-                localStorage.setItem('sm_user', user);
                 document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('cutscene-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
+                document.getElementById('controls').style.display = 'flex';
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W;
                 document.getElementById('stage').height = MAP.H;
                 this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
-                this.run();
+                if(!this.running) { this.run(); this.running = true; }
             },
             init(n) {
                 this.sector = n; this.active = true; this.entities = [];
                 localStorage.setItem('sm_save', n);
+                if(n === 21 && !this.s21Seen) { UI.playCutscene('mansion'); this.s21Seen = true; return; }
                 this.maze = (n === 202) ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
                 document.getElementById('v-sec').innerText = n;
-                document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
-                if(n===21) this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
-                else if(n===202) this.entities.push(new DiddyBoss(400, 300));
-                else {
-                    for(let i=0; i<Math.min(3 + Math.floor(n/10), 12); i++) this.entities.push(new Enemy());
-                }
             },
             createMaze() {
                 let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
@@ -139,101 +130,81 @@
             },
             update() {
                 if(!this.active || this.paused) return;
-                this.time += 1/60; document.getElementById('v-time').innerText = Math.floor(this.time);
                 this.player.tick();
-                for(let i=this.entities.length-1; i>=0; i--) {
-                    this.entities[i].tick();
-                    if(this.entities[i].dead) this.entities.splice(i,1);
-                }
-                if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
-                    if(this.sector===21 && this.player.invites < 3) return;
-                    if(this.sector===202 && this.entities.some(e => e instanceof DiddyBoss)) return; 
-                    UI.saveScore(); this.init(this.sector + 1);
+                this.entities.forEach((e, i) => { e.tick(); if(e.dead) this.entities.splice(i, 1); });
+                if(this.player.x > MAP.W - MAP.TW && this.player.y > MAP.H - MAP.TH) {
+                    if(this.sector === 21 && this.player.invites < 3) return;
+                    this.credits++;
+                    localStorage.setItem('sm_creds', this.credits);
+                    this.init(this.sector + 1);
                 }
             },
             draw() {
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.ctx.shadowBlur = 18;
-                this.ctx.shadowColor = (this.sector===21) ? "#500050" : "#00ff41";
-                this.ctx.fillStyle = this.ctx.shadowColor;
+                this.ctx.fillStyle = (this.sector >= 21 && this.sector < 30) ? "var(--mansion)" : "var(--neon)";
                 for(let r=0; r<MAP.R; r++) {
-                    for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+2, r*MAP.TH+2, MAP.TW-4, MAP.TH-4);
+                    for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW-2, MAP.TH-2);
                 }
-                this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "#0cf";
+                this.ctx.fillStyle = "var(--warp)";
                 this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
                 this.entities.forEach(e => e.draw(this.ctx));
                 this.player.draw(this.ctx);
             },
-            run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); }
+            run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
+            registerAction(a) {
+                this.cheatSeq = (this.cheatSeq + a).slice(-4);
+                if(this.cheatSeq === "SWWS") UI.toggleAdmin(true);
+            },
+            adminJump(v) { this.init(v); UI.toggleAdmin(false); }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.speed=5.5; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=Core.upgrades.tank; this.speed=Core.upgrades.speed; this.invites=0; }
             tick() {
                 let mx=0, my=0;
-                if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
-                if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
+                if(Core.keys.ArrowUp) my=-1; if(Core.keys.ArrowDown) my=1;
+                if(Core.keys.ArrowLeft) mx=-1; if(Core.keys.ArrowRight) mx=1;
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
-                this.ox -= 0.035; if(this.ox <= 0) Core.init(Core.sector);
+                this.ox -= 0.05; if(this.ox <= 0) location.reload();
                 document.getElementById('v-ox').innerText = Math.floor(this.ox);
-                document.getElementById('ox-bar').style.width = this.ox+"%";
+                document.getElementById('ox-bar').style.width = (this.ox/Core.upgrades.tank*100) + "%";
             }
-            isW(x,y) { 
-                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
-                return x<0||x>MAP.W||y<0||y>MAP.H||(r>=0&&r<MAP.R&&c>=0&&c<MAP.C&&Core.maze[r][c]===1); 
+            isW(x,y) {
+                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH);
+                return x<0||x>MAP.W||y<0||y>MAP.H||(r>=0&&r<MAP.R&&c>=0&&c<MAP.C&&Core.maze[r][c]===1);
             }
-            draw(ctx) { ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
-            shoot() { if(this.ox > 4) { Core.entities.push(new Bullet(this.x, this.y)); this.ox -= 4; } }
-            warp() { if(this.ox > 15) { this.x += 130; this.ox-=15; } }
+            draw(ctx) { ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,8,0,Math.PI*2); ctx.fill(); }
+            shoot() { if(this.ox > 5) { this.ox -= 5; Core.registerAction('S'); } }
+            warp() { if(this.ox > 10) { this.x += 100; this.ox -= 10; Core.registerAction('W'); } }
         }
-
-        class Bullet {
-            constructor(x,y) { this.x=x; this.y=y; }
-            tick() { this.x+=15; if(Core.player.isW(this.x,this.y)) this.dead=true; Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<25){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } }); }
-            draw(ctx) { ctx.fillStyle="#fff"; ctx.fillRect(this.x-3,this.y-3,6,6); }
-        }
-
-        class DiddyBoss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=30; this.maxHp=30; this.vx=5; this.vy=5; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(this.x<40 || this.x>MAP.W-40) this.vx*=-1; if(this.y<40 || this.y>MAP.H-40) this.vy*=-1; document.getElementById('boss-bar').style.width=(this.hp/this.maxHp*100)+"%"; if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<40) Core.init(Core.sector); }
-            draw(ctx) { ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,40,0,Math.PI*2); ctx.fill(); }
-        }
-
-        class Enemy {
-            constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<20) Core.init(Core.sector); }
-            draw(ctx) { ctx.fillStyle="var(--danger)"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
-        }
-
-        class Invite { constructor(x,y){this.x=x;this.y=y;} tick(){ if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<30){Core.player.invites++; this.dead=true;} } draw(ctx){ctx.fillStyle="var(--gold)"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill();} }
 
         const UI = {
-            togglePause() { Core.paused = !Core.paused; document.getElementById('pause-layer').style.display = Core.paused?'flex':'none'; },
-            saveScore() {
-                let lb = JSON.parse(localStorage.getItem('sm_global_lb') || "[]");
-                lb.push({user: localStorage.getItem('sm_user'), sec: Core.sector, time: Math.floor(Core.time)});
-                lb.sort((a,b) => b.sec - a.sec || a.time - b.time);
-                localStorage.setItem('sm_global_lb', JSON.stringify(lb.slice(0,10)));
-                this.updateLB();
+            toggleShop(s) { 
+                document.getElementById('shop-layer').style.display = s?'flex':'none'; 
+                document.getElementById('shop-credits').innerText = localStorage.getItem('sm_creds') || 0;
             },
-            updateLB() {
-                let lb = JSON.parse(localStorage.getItem('sm_global_lb') || "[]");
-                document.getElementById('leaderboard').innerHTML = "<b>GLOBAL RANKINGS:</b>" + lb.map(i => `<div class='lb-row'><span>${i.user}</span><span>S${i.sec} | ${i.time}s</span></div>`).join('');
+            buyUpgrade(type) {
+                let cr = parseInt(localStorage.getItem('sm_creds') || 0);
+                if(type==='speed' && cr >= 10) { Core.upgrades.speed = 8; cr -= 10; }
+                if(type==='tank' && cr >= 15) { Core.upgrades.tank = 200; cr -= 15; }
+                localStorage.setItem('sm_creds', cr);
+                localStorage.setItem('sm_upgrades', JSON.stringify(Core.upgrades));
+                this.toggleShop(false);
             },
-            startCutscene() {
-                document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('cutscene-layer').style.display = 'flex';
-                const text = "> INCOMING TRANSMISSION...\n> MISSION: INFILTRATE SECTOR 1-202.\n> OBJECTIVE A: RECOVER 3 MANSION INVITES IN SECTOR 21.\n> OBJECTIVE B: ELIMINATE TARGET 'DIDDY' IN SECTOR 202.\n> WARNING: OXYGEN DEPLETES ON EVERY ACTION.\n> SHOOT (SPACE) AND WARP (SHIFT) TO SURVIVE.\n> GOOD LUCK, OPERATIVE.";
-                let i = 0; const container = document.getElementById('typewriter');
-                function type() { if (i < text.length) { container.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i); i++; setTimeout(type, 30); } else { document.getElementById('skip-btn').style.display = 'block'; } }
-                type();
-            }
+            playCutscene(type) {
+                Core.paused = true;
+                const layer = document.getElementById('cutscene-layer');
+                const box = document.getElementById('typewriter');
+                layer.style.display = 'flex';
+                box.innerText = type === 'intro' ? "> MISSION: REACH SECTOR 202. WATCH YOUR OXYGEN." : "> SECTOR 21: THE MANSION. COLLECT INVITES.";
+                document.getElementById('proceed-btn').onclick = () => { layer.style.display = 'none'; Core.paused = false; if(!Core.player) Core.boot(); };
+            },
+            toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; }
         };
 
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp(); if(e.code==='Escape')UI.togglePause(); };
+        window.onkeydown=e=>Core.keys[e.code]=true;
         window.onkeyup=e=>Core.keys[e.code]=false;
-        UI.updateLB();
         if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
     </script>
 </body>
