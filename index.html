@@ -1,274 +1,242 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>SPACE MAZE: THE ULTIMATE LEGACY</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | MASTER</title>
     <style>
-        :root { --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --mansion: #a020f0; }
-        * { box-sizing: border-box; user-select: none; touch-action: none; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        
-        /* CRT SCANLINES */
-        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); z-index: 1000; background-size: 100% 3px; pointer-events: none; opacity: 0.2; }
-
-        .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
-        #game-layer { display: none; }
-
-        .neon-text { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }
-        .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon); }
-
-        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; }
-        #ox-bar-container { width: 150px; height: 12px; border: 2px solid var(--neon); margin-top: 5px; }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
-
-        .card { background: rgba(0,0,0,0.9); padding: 25px; border-radius: 4px; width: 360px; text-align: center; }
-        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 12px; margin: 8px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
-        .btn:hover { background: var(--neon); color: #000; }
-
-        #leaderboard { margin-top: 10px; font-size: 0.7rem; text-align: left; max-height: 100px; overflow-y: auto; color: var(--warp); border-top: 1px solid #333; padding-top: 5px; }
-        .lb-row { display: flex; justify-content: space-between; padding: 2px 0; }
-
-        #admin-layer, #shop-layer { display:none; z-index: 2000; background: rgba(0,0,0,0.95); }
-        #pause-btn { position: absolute; top: 20px; right: 20px; z-index: 600; width: 50px; cursor: pointer; }
+        body { background: #000; color: #0f4; font-family: monospace; margin: 0; overflow: hidden; touch-action: none; }
+        #ui-layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); z-index: 100; }
+        canvas { background: #000; display: block; margin: auto; border: 2px solid #333; }
+        #hud { position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-around; font-size: 18px; pointer-events: none; z-index: 50; text-shadow: 2px 2px #000; }
+        input { background: #000; color: #0f4; border: 1px solid #0f4; padding: 10px; margin: 10px; text-align: center; font-family: monospace; font-size: 1.2rem; }
+        button { background: #000; color: #0f4; border: 2px solid #0f4; padding: 15px 30px; cursor: pointer; font-family: monospace; font-weight: bold; font-size: 1.2rem; }
+        #joy-base { position: absolute; bottom: 50px; left: 50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border: 2px solid #333; border-radius: 50%; display: none; }
+        #joy-stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: #0f4; border-radius: 50%; }
+        #shoot-btn { position: absolute; bottom: 50px; right: 50px; width: 90px; height: 90px; background: rgba(255,0,0,0.2); border: 3px solid #f00; border-radius: 50%; display: none; color: #f00; text-align: center; line-height: 90px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer" class="layer">
-        <h1 class="neon-text" style="font-size: 3rem; margin-bottom: 5px;">SPACE MAZE</h1>
-        <div class="card neon-border">
-            <input type="text" id="username" placeholder="OPERATIVE NAME" style="width:100%; background:#000; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:10px; font-family:inherit; text-align:center;">
-            <button class="btn" onclick="UI.playCutscene('intro')">START MISSION</button>
-            <button class="btn" style="border-color:var(--warp); color:var(--warp);" onclick="UI.toggleShop(true)">UPGRADES</button>
-            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
-            <div id="leaderboard"></div>
-            <p style="font-size: 0.6rem; color: #555; margin-top: 10px;">Privacy Policy: This game stores data locally on your device only.</p>
-        </div>
-    </div>
+<div id="hud">
+    <div>SEC: <span id="v-sec">1</span></div>
+    <div>USER: <span id="v-user">---</span></div>
+    <div>O2: <span id="v-ox">100</span>%</div>
+</div>
 
-    <div id="shop-layer" class="layer">
-        <div class="card neon-border" style="border-color: var(--warp);">
-            <h2 style="color:var(--warp);">HACKER_MARKET</h2>
-            <p>Credits: <span id="shop-credits">0</span> (Sectors Cleared)</p>
-            <button class="btn" onclick="UI.buyUpgrade('speed')">Lungs (Faster) - 5 Cr</button>
-            <button class="btn" onclick="UI.buyUpgrade('tank')">Oxygen Tank+ - 10 Cr</button>
-            <button class="btn" style="border-color:#fff; color:#fff;" onclick="UI.toggleShop(false)">EXIT</button>
-        </div>
-    </div>
+<div id="ui-layer">
+    <h1 id="ui-title" style="font-size: 50px; margin: 10px;">SPACE MAZE</h1>
+    <div id="cutscene-text" style="max-width: 80%; margin-bottom: 20px; color: #fff; line-height: 1.5;"></div>
+    <input type="text" id="username" placeholder="IDENT_NAME">
+    <button onclick="preStart()">INITIALIZE SYSTEM</button>
+    <div id="leaderboard" style="margin-top: 25px; font-size: 16px; color: #0cf;"></div>
+</div>
 
-    <div id="pause-layer" class="layer" style="display:none; background:rgba(0,0,0,0.85); z-index:1500;">
-        <div class="card neon-border">
-            <h2 class="neon-text">PAUSED</h2>
-            <button class="btn" onclick="UI.togglePause()">RESUME</button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="location.reload()">LEAVE MISSION</button>
-        </div>
-    </div>
+<div id="joy-base"><div id="joy-stick"></div></div>
+<div id="shoot-btn">FIRE</div>
 
-    <div id="admin-layer" class="layer">
-        <div class="card neon-border" style="border-color: var(--danger);">
-            <h2 style="color:var(--danger);">ROOT_ACCESS</h2>
-            <button class="btn" onclick="Core.adminJump(21)">SECTOR 21</button>
-            <button class="btn" onclick="Core.adminJump(202)">SECTOR 202</button>
-            <button class="btn" onclick="Core.player.ox=9999; UI.toggleAdmin(false)">GOD_MODE</button>
-            <button class="btn" style="border-color:#fff; color:#fff;" onclick="UI.toggleAdmin(false)">CLOSE</button>
-        </div>
-    </div>
+<canvas id="g" width="800" height="600"></canvas>
 
-    <div id="cutscene-layer" class="layer" style="display:none;">
-        <div style="padding:40px; text-align:left; background:#000; border:1px solid #333; width:85%; max-width:600px;">
-            <div id="typewriter" style="font-size:1.1rem; line-height:1.6;"></div>
-        </div>
-        <button class="btn" id="proceed-btn" style="width:200px; margin-top:30px; display:none;">PROCEED ></button>
-    </div>
+<script>
+const cvs = document.getElementById('g');
+const ctx = cvs.getContext('2d');
+const MAP = { r: 13, c: 19, w: 800/19, h: 600/13 };
 
-    <div id="game-layer" class="layer">
-        <div id="hud">
-            <div class="neon-text">SEC: <span id="v-sec">1</span> | <span id="v-time">0</span>s</div>
-            <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
-        </div>
-        <button id="pause-btn" class="btn" onclick="UI.togglePause()">||</button>
-        <canvas id="stage"></canvas>
-        <div id="boss-hud" style="position:absolute; bottom:50px; width:400px; height:15px; border:2px solid var(--danger); display:none;"><div id="boss-bar" style="height:100%; background:var(--danger); width:100%;"></div></div>
-    </div>
+let sector = 1, player, enemies = [], bullets = [], items = [], maze = [], boss = null, keys = {}, combo = "";
+let user = "", joy = { active: false, x: 0, y: 0 };
 
-    <script>
-        const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
+function preStart() {
+    user = document.getElementById('username').value || "PILOT_01";
+    document.getElementById('v-user').innerText = user;
+    document.getElementById('username').style.display = 'none';
+    document.getElementById('ui-title').innerText = "ORIGIN STORY";
+    document.getElementById('cutscene-text').innerHTML = "The Sphere is the ancient neural core.<br>Diddy has corrupted the system and retreated to the Mansion.<br>Sector 21 is the gateway to the Unknown.<br>Sector 202 is the Final Battle ground.";
+    document.querySelector('button').onclick = start;
+}
+
+function start() {
+    document.getElementById('ui-layer').style.display = 'none';
+    if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+        document.getElementById('joy-base').style.display = 'block';
+        document.getElementById('shoot-btn').style.display = 'block';
+    }
+    init(1);
+    updateLeaderboard();
+    loop();
+}
+
+function init(n) {
+    sector = n;
+    enemies = []; bullets = []; boss = null; items = [];
+    maze = Array.from({length: MAP.r}, () => Array(MAP.c).fill(1));
+
+    if (n === 202) {
+        maze = maze.map(r => r.fill(0));
+        boss = { x: 400, y: 300, hp: 150, size: 70 };
+    } else if (n === "?") {
+        maze = maze.map(r => r.fill(0));
+        setTimeout(() => { alert("DIDDY: 'I see you... See you at Sector 202.'"); init(22); }, 10000);
+    } else {
+        genMaze(0, 0);
+        for(let i=0; i<Math.min(4+n, 20); i++) enemies.push(new Enemy());
         
-        const Core = {
-            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", time: 0, paused: false, shake: 0,
-            upgrades: { speed: 5.5, tank: 100 },
-            boot(resume) {
-                const user = document.getElementById('username').value || "GUEST";
-                localStorage.setItem('sm_user', user);
-                document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('game-layer').style.display = 'flex';
-                this.ctx = document.getElementById('stage').getContext('2d');
-                document.getElementById('stage').width = MAP.W;
-                document.getElementById('stage').height = MAP.H;
-                this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
-                if(!this.running) { this.run(); this.running = true; }
-            },
-            init(n) {
-                this.sector = n; this.active = true; this.entities = [];
-                localStorage.setItem('sm_save', n);
-                if(n === 21 && !this.s21Seen) { UI.playCutscene('mansion'); this.s21Seen = true; return; }
-                this.maze = (n === 202) ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
-                this.player = new Player(MAP.TW/2, MAP.TH/2);
-                document.getElementById('v-sec').innerText = n;
-                document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
-                if(n===21) this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
-                else if(n===202) this.entities.push(new DiddyBoss(400, 300));
-                else {
-                    for(let i=0; i<Math.min(3 + Math.floor(n/8), 15); i++) this.entities.push(new Enemy());
-                    if(Math.random() > 0.4) this.entities.push(new PowerUp());
-                }
-            },
-            createMaze() {
-                let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
-                let s = [[0,0]]; m[0][0] = 0;
-                while(s.length) {
-                    let [r,c] = s[s.length-1];
-                    let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<MAP.R&&nc>=0&&nc<MAP.C&&m[nr][nc]===1);
-                    if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
-                }
-                return m;
-            },
-            update() {
-                if(!this.active || this.paused) return;
-                this.time += 1/60; document.getElementById('v-time').innerText = Math.floor(this.time);
-                if(this.shake > 0) this.shake *= 0.9;
-                this.player.tick();
-                for(let i=this.entities.length-1; i>=0; i--) {
-                    this.entities[i].tick();
-                    if(this.entities[i].dead) this.entities.splice(i,1);
-                }
-                if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
-                    if(this.sector===21 && this.player.invites < 3) return;
-                    if(this.sector===202 && this.entities.some(e => e instanceof DiddyBoss)) return; 
-                    if(this.sector === 202) { UI.playCutscene('victory'); return; }
-                    UI.saveScore(); this.init(this.sector + 1);
-                }
-            },
-            draw() {
-                this.ctx.save();
-                if(this.shake > 0.5) this.ctx.translate(Math.random()*this.shake-this.shake/2, Math.random()*this.shake-this.shake/2);
-                this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.ctx.shadowBlur = 18;
-                this.ctx.shadowColor = (this.sector===21) ? "var(--mansion)" : "var(--neon)";
-                this.ctx.fillStyle = this.ctx.shadowColor;
-                for(let r=0; r<MAP.R; r++) {
-                    for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+2, r*MAP.TH+2, MAP.TW-4, MAP.TH-4);
-                }
-                this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#111" : "var(--warp)";
-                this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                this.entities.forEach(e => e.draw(this.ctx));
-                this.player.draw(this.ctx);
-                this.ctx.restore();
-            },
-            run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
-            registerAction(a) {
-                this.cheatSeq += a;
-                if(this.cheatSeq.slice(-4) === "SWWS") { UI.toggleAdmin(true); this.cheatSeq = ""; }
-            },
-            adminJump(v) { this.init(v); UI.toggleAdmin(false); }
-        };
-
-        class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=Core.upgrades.tank; this.invites=0; this.speed=Core.upgrades.speed; }
-            tick() {
-                let mx=0, my=0;
-                if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
-                if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
-                let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
-                if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
-                this.ox -= 0.04; if(this.ox <= 0) UI.playCutscene('gameover');
-                document.getElementById('v-ox').innerText = Math.floor(this.ox);
-                document.getElementById('ox-bar').style.width = (this.ox/Core.upgrades.tank*100)+"%";
-            }
-            isW(x,y) { 
-                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
-                return x<0||x>MAP.W||y<0||y>MAP.H||(r>=0&&r<MAP.R&&c>=0&&c<MAP.C&&Core.maze[r][c]===1); 
-            }
-            draw(ctx) { ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
-            shoot() { if(this.ox > 4) { Core.entities.push(new Bullet(this.x, this.y)); this.ox -= 4; Core.shake=5; Core.registerAction('S'); } }
-            warp() { if(this.ox > 15) { this.x += 130; this.ox-=15; Core.shake=10; Core.registerAction('W'); } }
+        // Spawning Power-ups
+        let types = ['shd', 'ox', 'spd', 'rpd'];
+        for(let i=0; i<4; i++) {
+            items.push({ x: Math.random()*700+50, y: Math.random()*500+50, type: types[i] });
         }
+    }
 
-        class Bullet {
-            constructor(x,y) { this.x=x; this.y=y; }
-            tick() { this.x+=15; if(Core.player.isW(this.x,this.y)) this.dead=true; Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<25){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } }); }
-            draw(ctx) { ctx.fillStyle="#fff"; ctx.fillRect(this.x-3,this.y-3,6,6); }
+    if (!player) player = { x: 25, y: 25, ox: 100, shd: false, spd: 5.5, rpd: false };
+    player.x = 25; player.y = 25;
+    player.spd = 5.5; // Reset speed each sector
+    document.getElementById('v-sec').innerText = sector;
+}
+
+function genMaze(r, c) {
+    maze[r][c] = 0;
+    let ds = [[0,2],[0,-2],[2,0],[-2,0]].sort(() => Math.random() - 0.5);
+    ds.forEach(([dr, dc]) => {
+        let nr = r+dr, nc = c+dc;
+        if (nr>=0 && nr<MAP.r && nc>=0 && nc<MAP.c && maze[nr][nc]===1) {
+            maze[r+dr/2][c+dc/2] = 0; genMaze(nr, nc);
         }
+    });
+}
 
-        class DiddyBoss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=40; this.maxHp=40; this.vx=5; this.vy=5; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(this.x<40 || this.x>MAP.W-40) this.vx*=-1; if(this.y<40 || this.y>MAP.H-40) this.vy*=-1; document.getElementById('boss-bar').style.width=(this.hp/this.maxHp*100)+"%"; if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<40) UI.playCutscene('gameover'); }
-            draw(ctx) { ctx.fillStyle="var(--mansion)"; ctx.shadowBlur=30; ctx.beginPath(); ctx.arc(this.x,this.y,40,0,Math.PI*2); ctx.fill(); }
+class Enemy {
+    constructor() {
+        this.x = Math.random()*700+50; this.y = Math.random()*500+50;
+        this.vx = (Math.random()-0.5)*7; this.vy = (Math.random()-0.5)*7;
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        if(isW(this.x, this.y)) { this.vx *= -1; this.vy *= -1; }
+        if(Math.hypot(this.x - player.x, this.y - player.y) < 22) {
+            if(player.shd) { player.shd = false; this.x = -500; }
+            else die();
         }
+    }
+}
 
-        class Enemy {
-            constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<20) UI.playCutscene('gameover'); }
-            draw(ctx) { ctx.fillStyle="var(--danger)"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
+function isW(x, y) {
+    let c = Math.floor(x/MAP.w), r = Math.floor(y/MAP.h);
+    return (r<0||r>=MAP.r||c<0||c>=MAP.c||maze[r][c]===1);
+}
+
+function die() {
+    let scores = JSON.parse(localStorage.getItem('mz_legacy_scores') || '[]');
+    scores.push({name: user, sec: sector});
+    localStorage.setItem('mz_legacy_scores', JSON.stringify(scores.sort((a,b)=>b.sec-a.sec).slice(0,5)));
+    location.reload();
+}
+
+function updateLeaderboard() {
+    let scores = JSON.parse(localStorage.getItem('mz_legacy_scores') || '[]');
+    document.getElementById('leaderboard').innerHTML = "HALL OF FAME:<br>" + scores.map(s => `${s.name}: S${s.sec}`).join(' | ');
+}
+
+function shoot() {
+    bullets.push({x: player.x, y: player.y});
+    if(player.rpd) { // Rapid fire extra bullets
+        bullets.push({x: player.x, y: player.y-10});
+        bullets.push({x: player.x, y: player.y+10});
+    }
+}
+
+function loop() {
+    let s = player.spd;
+    let mx = 0, my = 0;
+    if (keys['w']) my = -s; if (keys['s']) my = s;
+    if (keys['a']) mx = -s; if (keys['d']) mx = s;
+    if (joy.active) { mx = joy.x * s; my = joy.y * s; }
+    if (!isW(player.x + mx, player.y + my)) { player.x += mx; player.y += my; }
+
+    player.ox -= 0.045;
+    document.getElementById('v-ox').innerText = Math.floor(player.ox);
+    if(player.ox <= 0) die();
+
+    enemies.forEach(e => e.update());
+    
+    // Items
+    items.forEach((p, i) => {
+        if (Math.hypot(p.x - player.x, p.y - player.y) < 25) {
+            if (p.type === 'shd') player.shd = true;
+            if (p.type === 'ox') player.ox = 100;
+            if (p.type === 'spd') player.spd = 9;
+            if (p.type === 'rpd') player.rpd = true;
+            items.splice(i, 1);
         }
+    });
 
-        class Invite { constructor(x,y){this.x=x;this.y=y;} tick(){ if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<30){Core.player.invites++; this.dead=true;} } draw(ctx){ctx.fillStyle="var(--gold)"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill();} }
-        class PowerUp { constructor(){let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry;} tick(){if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<25){Core.player.ox=Core.upgrades.tank; this.dead=true;}} draw(ctx){ctx.fillStyle="var(--warp)"; ctx.fillRect(this.x-8,this.y-8,16,16);} }
+    if(boss) {
+        let dx = player.x-boss.x, dy = player.y-boss.y, d = Math.hypot(dx,dy);
+        boss.x += (dx/d)*3.8; boss.y += (dy/d)*3.8;
+        if(d < 50) die();
+        if(boss.hp <= 0) { alert("DIDDY DEFEATED! YOU WIN!"); die(); }
+    }
 
-        const UI = {
-            togglePause() { Core.paused = !Core.paused; document.getElementById('pause-layer').style.display = Core.paused?'flex':'none'; },
-            toggleAdmin(s) { Core.paused = s; document.getElementById('admin-layer').style.display = s?'flex':'none'; },
-            toggleShop(s) { document.getElementById('shop-layer').style.display = s?'flex':'none'; document.getElementById('shop-credits').innerText = localStorage.getItem('sm_save') || 0; },
-            buyUpgrade(type) {
-                let creds = parseInt(localStorage.getItem('sm_save') || 0);
-                if(type==='speed' && creds >= 5) { Core.upgrades.speed = 8; localStorage.setItem('sm_save', creds - 5); }
-                if(type==='tank' && creds >= 10) { Core.upgrades.tank = 150; localStorage.setItem('sm_save', creds - 10); }
-                this.toggleShop(false);
-            },
-            saveScore() {
-                let lb = JSON.parse(localStorage.getItem('sm_global_lb') || "[]");
-                lb.push({user: localStorage.getItem('sm_user'), sec: Core.sector, time: Math.floor(Core.time)});
-                lb.sort((a,b) => b.sec - a.sec || a.time - b.time);
-                localStorage.setItem('sm_global_lb', JSON.stringify(lb.slice(0,5)));
-                this.updateLB();
-            },
-            updateLB() {
-                let lb = JSON.parse(localStorage.getItem('sm_global_lb') || "[]");
-                document.getElementById('leaderboard').innerHTML = lb.map(i => `<div class='lb-row'><span>${i.user}</span><span>S${i.sec}</span></div>`).join('');
-            },
-            playCutscene(type) {
-                Core.paused = true;
-                const layer = document.getElementById('cutscene-layer');
-                const box = document.getElementById('typewriter');
-                const btn = document.getElementById('proceed-btn');
-                layer.style.display = 'flex'; box.innerHTML = ""; btn.style.display = 'none';
+    bullets.forEach((b, i) => {
+        b.x += 12;
+        if(isW(b.x, b.y)) bullets.splice(i,1);
+        enemies.forEach((e, ei) => {
+            if(Math.hypot(b.x-e.x, b.y-e.y) < 22) { enemies.splice(ei, 1); bullets.splice(i, 1); }
+        });
+        if(boss && Math.hypot(b.x-boss.x, b.y-boss.y) < boss.size) { boss.hp -= 2; bullets.splice(i, 1); }
+    });
 
-                let text = "";
-                if(type === 'intro') text = "> MISSION: INFILTRATE SECTOR 202.\n> ELIMINATE TARGET 'DIDDY'.\n> DO NOT RUN OUT OF OXYGEN.";
-                if(type === 'mansion') text = "> !! ANOMALY DETECTED !!\n> SECTOR 21: THE MANSION.\n> COLLECT 3 GOLDEN INVITES TO OPEN THE GATE.";
-                if(type === 'gameover') text = "> !! CRITICAL FAILURE !!\n> OPERATIVE TERMINATED.\n> MISSION ABORTED.";
-                if(type === 'victory') text = "> MISSION COMPLETE.\n> DIDDY ELIMINATED.\n> YOU ARE THE MASTER OF THE MAZE.";
+    if(player.x > 750 && player.y > 550) {
+        if(sector === 21) init("?"); else init(sector + 1);
+    }
+    draw();
+    requestAnimationFrame(loop);
+}
 
-                let i = 0;
-                const typeInterval = setInterval(() => {
-                    if(i < text.length) { box.innerHTML += text[i] === "\n" ? "<br>" : text[i]; i++; }
-                    else { clearInterval(typeInterval); btn.style.display = 'block'; }
-                }, 30);
+function draw() {
+    ctx.clearRect(0,0,800,600);
+    ctx.fillStyle = "#0f4";
+    for(let r=0; r<MAP.r; r++) for(let c=0; c<MAP.c; c++) if(maze[r][c]) ctx.fillRect(c*MAP.w, r*MAP.h, MAP.w-1, MAP.h-1);
+    ctx.fillStyle = "#0cf"; ctx.fillRect(765, 565, 30, 30);
+    
+    items.forEach(p => {
+        ctx.fillStyle = (p.type==='shd')?'#ff0':(p.type==='ox')?'#0cf':(p.type==='spd')?'#00f':'#f0f';
+        ctx.fillRect(p.x-10, p.y-10, 20, 20);
+    });
 
-                btn.onclick = () => {
-                    layer.style.display = 'none';
-                    if(type === 'gameover') location.reload();
-                    else if(type === 'victory') { localStorage.clear(); location.reload(); }
-                    else { Core.paused = false; if(!Core.player) Core.boot(false); else Core.init(Core.sector); }
-                };
-            }
-        };
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, 7); ctx.fill();
+    if(player.shd) { ctx.strokeStyle="#ff0"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(player.x,player.y,16,0,7); ctx.stroke(); }
 
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp(); if(e.code==='Escape')UI.togglePause(); };
-        window.onkeyup=e=>Core.keys[e.code]=false;
-        UI.updateLB();
-        if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
-    </script>
+    ctx.fillStyle = "#f00";
+    enemies.forEach(e => { ctx.beginPath(); ctx.arc(e.x, e.y, 12, 0, 7); ctx.fill(); });
+    
+    if(boss) {
+        ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, 7); ctx.fill();
+        ctx.fillStyle="#fff"; ctx.fillText("BOSS HP: "+boss.hp, boss.x-30, boss.y-boss.size-10);
+    }
+    ctx.fillStyle = "#fff";
+    bullets.forEach(b => ctx.fillRect(b.x, b.y, 10, 4));
+}
+
+window.onkeydown = e => {
+    keys[e.key.toLowerCase()] = true;
+    if(e.code === 'Space') { combo += "S"; shoot(); }
+    if(e.code === 'ShiftLeft') { combo += "H"; player.x += 100; player.ox -= 2; }
+    if(combo.endsWith("SHHS")) { combo = ""; init(202); }
+};
+window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+
+const jBase = document.getElementById('joy-base'), jStick = document.getElementById('joy-stick');
+jBase.addEventListener('touchstart', e => { joy.active = true; });
+jBase.addEventListener('touchmove', e => {
+    e.preventDefault(); let t = e.touches[0], rect = jBase.getBoundingClientRect();
+    let dx = t.clientX - (rect.left + 50), dy = t.clientY - (rect.top + 50);
+    let dist = Math.min(Math.hypot(dx, dy), 40), angle = Math.atan2(dy, dx);
+    joy.x = (Math.cos(angle) * dist) / 40; joy.y = (Math.sin(angle) * dist) / 40;
+    jStick.style.transform = `translate(${joy.x*40}px, ${joy.y*40}px)`;
+});
+jBase.addEventListener('touchend', () => { joy.active = false; joy.x = 0; joy.y = 0; jStick.style.transform = 'translate(0,0)'; });
+document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
+
+updateLeaderboard();
+</script>
 </body>
 </html>
