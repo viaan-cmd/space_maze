@@ -11,154 +11,102 @@
             --danger: #ff0033; 
             --gold: #ffd700; 
             --bg: #000; 
+            --glitch: #a020f0;
+            --oil: #2e0854;
         }
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { 
-            background: var(--bg); 
-            color: var(--neon); 
-            font-family: 'Courier New', monospace; 
-            margin: 0; 
-            overflow: hidden; 
-            height: 100vh; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
+            background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; 
+            margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; 
         }
-
         body::after { 
             content: " "; position: absolute; inset: 0; 
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); 
             z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; 
         }
-
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
         #game-layer { display: none; }
-
         .neon-text { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }
         .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon), inset 0 0 5px var(--neon); }
-
         #cutscene-layer { display: none; background: #000; color: var(--neon); padding: 40px; text-align: left; justify-content: flex-start; overflow: hidden; }
         #typewriter { font-size: 1.2rem; line-height: 1.6; max-width: 600px; text-shadow: 0 0 5px var(--neon); }
-
-        #hud { 
-            position: absolute; top: 0; width: 100%; padding: 20px; 
-            display: flex; justify-content: space-between; font-size: 1.2rem; 
-            z-index: 100; pointer-events: none; font-weight: bold;
-            filter: drop-shadow(0 0 8px var(--neon));
-        }
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; font-weight: bold; }
         #ox-bar-container { width: 150px; height: 12px; border: 2px solid var(--neon); margin-top: 5px; background: rgba(0,255,65,0.1); }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; box-shadow: 0 0 15px var(--neon); }
-
-        #boss-hud { 
-            position: absolute; bottom: 120px; width: 400px; height: 20px; 
-            border: 2px solid var(--danger); background: #000; display: none; z-index: 100;
-            box-shadow: 0 0 20px var(--danger);
-        }
+        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
+        #boss-hud { position: absolute; bottom: 40px; width: 80%; max-width: 500px; height: 20px; border: 2px solid var(--danger); background: #000; display: none; z-index: 100; box-shadow: 0 0 15px var(--danger); }
         #boss-bar { height: 100%; width: 100%; background: var(--danger); transition: width 0.1s; }
-
         .card { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 4px; width: 340px; text-align: center; }
-        .btn { 
-            background: #000; border: 2px solid var(--neon); color: var(--neon); 
-            padding: 15px; margin: 10px 0; cursor: pointer; width: 100%; 
-            font-family: inherit; font-weight: bold; text-transform: uppercase;
-            box-shadow: 0 0 5px var(--neon); transition: 0.2s;
-        }
-        .btn:active { background: var(--neon); color: #000; }
-
-        #leaderboard { margin-top: 10px; font-size: 0.8rem; text-align: left; width: 100%; max-height: 150px; overflow-y: auto; }
-        .lb-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding: 2px 0; }
-
-        #pause-btn { position: absolute; top: 20px; right: 20px; z-index: 600; width: 50px; pointer-events: auto; }
-
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; }
+        .admin-input { width: 100%; background: #111; border: 1px solid var(--danger); color: var(--danger); padding: 8px; margin: 5px 0; font-family: inherit; }
+        .admin-btn { border-color: var(--danger); color: var(--danger); font-size: 0.8rem; }
         #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 500; }
         .zone { position: absolute; bottom: 30px; width: 220px; height: 220px; pointer-events: auto; }
         .right { right: 20px; } .left { left: 20px; }
-        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 40px auto; position: relative; box-shadow: 0 0 20px var(--neon); background: rgba(0,255,65,0.05); }
-        #j-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 32px; left: 32px; box-shadow: 0 0 15px #fff; }
-        .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 10px; background: rgba(0,204,255,0.1); box-shadow: 0 0 15px var(--warp); }
+        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 40px auto; position: relative; }
+        #j-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 32px; left: 32px; }
+        .act-btn { width: 85px; height: 85px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 10px; }
     </style>
 </head>
 <body>
-
     <div id="ui-layer" class="layer">
-        <h1 class="neon-text" style="font-size: 3.5rem; letter-spacing: 10px;">SPACE MAZE</h1>
+        <h1 class="neon-text" style="font-size: 3rem;">SPACE MAZE</h1>
         <div class="card neon-border">
-            <input type="text" id="username" placeholder="ENTER USERNAME" style="width:100%; background:#000; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:10px; font-family:inherit;">
+            <input type="text" id="username" placeholder="ENTER USERNAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);">
             <button class="btn" onclick="UI.startCutscene()">START MISSION</button>
             <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
-            <div id="leaderboard"></div>
         </div>
     </div>
-
-    <div id="pause-layer" class="layer" style="display:none; background:rgba(0,0,0,0.8); z-index:700;">
-        <div class="card neon-border">
-            <h2 class="neon-text">PAUSED</h2>
-            <button class="btn" onclick="UI.togglePause()">RESUME</button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="location.reload()">LEAVE MISSION</button>
-        </div>
-    </div>
-
     <div id="cutscene-layer" class="layer">
         <div id="typewriter"></div>
-        <button class="btn" id="skip-btn" style="width:200px; margin-top:50px; display:none;" onclick="Core.boot(false)">PROCEED ></button>
+        <button class="btn" id="skip-btn" style="width:200px; margin-top:50px; display:none;" onclick="Core.handleCutsceneEnd()">PROCEED ></button>
     </div>
-
     <div id="admin-layer" class="layer" style="display:none; z-index:2000; background: rgba(0,0,0,0.95);">
         <div class="card neon-border" style="border-color: var(--danger);">
-            <h2 style="color:var(--danger);">ROOT_ACCESS</h2>
-            <button class="btn" onclick="Core.adminJump(202)">SKIP TO DIDDY (202)</button>
-            <button class="btn" onclick="Core.adminJump(21)">SKIP TO MANSION (21)</button>
-            <button class="btn" onclick="UI.toggleAdmin(false)">CLOSE</button>
+            <h2 style="color:var(--danger); margin-top:0;">ROOT_ACCESS</h2>
+            <input type="number" id="jump-level" placeholder="SECTOR NUMBER" class="admin-input">
+            <button class="btn admin-btn" onclick="Core.adminJump(document.getElementById('jump-level').value)">JUMP TO SECTOR</button>
+            <button class="btn admin-btn" onclick="Core.toggleInfOx()">INF OXYGEN: <span id="inf-ox-status">OFF</span></button>
+            <button class="btn admin-btn" onclick="Core.player.speedBase = 12">SPEED BOOST</button>
+            <button class="btn admin-btn" style="margin-top:20px;" onclick="UI.toggleAdmin(false)">EXIT ROOT</button>
         </div>
     </div>
-
     <div id="game-layer" class="layer">
         <div id="hud">
             <div class="neon-text">SEC: <span id="v-sec">1</span> | <span id="v-time">0</span>s</div>
-            <div>
-                OX: <span id="v-ox">100</span>%
-                <div id="ox-bar-container"><div id="ox-bar"></div></div>
-            </div>
+            <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
         </div>
-        <button id="pause-btn" class="btn" onclick="UI.togglePause()">||</button>
         <canvas id="stage"></canvas>
         <div id="boss-hud"><div id="boss-bar"></div></div>
         <div id="mobile-controls">
             <div class="zone right"><div id="j-base"><div id="j-knob"></div></div></div>
-            <div class="zone left"><div class="act-btn" onpointerdown="Core.player.warp()">WARP</div><div class="act-btn" style="border-color:var(--danger);" onpointerdown="Core.player.shoot()">FIRE</div></div>
+            <div class="zone left"><div class="act-btn" onpointerdown="Core.player.warp()">WARP</div><div class="act-btn" style="border-color:var(--danger); font-size:0.6rem; text-align:center;">AUTO AIM ON</div></div>
         </div>
     </div>
 
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
-        
         const Core = {
-            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", shake: 0, time: 0, paused: false,
+            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", time: 0, paused: false, infOx: false,
             boot(resume) {
-                const user = document.getElementById('username').value || "UNKNOWN_OP";
-                localStorage.setItem('sm_user', user);
                 document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('cutscene-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
                 this.ctx = document.getElementById('stage').getContext('2d');
-                document.getElementById('stage').width = MAP.W;
-                document.getElementById('stage').height = MAP.H;
+                document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
                 this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
                 this.run();
             },
             init(n) {
-                this.sector = n; this.active = true; this.entities = [];
+                this.sector = parseInt(n); this.active = true; this.entities = [];
                 localStorage.setItem('sm_save', n);
-                this.maze = (n === 202) ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
+                const isEmpty = (n === 202 || n === 999);
+                this.maze = isEmpty ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
-                document.getElementById('v-sec').innerText = n;
-                document.getElementById('boss-hud').style.display = (n===202) ? 'block' : 'none';
-                if(n===21) this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480));
-                else if(n===202) this.entities.push(new DiddyBoss(400, 300));
-                else {
-                    let enemyCount = Math.min(3 + Math.floor(n/10), 12);
-                    for(let i=0; i<enemyCount; i++) this.entities.push(new Enemy());
-                }
+                document.getElementById('v-sec').innerText = (n === 999) ? "???" : n;
+                document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
+                if(n === 21) { this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480)); } 
+                else if(n === 202) { this.entities.push(new DiddyBoss(400, 300)); } 
+                else if(n === 999) { this.active = false; UI.playGlitchCutscene(); } 
+                else { let count = Math.min(3 + Math.floor(n/10), 12); for(let i=0; i<count; i++) this.entities.push(new Enemy()); }
             },
             createMaze() {
                 let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
@@ -173,78 +121,94 @@
             update() {
                 if(!this.active || this.paused) return;
                 this.time += 1/60; document.getElementById('v-time').innerText = Math.floor(this.time);
-                if(this.shake > 0) this.shake--;
                 this.player.tick();
                 for(let i=this.entities.length-1; i>=0; i--) {
                     this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
                 if(this.player.x > MAP.W-45 && this.player.y > MAP.H-45) {
-                    if(this.sector===21 && this.player.invites < 3) return;
-                    if(this.sector===202 && this.entities.some(e => e instanceof DiddyBoss)) return; 
-                    UI.saveScore(); this.init(this.sector + 1);
+                    if(this.sector === 21 && this.player.invites < 3) return;
+                    if(this.sector === 21) this.init(999);
+                    else if(this.sector === 202 && this.entities.some(e=>e instanceof DiddyBoss)) return;
+                    else this.init(this.sector + 1);
                 }
             },
             draw() {
-                this.ctx.save();
-                if(this.shake > 0) this.ctx.translate(Math.random()*10-5, Math.random()*10-5);
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.ctx.shadowBlur = 18;
-                this.ctx.shadowColor = (this.sector===21) ? "#500050" : "#00ff41";
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = (this.sector === 21) ? "#500050" : (this.sector === 999 ? "#a020f0" : "#00ff41");
                 this.ctx.fillStyle = this.ctx.shadowColor;
-                for(let r=0; r<MAP.R; r++) {
-                    for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+2, r*MAP.TH+2, MAP.TW-4, MAP.TH-4);
-                }
-                this.ctx.fillStyle = (this.sector===21 && this.player.invites < 3) ? "#222" : "#0cf";
-                this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                this.entities.forEach(e => e.draw(this.ctx));
-                this.player.draw(this.ctx);
-                this.ctx.restore();
+                for(let r=0; r<MAP.R; r++) { for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2); }
+                this.ctx.fillStyle = "#0cf"; this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
+                this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
             },
             run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
-            registerAction(a) {
-                this.cheatSeq += a; if(this.cheatSeq.slice(-4) === "SWWS") UI.toggleAdmin(true);
-            },
-            adminJump(v) { this.init(v); UI.toggleAdmin(false); }
+            adminJump(v) { if(v) { this.init(parseInt(v)); UI.toggleAdmin(false); } },
+            toggleInfOx() { this.infOx = !this.infOx; document.getElementById('inf-ox-status').innerText = this.infOx ? "ON" : "OFF"; },
+            handleCutsceneEnd() { if(this.sector === 999) this.init(22); else this.boot(false); }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.speed=5.5; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.invites=0; this.speedBase=5.5; this.speed=5.5; this.cd=0; }
             tick() {
-                let mx=0, my=0;
+                let mx=0, my=0; this.speed = this.speedBase;
+                // Check Oil contact
+                Core.entities.forEach(e => { if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) this.speed = 1.5; });
                 if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
                 if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
-                this.ox -= 0.035; if(this.ox <= 0) Core.init(Core.sector);
-                document.getElementById('v-ox').innerText = Math.floor(this.ox);
+                if(this.cd > 0) this.cd--;
+                if(this.cd <= 0) {
+                    let target = Core.entities.find(e => (e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(e.x-this.x, e.y-this.y) < 350);
+                    if(target) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(target.y-this.y, target.x-this.x), "#fff", true)); if(!Core.infOx) this.ox -= 0.8; this.cd = 18; }
+                }
+                if(!Core.infOx) this.ox -= 0.035; if(this.ox <= 0) Core.init(Core.sector);
+                document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
                 document.getElementById('ox-bar').style.width = Math.min(100, this.ox)+"%";
             }
-            isW(x,y) { 
-                if (x < 0 || x > MAP.W || y < 0 || y > MAP.H) return true;
-                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
-                return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; 
-            }
-            draw(ctx) { ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
-            shoot() { if(this.ox > 4) { Core.entities.push(new Bullet(this.x, this.y)); this.ox -= 4; Core.registerAction('S'); } }
-            warp() { if(this.ox > 15) { this.x += 130; this.ox-=15; Core.registerAction('W'); } }
+            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
+            draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
+            warp() { if(this.ox > 15 || Core.infOx) { this.x += 130; if(!Core.infOx) this.ox-=15; Core.cheatSeq += "W"; if(Core.cheatSeq.slice(-4)==="WWWW") UI.toggleAdmin(true); } }
         }
 
         class Bullet {
-            constructor(x,y) { this.x=x; this.y=y; this.vx=15; this.vy=0; }
-            tick() { this.x+=this.vx; if(Core.player.isW(this.x,this.y)) this.dead=true; Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<25){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } }); }
-            draw(ctx) { ctx.fillStyle="#fff"; ctx.fillRect(this.x-3,this.y-3,6,6); }
+            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*10; this.vy=Math.sin(a)*10; this.c=c; this.isPlayer=p; }
+            tick() { 
+                this.x+=this.vx; this.y+=this.vy; 
+                if(Core.player.isW(this.x,this.y)) this.dead=true;
+                if(this.isPlayer) {
+                    Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<30){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } });
+                } else {
+                    if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y) < 15) Core.init(Core.sector);
+                }
+            }
+            draw(ctx) { ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-3,this.y-3,6,6); }
+        }
+
+        class Oil {
+            constructor(x,y) { this.x=x; this.y=y; this.r=45; this.life=400; }
+            tick() { this.life--; if(this.life<=0) this.dead=true; }
+            draw(ctx) { ctx.shadowBlur=0; ctx.fillStyle="rgba(46, 8, 84, 0.6)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); }
         }
 
         class DiddyBoss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=30; this.maxHp=30; this.vx=5; this.vy=5; this.rad=40; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(this.x-this.rad<0 || this.x+this.rad>MAP.W) this.vx*=-1; if(this.y-this.rad<0 || this.y+this.rad>MAP.H) this.vy*=-1; document.getElementById('boss-bar').style.width = (this.hp/this.maxHp*100) + "%"; if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<this.rad) Core.init(Core.sector); }
-            draw(ctx) { ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,this.rad,0,Math.PI*2); ctx.fill(); }
+            constructor(x,y) { this.x=x; this.y=y; this.hp=120; this.max=120; this.vx=3.5; this.vy=3.5; this.oilCd=100; this.shootCd=90; }
+            tick() {
+                this.x+=this.vx; this.y+=this.vy; if(this.x<50 || this.x>MAP.W-50) this.vx*=-1; if(this.y<50 || this.y>MAP.H-50) this.vy*=-1;
+                // Spill Oil
+                this.oilCd--; if(this.oilCd<=0) { Core.entities.push(new Oil(this.x, this.y)); this.oilCd=120; }
+                // Shoot Player
+                this.shootCd--; if(this.shootCd<=0) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(Core.player.y-this.y, Core.player.x-this.x), "#a020f0", false)); this.shootCd=80; }
+                document.getElementById('boss-bar').style.width = (this.hp/this.max*100) + "%";
+                if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45) Core.init(Core.sector);
+            }
+            draw(ctx) { ctx.shadowColor="#a020f0"; ctx.shadowBlur=25; ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); }
         }
 
         class Enemy {
-            constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; }
+            constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; }
             tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<20) Core.init(Core.sector); }
             draw(ctx) { ctx.fillStyle="var(--danger)"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
         }
@@ -252,43 +216,20 @@
         class Invite { constructor(x,y){this.x=x;this.y=y;} tick(){ if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<30){Core.player.invites++; this.dead=true;} } draw(ctx){ctx.fillStyle="var(--gold)"; ctx.beginPath(); ctx.arc(this.x,this.y,15,0,Math.PI*2); ctx.fill();} }
 
         const UI = {
-            setDev(d) { document.getElementById('mobile-controls').style.display = d==='mobile' ? 'block' : 'none'; },
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; },
-            togglePause() { Core.paused = !Core.paused; document.getElementById('pause-layer').style.display = Core.paused?'flex':'none'; },
-            saveScore() {
-                let lb = JSON.parse(localStorage.getItem('sm_lb') || "[]");
-                const user = localStorage.getItem('sm_user');
-                lb.push({user, sec: Core.sector, time: Math.floor(Core.time)});
-                lb.sort((a,b) => b.sec - a.sec || a.time - b.time);
-                localStorage.setItem('sm_lb', JSON.stringify(lb.slice(0,10)));
-                this.updateLB();
-            },
-            updateLB() {
-                let lb = JSON.parse(localStorage.getItem('sm_lb') || "[]");
-                document.getElementById('leaderboard').innerHTML = "<b>LEADERBOARD:</b>" + lb.map(i => `<div class='lb-row'><span>${i.user}</span><span>S${i.sec} | ${i.time}s</span></div>`).join('');
-            },
-            startCutscene() {
-                document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('cutscene-layer').style.display = 'flex';
-                const text = "> INCOMING TRANSMISSION...\n> MISSION: INFILTRATE SECTOR 1-202.\n> OBJECTIVE A: RECOVER 3 MANSION INVITES IN SECTOR 21.\n> OBJECTIVE B: ELIMINATE TARGET 'DIDDY' IN SECTOR 202.\n> WARNING: OXYGEN DEPLETES ON EVERY ACTION.\n> SHOOT (SPACE) AND WARP (SHIFT) TO SURVIVE.\n> GOOD LUCK, OPERATIVE.";
-                let i = 0; const container = document.getElementById('typewriter');
-                function type() {
-                    if (i < text.length) { container.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i); i++; setTimeout(type, 35); }
-                    else { document.getElementById('skip-btn').style.display = 'block'; }
-                }
-                type();
+            startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> MISSION START: SECTOR 1\n> OBJECTIVE: REACH SECTOR 202\n> CAUTION: OIL SLICKS DETECTED NEAR BOSS SIGHTINGS"); },
+            playGlitchCutscene() { document.getElementById('game-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; document.getElementById('typewriter').style.color = "var(--glitch)"; this.type("CRITICAL ERROR: BYPASSING SECTOR...\n\n[DIDDY]: See you at sector 202... I hope you like oil."); },
+            type(t) {
+                let i = 0; const c = document.getElementById('typewriter'); c.innerHTML = ""; document.getElementById('skip-btn').style.display = 'none';
+                const f = () => { if(i < t.length) { c.innerHTML += t[i]==='\n'?'<br>':t[i]; i++; setTimeout(f, 40); } else document.getElementById('skip-btn').style.display = 'block'; }; f();
             }
         };
 
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp(); if(e.code==='Escape')UI.togglePause(); };
+        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='ShiftLeft')Core.player.warp(); };
         window.onkeyup=e=>Core.keys[e.code]=false;
-        let joyOn=false, joyV={x:0,y:0};
-        const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.onpointerdown=e=>{joyOn=true;};
-        window.onpointermove=e=>{ if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),50), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
+        let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
+        jB.onpointerdown=()=>{joyOn=true;}; window.onpointermove=e=>{ if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),50), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
         window.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
-        UI.updateLB();
-        if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
     </script>
 </body>
 </html>
