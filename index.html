@@ -3,101 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE: THE FINAL BUILD</title>
+    <title>SPACE MAZE: GOD EDITION</title>
     <style>
         body { background: #000; color: #0f4; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; touch-action: none; }
         canvas { background: #000; display: block; margin: auto; border: 2px solid #0f4; max-width: 100vw; max-height: 80vh; }
-        
-        /* UI Overlays */
         #ui-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
-        .menu-box { pointer-events: auto; background: rgba(0,20,0,0.95); border: 3px solid #0f4; padding: 20px; text-align: center; box-shadow: 0 0 20px #0f4; border-radius: 8px; max-width: 400px; width: 90%; }
-        
-        input { background: #000; color: #0f4; border: 1px solid #0f4; padding: 10px; margin: 10px 0; text-align: center; width: 80%; font-family: inherit; font-weight: bold; }
-        button { background: transparent; color: #0f4; border: 2px solid #0f4; padding: 10px 20px; font-weight: bold; cursor: pointer; margin: 5px; font-family: inherit; transition: 0.2s; }
+        .menu-box { pointer-events: auto; background: rgba(0,20,0,0.95); border: 3px solid #0f4; padding: 20px; text-align: center; box-shadow: 0 0 20px #0f4; border-radius: 8px; width: 90%; max-width: 400px; }
+        input { background: #000; color: #0f4; border: 1px solid #0f4; padding: 10px; margin: 10px 0; text-align: center; width: 80%; }
+        button { background: transparent; color: #0f4; border: 2px solid #0f4; padding: 10px 20px; font-weight: bold; cursor: pointer; margin: 5px; }
         button:hover, button.active { background: #0f4; color: #000; }
-        
-        /* Leaderboard */
-        #leaderboard { margin-top: 15px; font-size: 0.9rem; border-top: 1px dashed #0f4; padding-top: 10px; text-align: left; }
-        
-        /* HUD & Boss Bar */
-        #stats { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 1.2rem; pointer-events: none; z-index: 10; text-shadow: 2px 2px 0 #000; }
+        #stats { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 1.2rem; z-index: 10; text-shadow: 2px 2px 0 #000; }
         #boss-bar-container { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 300px; height: 20px; border: 2px solid #800080; display: none; background: #000; z-index: 10; }
-        #boss-bar { width: 100%; height: 100%; background: #800080; transition: width 0.1s; }
-        #boss-name { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 0.8rem; line-height: 20px; z-index: 11; pointer-events: none; }
-
-        /* Admin Panel */
-        #admin-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; background: rgba(0,0,0,0.95); border: 3px solid #f0f; padding: 20px; z-index: 1000; display: none; text-align: center; pointer-events: auto; }
-        .admin-btn { width: 45%; font-size: 0.8rem; padding: 8px 5px; border-color: #f0f; color: #f0f; }
-        .admin-btn:hover { background: #f0f; color: #000; }
-
-        /* Mobile Controls */
-        #mobile-controls { position: absolute; bottom: 15px; width: 100%; display: none; justify-content: space-between; padding: 0 20px; box-sizing: border-box; pointer-events: none; z-index: 20; }
-        .dpad { display: grid; grid-template-columns: repeat(3, 55px); gap: 5px; }
-        .m-btn { width: 55px; height: 55px; border: 2px solid #0f4; background: rgba(0,255,0,0.1); color: #0f4; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; pointer-events: auto; user-select: none; border-radius: 8px; }
-        .m-btn:active { background: #0f4; color: #000; }
-        
-        .action-btns { display: flex; flex-direction: column; gap: 10px; }
-        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center; font-weight: bold; pointer-events: auto; user-select: none; background: rgba(0,0,0,0.5); }
+        #boss-bar { width: 100%; height: 100%; background: #800080; }
+        #admin-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; background: rgba(0,0,0,0.98); border: 3px solid #f0f; padding: 20px; z-index: 1000; display: none; text-align: center; pointer-events: auto; }
+        #mobile-controls { position: absolute; bottom: 15px; width: 100%; display: none; justify-content: space-between; padding: 0 20px; box-sizing: border-box; pointer-events: none; }
+        .m-btn { width: 55px; height: 55px; border: 2px solid #0f4; background: rgba(0,255,0,0.1); color: #0f4; display: flex; align-items: center; justify-content: center; pointer-events: auto; border-radius: 8px; }
+        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center; font-weight: bold; pointer-events: auto; }
     </style>
 </head>
 <body>
 
 <div id="stats">SEC: <span id="s-val">1</span> | <span id="u-val">PILOT</span> | O2: <span id="o-val">100</span>%</div>
-<div id="boss-bar-container"><div id="boss-bar"></div><div id="boss-name">DIDDY</div></div>
+<div id="boss-bar-container"><div id="boss-bar"></div></div>
 
 <div id="ui-layer">
     <div id="main-menu" class="menu-box">
-        <h1 style="font-size: 2.2rem; margin-top:0; text-shadow: 0 0 10px #0f4;">SPACE MAZE</h1>
+        <h1>SPACE MAZE</h1>
         <input type="text" id="userIn" placeholder="ENTER PILOT NAME">
-        
-        <div style="margin: 15px 0;">
+        <div>
             <button id="btn-pc" class="active" onclick="selectMode('pc')">PC</button>
             <button id="btn-mob" onclick="selectMode('mobile')">MOBILE</button>
         </div>
-        
-        <button style="width: 100%; font-size: 1.2rem; background: #0f4; color: #000;" onclick="startGame()">LAUNCH MISSION</button>
-        
-        <div id="leaderboard">
-            <strong>TOP PILOTS (LOCAL)</strong>
-            <div id="lb-list">No records yet.</div>
-        </div>
+        <button style="width:100%; background:#0f4; color:#000;" onclick="startGame()">START</button>
     </div>
-
-    <div id="death-screen" class="menu-box" style="display:none; border-color: red; box-shadow: 0 0 20px red;">
-        <h1 style="color:red; margin-top:0;">MISSION FAILED</h1>
-        <p id="death-reason" style="color:white;"></p>
-        <button style="border-color:red; color:red;" onclick="retrySector()">RETRY SECTOR</button>
+    <div id="death-screen" class="menu-box" style="display:none; border-color: red;">
+        <h1 style="color:red;">MISSION FAILED</h1>
+        <button onclick="retrySector()">RETRY SECTOR</button>
     </div>
-
     <div id="pause-screen" class="menu-box" style="display:none; border-color: yellow;">
-        <h1 style="color:yellow; margin-top:0;">SYSTEM PAUSED</h1>
-        <button style="border-color:yellow; color:yellow;" onclick="togglePause()">RESUME</button>
+        <h1>PAUSED</h1>
+        <button onclick="togglePause()">RESUME</button>
     </div>
 </div>
 
 <div id="admin-panel">
-    <h3 style="color:#f0f; margin-top:0;">ADMIN CONSOLE</h3>
-    <input type="number" id="skipIn" placeholder="Sector #" style="border-color:#f0f; color:#f0f;">
-    <button class="admin-btn" style="width:90%" onclick="warpLevel()">WARP</button>
-    <br><br>
-    <button class="admin-btn" onclick="p.shd=true">SHIELD</button>
-    <button class="admin-btn" onclick="p.spd=8">SPEED</button>
-    <button class="admin-btn" onclick="p.rpd=true">RAPID FIRE</button>
-    <button class="admin-btn" id="infBtn" onclick="toggleO2()">INF O2: OFF</button>
-    <br><br>
-    <button style="background:red; color:white; border:none; padding:8px 20px;" onclick="closeAdmin()">CLOSE</button>
+    <h3 style="color:#f0f;">ADMIN CONSOLE</h3>
+    <input type="number" id="skipIn" placeholder="Sector #">
+    <button onclick="warpLevel()">WARP</button>
+    <button onclick="p.shd=true">SHIELD</button>
+    <button onclick="p.rpd=true">RAPID FIRE</button>
+    <button onclick="infO2=!infO2">INF O2</button>
+    <button style="background:red; color:white;" onclick="closeAdmin()">CLOSE</button>
 </div>
 
 <div id="mobile-controls">
-    <div class="dpad">
-        <div></div>
-        <div class="m-btn" ontouchstart="keys.w=1" ontouchend="keys.w=0">↑</div>
-        <div></div>
+    <div style="display:grid; grid-template-columns: repeat(3, 55px); gap: 5px;">
+        <div class="m-btn" style="grid-column:2" ontouchstart="keys.w=1" ontouchend="keys.w=0">↑</div>
         <div class="m-btn" ontouchstart="keys.a=1" ontouchend="keys.a=0">←</div>
         <div class="m-btn" ontouchstart="keys.s=1" ontouchend="keys.s=0">↓</div>
         <div class="m-btn" ontouchstart="keys.d=1" ontouchend="keys.d=0">→</div>
     </div>
-    <div class="action-btns">
+    <div style="display:flex; flex-direction:column; gap:10px;">
         <div class="act-btn" style="border-color:#0cf; color:#0cf;" ontouchstart="warp()">WARP</div>
         <div class="act-btn" style="border-color:#f00; color:#f00;" ontouchstart="shoot()">FIRE</div>
     </div>
@@ -108,301 +74,100 @@
 <script>
 const cvs = document.getElementById('c'), ctx = cvs.getContext('2d');
 const ROWS = 13, COLS = 19, CW = 800/COLS, CH = 600/ROWS;
-
-// Game State
 let sec = 1, p, ens = [], bult = [], maze = [], items = [], boss = null;
-let keys = {}, combo = "", user = "PILOT", paused = false, infO2 = false, alive = false;
+let keys = {}, combo = "", user = "PILOT", paused = false, infO2 = false, alive = false, shootTimer = 0;
 let playMode = 'pc';
-let leaderboard = JSON.parse(localStorage.getItem('spaceMazeLB')) || [];
 
-// Initialization & Menus
-function updateLeaderboardUI() {
-    let html = "";
-    leaderboard.sort((a,b) => b.sec - a.sec).slice(0,5).forEach((entry, i) => {
-        html += `${i+1}. ${entry.name} - Sec ${entry.sec}<br>`;
-    });
-    if(html) document.getElementById('lb-list').innerHTML = html;
-}
-updateLeaderboardUI();
+function selectMode(m) { playMode = m; document.getElementById('btn-pc').className = m==='pc'?'active':''; document.getElementById('btn-mob').className = m==='mobile'?'active':''; }
+function startGame() { user = document.getElementById('userIn').value.toUpperCase() || "PILOT"; document.getElementById('u-val').innerText = user; document.getElementById('main-menu').style.display = 'none'; if(playMode === 'mobile') document.getElementById('mobile-controls').style.display = 'flex'; alive = true; loadSector(1); requestAnimationFrame(loop); }
+function getOpenSpot() { let r, c; do { r = Math.floor(Math.random()*ROWS); c = Math.floor(Math.random()*COLS); } while (maze[r][c]===1 || (r<2 && c<2)); return {x:(c*CW)+(CW/2), y:(r*CH)+(CH/2)}; }
 
-function saveScore() {
-    let existing = leaderboard.find(e => e.name === user);
-    if(existing) { if(sec > existing.sec) existing.sec = sec; } 
-    else { leaderboard.push({name: user, sec: sec}); }
-    localStorage.setItem('spaceMazeLB', JSON.stringify(leaderboard));
-    updateLeaderboardUI();
-}
-
-function selectMode(m) {
-    playMode = m;
-    document.getElementById('btn-pc').className = m === 'pc' ? 'active' : '';
-    document.getElementById('btn-mob').className = m === 'mobile' ? 'active' : '';
-}
-
-function startGame() {
-    let inputName = document.getElementById('userIn').value.trim();
-    if(inputName) user = inputName.toUpperCase();
-    document.getElementById('u-val').innerText = user;
-    
-    document.getElementById('main-menu').style.display = 'none';
-    if(playMode === 'mobile') document.getElementById('mobile-controls').style.display = 'flex';
-    
-    alive = true;
-    loadSector(1);
-    requestAnimationFrame(loop);
-}
-
-// Helper to find an open floor tile for spawning
-function getOpenSpot() {
-    let r, c;
-    do {
-        r = Math.floor(Math.random() * ROWS);
-        c = Math.floor(Math.random() * COLS);
-    } while (maze[r][c] === 1 || (r === 0 && c === 0)); // Don't spawn exactly on top of player's start (0,0)
-    return { x: (c * CW) + (CW / 2), y: (r * CH) + (CH / 2) };
-}
-
-// Level Generation
 function loadSector(n) {
     sec = n; ens = []; bult = []; items = []; boss = null;
     document.getElementById('s-val').innerText = n;
-    document.getElementById('boss-bar-container').style.display = 'none';
-    saveScore();
-
+    document.getElementById('boss-bar-container').style.display = n==202?'block':'none';
     maze = Array.from({length: ROWS}, () => Array(COLS).fill(1));
-    p = {x: CW/2, y: CH/2, ox: 100, spd: 4, shd: false, rpd: false}; // Force player start at top left open cell
+    p = {x: CW/2, y: CH/2, ox: 100, spd: 4, shd: false, rpd: false};
 
-    if(n === 21) {
-        // Sector 21: Mansion / Story
-        maze = maze.map(r => r.fill(0));
-        p.x = 400; p.y = 500;
-        paused = true;
-        setTimeout(() => {
-            alert(`DIDDY: "I've been watching you, ${user}..."`);
-            paused = false;
-        }, 500);
-        // Portal to next
-        items.push({x: 400, y: 100, type: 'portal'});
-    } 
-    else if(n === 202) {
-        // Sector 202: The Boss Room
-        maze = maze.map(r => r.fill(0));
-        p.x = 400; p.y = 500;
-        boss = {x: 400, y: 150, hp: 500, maxHp: 500, size: 40};
-        document.getElementById('boss-bar-container').style.display = 'block';
-    } 
-    else {
-        // Normal Mazes
-        genMaze(0,0);
-        
-        // Guarantee the exit area is open
-        maze[ROWS-1][COLS-1] = 0;
-        maze[ROWS-1][COLS-2] = 0;
-        maze[ROWS-2][COLS-1] = 0;
-
-        let enemyCount = Math.min(3 + n, 15);
-        for(let i=0; i<enemyCount; i++) {
-            let spot = getOpenSpot();
-            ens.push({x: spot.x, y: spot.y, dx: 3, dy: 3});
-        }
-        
-        // Spawn Random Powerups in open spots
-        let pTypes = ['shd', 'ox', 'spd', 'rpd'];
-        pTypes.forEach(t => {
-            if(Math.random() > 0.3) {
-                let spot = getOpenSpot();
-                items.push({x: spot.x, y: spot.y, type: t});
-            }
-        });
+    if(n === 21) { 
+        maze = maze.map(r => r.fill(0)); p.x=400; p.y=500; paused=true; 
+        setTimeout(() => { alert(`DIDDY: "I've been watching you, ${user}..."`); paused=false; }, 500); 
+        items.push({x:400, y:100, type:'portal'});
+    } else if(n === 202) { 
+        maze = maze.map(r => r.fill(0)); p.x=400; p.y=500; boss={x:400, y:150, hp:500, maxHp:500, size:40};
+    } else {
+        genMaze(0,0); maze[ROWS-1][COLS-1]=0; 
+        for(let i=0; i<Math.min(3+n, 12); i++) { let s=getOpenSpot(); ens.push({x:s.x, y:s.y, dx:3, dy:3}); }
+        ['shd','ox','spd','rpd'].forEach(t => { if(Math.random()>0.3){ let s=getOpenSpot(); items.push({x:s.x, y:s.y, type:t}); }});
     }
 }
 
-function genMaze(r, c) {
-    maze[r][c] = 0;
-    let ds = [[0,2],[0,-2],[2,0],[-2,0]].sort(()=>Math.random()-0.5);
-    ds.forEach(([dr, dc]) => {
-        let nr=r+dr, nc=c+dc;
-        if(nr>=0 && nr<ROWS && nc>=0 && nc<COLS && maze[nr][nc]===1) {
-            maze[r+dr/2][c+dc/2]=0; genMaze(nr, nc);
-        }
-    });
-}
+function genMaze(r, c) { maze[r][c]=0; let ds=[[0,2],[0,-2],[2,0],[-2,0]].sort(()=>Math.random()-0.5); ds.forEach(([dr, dc]) => { let nr=r+dr, nc=c+dc; if(nr>=0 && nr<ROWS && nc>=0 && nc<COLS && maze[nr][nc]===1){ maze[r+dr/2][c+dc/2]=0; genMaze(nr, nc); } }); }
+function isWall(x, y) { let r=Math.floor(y/CH), c=Math.floor(x/CW); return (r<0||r>=ROWS||c<0||c>=COLS||maze[r][c]===1); }
+function shoot() { bult.push({x:p.x, y:p.y, dx:12}); if(p.rpd){ bult.push({x:p.x, y:p.y-15, dx:12}); bult.push({x:p.x, y:p.y+15, dx:12}); } }
+function warp() { let nx=p.x+100; if(!isWall(nx, p.y)){ p.x=nx; if(!infO2) p.ox-=5; } }
+function die() { alive=false; document.getElementById('death-screen').style.display='block'; }
+function retrySector() { document.getElementById('death-screen').style.display='none'; alive=true; loadSector(sec); }
+function togglePause() { if(!alive) return; paused=!paused; document.getElementById('pause-screen').style.display=paused?'block':'none'; }
+function openAdmin() { paused=true; document.getElementById('admin-panel').style.display='block'; }
+function closeAdmin() { paused=false; document.getElementById('admin-panel').style.display='none'; }
+function warpLevel() { let lv=document.getElementById('skipIn').value; if(lv){ loadSector(parseInt(lv)); closeAdmin(); } }
 
-// Logic & Controls
-function isWall(x, y) { 
-    let r = Math.floor(y/CH), c = Math.floor(x/CW); 
-    return (r<0 || r>=ROWS || c<0 || c>=COLS || maze[r][c]===1); 
-}
-
-function shoot() {
-    if(!alive || paused) return;
-    bult.push({x: p.x, y: p.y, dx: 12});
-    if(p.rpd) { bult.push({x: p.x, y: p.y-15, dx: 12}); bult.push({x: p.x, y: p.y+15, dx: 12}); }
-}
-
-function warp() {
-    if(!alive || paused) return;
-    let nx = p.x + 100;
-    if(!isWall(nx, p.y)) { p.x = nx; if(!infO2) p.ox -= 5; }
-}
-
-function die(reason) {
-    alive = false;
-    document.getElementById('death-reason').innerText = reason;
-    document.getElementById('death-screen').style.display = 'block';
-}
-
-function retrySector() {
-    document.getElementById('death-screen').style.display = 'none';
-    alive = true;
-    loadSector(sec);
-}
-
-function togglePause() {
-    if(!alive) return;
-    paused = !paused;
-    document.getElementById('pause-screen').style.display = paused ? 'block' : 'none';
-}
-
-// Admin Logic
-function openAdmin() { paused = true; document.getElementById('admin-panel').style.display = 'block'; }
-function closeAdmin() { paused = false; document.getElementById('admin-panel').style.display = 'none'; }
-function warpLevel() { let lv = document.getElementById('skipIn').value; if(lv) { loadSector(parseInt(lv)); closeAdmin(); } }
-function toggleO2() { infO2 = !infO2; document.getElementById('infBtn').innerText = "INF O2: " + (infO2 ? "ON" : "OFF"); p.ox = 100; }
-
-// Input Handling
-window.onkeydown = e => {
-    let k = e.key.toLowerCase();
-    keys[k] = 1;
-    
-    // Gameplay actions
-    if(e.code === 'Space') shoot();
-    if(e.code === 'ShiftLeft' || e.code === 'ShiftRight') warp();
-    if(k === 'p') togglePause();
-
-    // Admin Combo: Space, Shift, Shift, Space
-    if(e.code === 'Space') combo += "S";
-    else if(e.code.includes('Shift')) combo += "H";
-    else combo = ""; 
-    
-    if(combo.endsWith("SHHS")) { combo = ""; openAdmin(); }
-};
+window.onkeydown = e => { keys[e.key.toLowerCase()] = 1; if(e.code==='Space') shoot(); if(e.code.includes('Shift')) warp(); if(e.key==='p') togglePause(); if(e.code==='Space') combo+="S"; else if(e.code.includes('Shift')) combo+="H"; else combo=""; if(combo.endsWith("SHHS")){ combo=""; openAdmin(); } };
 window.onkeyup = e => keys[e.key.toLowerCase()] = 0;
 
-// Main Loop
 function loop() {
     if(alive && !paused) {
-        // Player Move
         if((keys.w||keys.arrowup) && !isWall(p.x, p.y-p.spd)) p.y-=p.spd;
         if((keys.s||keys.arrowdown) && !isWall(p.x, p.y+p.spd)) p.y+=p.spd;
         if((keys.a||keys.arrowleft) && !isWall(p.x-p.spd, p.y)) p.x-=p.spd;
         if((keys.d||keys.arrowright) && !isWall(p.x+p.spd, p.y)) p.x+=p.spd;
 
-        // Enemy Move & Collision
+        if(p.rpd) { shootTimer++; if(shootTimer > 10) { shoot(); shootTimer = 0; } }
+
         ens.forEach(e => {
             if(!isWall(e.x+e.dx, e.y)) e.x+=e.dx; else e.dx*=-1;
             if(!isWall(e.x, e.y+e.dy)) e.y+=e.dy; else e.dy*=-1;
-            
-            if(Math.hypot(p.x-e.x, p.y-e.y) < 20) {
-                if(p.shd) { p.shd = false; e.x = -1000; } 
-                else die("KILLED BY VIRUS");
-            }
+            if(Math.hypot(p.x-e.x, p.y-e.y)<20){ if(p.shd){ p.shd=false; e.x=-1000; } else die(); }
         });
 
-        // Boss Logic (Purple Diddy)
         if(boss) {
-            let dx = p.x - boss.x, dy = p.y - boss.y, dist = Math.hypot(dx, dy);
-            boss.x += (dx/dist) * 2; // Aggressive tracking
-            boss.y += (dy/dist) * 2;
-            
-            if(dist < boss.size + 10) {
-                if(p.shd) { p.shd = false; p.x -= dx; p.y -= dy; } // Bounce back
-                else die("CAUGHT BY DIDDY");
-            }
-            
-            // Update Boss UI Bar
-            document.getElementById('boss-bar').style.width = Math.max(0, (boss.hp/boss.maxHp)*100) + "%";
-            
-            if(boss.hp <= 0) {
-                alert("MISSION ACCOMPLISHED. THE VIRUS IS DEFEATED.");
-                location.reload(); // Full win resets game
-            }
+            let dx=p.x-boss.x, dy=p.y-boss.y, dist=Math.hypot(dx,dy);
+            boss.x+=(dx/dist)*2; boss.y+=(dy/dist)*2;
+            if(dist<boss.size+10) die();
+            document.getElementById('boss-bar').style.width=(boss.hp/boss.maxHp)*100+"%";
+            if(boss.hp<=0){ alert("DEFEATED"); location.reload(); }
         }
 
-        // Bullets
         bult = bult.filter(b => {
-            b.x += b.dx;
-            let hit = false;
-            // Hit enemies
-            ens.forEach((e,i) => { if(Math.hypot(b.x-e.x, b.y-e.y)<20) { ens.splice(i,1); hit = true; }});
-            // Hit boss
-            if(boss && Math.hypot(b.x-boss.x, b.y-boss.y) < boss.size) { boss.hp -= 5; hit = true; }
-            
-            return !hit && !isWall(b.x, b.y) && b.x < 800;
+            b.x+=b.dx; let hit=false;
+            ens.forEach((e,i)=>{ if(Math.hypot(b.x-e.x, b.y-e.y)<20){ ens.splice(i,1); hit=true; }});
+            if(boss && Math.hypot(b.x-boss.x, b.y-boss.y)<boss.size){ boss.hp-=5; hit=true; }
+            return !hit && !isWall(b.x, b.y) && b.x<800;
         });
 
-        // Items Collection
         items = items.filter(it => {
-            if(Math.hypot(p.x-it.x, p.y-it.y) < 25) {
-                if(it.type === 'shd') p.shd = true;
-                if(it.type === 'ox') p.ox = 100;
-                if(it.type === 'spd') p.spd = 7;
-                if(it.type === 'rpd') p.rpd = true;
-                if(it.type === 'portal') loadSector(sec + 1);
+            if(Math.hypot(p.x-it.x, p.y-it.y)<25){
+                if(it.type==='shd') p.shd=true; if(it.type==='ox') p.ox=100;
+                if(it.type==='spd') p.spd=7; if(it.type==='rpd') p.rpd=true;
+                if(it.type==='portal') loadSector(sec+1);
                 return false;
-            }
-            return true;
+            } return true;
         });
 
-        // Exit Portal (Bottom Right)
-        if(sec !== 21 && sec !== 202 && p.x > 760 && p.y > 560) loadSector(sec+1);
-
-        // Oxygen Mechanic
-        if(!infO2) p.ox -= 0.04;
-        document.getElementById('o-val').innerText = Math.max(0, Math.floor(p.ox));
-        if(p.ox <= 0) die("OXYGEN DEPLETED");
+        if(sec!==21 && sec!==202 && p.x>760 && p.y>560) loadSector(sec+1);
+        if(!infO2) p.ox-=0.04; document.getElementById('o-val').innerText=Math.max(0, Math.floor(p.ox));
+        if(p.ox<=0) die();
     }
-    
-    // Rendering
-    ctx.clearRect(0,0,800,600);
-    
-    // Draw Maze (Neon Green)
-    ctx.fillStyle="#0f4";
+    ctx.clearRect(0,0,800,600); ctx.fillStyle="#0f4";
     for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(maze[r][c]) ctx.fillRect(c*CW, r*CH, CW-1, CH-1);
-    
-    // Draw Exit Box (Cyan)
-    if(sec !== 21 && sec !== 202) { ctx.fillStyle="#0cf"; ctx.fillRect(760, 560, 30, 30); }
-    
-    // Draw Items
-    items.forEach(it => {
-        if(it.type === 'shd') ctx.fillStyle = '#ff0'; // Yellow
-        else if(it.type === 'ox') ctx.fillStyle = '#0cf'; // Cyan
-        else if(it.type === 'spd') ctx.fillStyle = '#00f'; // Blue
-        else if(it.type === 'rpd') ctx.fillStyle = '#f0f'; // Purple/Pink
-        else if(it.type === 'portal') ctx.fillStyle = '#fff';
-        ctx.fillRect(it.x-10, it.y-10, 20, 20);
-    });
-    
-    // Draw Player (White)
+    if(sec<21) { ctx.fillStyle="#0cf"; ctx.fillRect(760, 560, 30, 30); }
+    items.forEach(it => { ctx.fillStyle=it.type==='shd'?'#ff0':it.type==='ox'?'#0cf':it.type==='spd'?'#00f':it.type==='rpd'?'#f0f':'#fff'; ctx.fillRect(it.x-10, it.y-10, 20, 20); });
     ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill();
-    if(p.shd) { ctx.strokeStyle="#ff0"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x, p.y, 16, 0, 7); ctx.stroke(); }
-    
-    // Draw Enemies (Red)
+    if(p.shd){ ctx.strokeStyle="#ff0"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x, p.y, 16, 0, 7); ctx.stroke(); }
     ctx.fillStyle="#f00"; ens.forEach(e=>{ ctx.beginPath(); ctx.arc(e.x, e.y, 12, 0, 7); ctx.fill(); });
-    
-    // Draw Boss (Purple)
-    if(boss) { 
-        ctx.fillStyle="#800080"; // Purple
-        ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, 7); ctx.fill(); 
-        // Evil glowing eyes
-        ctx.fillStyle="#f00"; 
-        ctx.beginPath(); ctx.arc(boss.x - 15, boss.y - 10, 8, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(boss.x + 15, boss.y - 10, 8, 0, 7); ctx.fill();
-    }
-    
-    // Draw Bullets (Cyan)
+    if(boss){ ctx.fillStyle="#800080"; ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, 7); ctx.fill(); ctx.fillStyle="#f00"; ctx.beginPath(); ctx.arc(boss.x-15, boss.y-10, 8, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(boss.x+15, boss.y-10, 8, 0, 7); ctx.fill(); }
     ctx.fillStyle="#0cf"; bult.forEach(b=>ctx.fillRect(b.x, b.y, 12, 4));
-    
     requestAnimationFrame(loop);
 }
 </script>
