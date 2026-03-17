@@ -3,75 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | VIAAN2501 FINAL</title>
+    <title>SPACE MAZE | VIAAN2501 FIX</title>
     <style>
         :root { --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --purple: #a020f0; }
-        * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; user-select: none; touch-action: none; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; }
+        #game-layer { display: none; position: relative; }
+        canvas { border: 2px solid var(--neon); background: #000; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
-        #game-layer { display: none; }
-        .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon); }
-        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; font-size: 1rem; z-index: 100; pointer-events: none; }
-        #ox-bar-container { width: 100px; height: 8px; border: 1px solid var(--neon); background: rgba(0,255,65,0.1); margin-top: 4px; }
-        #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
-        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; }
-        #admin-layer { z-index: 2000; background: rgba(0,0,0,0.95); display: none; }
-        #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-weight: bold; text-shadow: 0 0 20px var(--danger); pointer-events: none; display: none; z-index: 1500; transition: transform 0.2s; }
-        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; }
-        .zone { position: absolute; bottom: 20px; width: 50%; height: 200px; pointer-events: auto; }
-        .left-zone { left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
-        .right-zone { right: 0; }
-        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: rgba(0,0,0,0.5); }
-        #j-base { width: 100px; height: 100px; border: 2px solid var(--neon); border-radius: 50%; margin: 50px auto; position: relative; }
-        #j-knob { width: 35px; height: 35px; background: var(--neon); border-radius: 50%; position: absolute; top: 32px; left: 32px; }
+        #hud { position: absolute; top: 10px; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; pointer-events: none; z-index: 100; font-weight: bold; }
+        #ox-bar-container { width: 100px; height: 8px; border: 1px solid var(--neon); background: rgba(0,255,65,0.1); margin-top: 5px; }
+        #ox-bar { height: 100%; width: 100%; background: var(--neon); }
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px 20px; cursor: pointer; font-family: inherit; margin: 5px; }
+        #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-size: 2rem; font-weight: bold; pointer-events: none; display: none; z-index: 1500; text-shadow: 0 0 10px #000; }
+        #admin-layer { z-index: 2000; background: rgba(0,0,0,0.9); display: none; }
     </style>
 </head>
 <body>
     <div id="ui-layer" class="layer">
-        <h1 style="font-size: 3rem; text-shadow: 0 0 10px var(--neon);">SPACE MAZE</h1>
-        <div class="card neon-border" style="padding: 20px; width: 300px; text-align: center;">
-            <input type="text" id="username" placeholder="PILOT NAME" style="width:100%; background:#111; color:var(--neon); border:1px solid var(--neon); padding:8px; margin-bottom:10px;">
-            <button class="btn" onclick="UI.start()">START MISSION</button>
-            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
-        </div>
+        <h1 style="font-size: 2.5rem; text-shadow: 0 0 10px var(--neon);">SPACE MAZE</h1>
+        <input type="text" id="username" placeholder="PILOT NAME" style="background:#111; color:var(--neon); border:1px solid var(--neon); padding:10px; margin-bottom:10px; text-align:center;">
+        <button class="btn" onclick="UI.start()">START MISSION</button>
+        <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
     </div>
 
     <div id="admin-layer" class="layer">
-        <div class="card neon-border" style="padding:20px; border-color:var(--danger); text-align:center;">
+        <div style="border: 2px solid var(--danger); padding: 20px; text-align:center; background:#000;">
             <h2 style="color:var(--danger);">ROOT: VIAAN2501</h2>
-            <input type="number" id="jump-level" placeholder="SECTOR" style="width:100%; background:#000; color:var(--danger); border:1px solid var(--danger); padding:5px;">
+            <input type="number" id="jump-level" placeholder="SECTOR" style="width:80px; background:#000; color:var(--danger); border:1px solid var(--danger); padding:5px;">
             <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.adminJump(document.getElementById('jump-level').value)">WARP</button>
-            <button class="btn" onclick="Core.god=!Core.god; UI.toggleAdmin(false)">GOD MODE: <span id="gs">OFF</span></button>
-            <button class="btn" onclick="UI.toggleAdmin(false)">EXIT</button>
+            <button class="btn" onclick="Core.god=!Core.god; UI.toggleAdmin(false)">GOD MODE</button>
+            <button class="btn" onclick="UI.toggleAdmin(false)">CLOSE</button>
         </div>
     </div>
 
     <div id="rage-overlay">GET GOOD.</div>
 
-    <div id="game-layer" class="layer">
+    <div id="game-layer" class="layer" style="display:none;">
         <div id="hud">
-            <div>SEC: <span id="v-sec">1</span><br>DEATHS: <span id="v-deaths">0</span></div>
-            <div id="override-msg" style="color:var(--purple); font-weight:bold;"></div>
+            <div>SEC: <span id="v-sec">1</span> | DEATHS: <span id="v-deaths">0</span></div>
+            <div id="override-msg"></div>
             <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
         </div>
         <canvas id="stage"></canvas>
-        <div id="mobile-controls">
-            <div class="zone left-zone">
-                <div class="act-btn" onpointerdown="Core.player.warp()">WARP</div>
-                <div class="act-btn" style="border-color:#fff; color:#fff;" onpointerdown="Core.player.shoot()">FIRE</div>
-            </div>
-            <div class="zone right-zone"><div id="j-base"><div id="j-knob"></div></div></div>
-        </div>
     </div>
 
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
-        const RAGE_MESSAGES = ["GET GOOD.", "ARE YOU EVEN TRYING?", "MY GRANDMA PLAYS BETTER.", "EMBARRASSING.", "SKILL ISSUE.", "JUST QUIT.", "OXYGEN IS FOR WINNERS."];
-        let user = "";
-
+        const RAGE = ["SKILL ISSUE.", "PATHETIC.", "MY CAT PLAYS BETTER.", "TRY TYPING.", "LOL RAGED?"];
+        
         const Core = {
-            sector: 1, entities: [], particles: [], keys: {}, combo: "", god: false, alive: false, deaths: 0, rageLevel: 1,
+            sector: 1, entities: [], keys: {}, combo: "", god: false, alive: false, deaths: 0, rageSize: 1,
             boot(resume) {
                 if(resume) this.sector = parseInt(localStorage.getItem('sm_save')) || 1;
                 this.deaths = parseInt(localStorage.getItem('sm_deaths')) || 0;
@@ -79,7 +61,6 @@
                 localStorage.setItem('sm_user', user);
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
-                if('ontouchstart' in window) document.getElementById('mobile-controls').style.display = 'flex';
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
                 this.alive = true; this.init(this.sector);
@@ -87,45 +68,46 @@
             },
             init(n) {
                 this.sector = n; localStorage.setItem('sm_save', n);
-                this.entities = []; this.particles = [];
-                
-                // Sector 21 is ONLY the override level
-                const isOverride = (n === 21);
-                const isBoss = (n === 202);
-                
-                document.getElementById('override-msg').innerText = isOverride ? "SYSTEM OVERRIDE: VOID REACHED" : "";
-                
-                // Generate Maze if not Sector 21 or Boss
-                this.maze = (isOverride || isBoss) ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
-                this.player = new Player(MAP.TW/2, MAP.TH/2);
+                this.entities = [];
+                const isSpecial = (n === 21 || n === 202);
+                document.getElementById('override-msg').innerText = (n === 21) ? "VOID OVERRIDE" : "";
+                this.maze = isSpecial ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
+                this.player = new Player(MAP.TW+5, MAP.TH+5);
                 document.getElementById('v-sec').innerText = n;
                 document.getElementById('v-deaths').innerText = this.deaths;
                 
-                if(isBoss) this.entities.push(new DiddyBoss(400, 300));
-                else if(!isOverride) { for(let i=0; i<Math.min(3+n, 15); i++) this.entities.push(new Enemy()); }
+                if(n === 202) this.entities.push(new DiddyBoss(400, 300));
+                else if(!isSpecial) {
+                    let count = 0;
+                    while(count < Math.min(2 + Math.floor(n/2), 10)) {
+                        let rx = Math.random() * MAP.W, ry = Math.random() * MAP.H;
+                        if(!this.isWall(rx, ry)) { this.entities.push(new Enemy(rx, ry)); count++; }
+                    }
+                }
             },
             createMaze() {
                 let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
-                let s = [[0,0]]; m[0][0] = 0;
+                let s = [[1,1]]; m[1][1] = 0;
                 while(s.length) {
                     let [r,c] = s[s.length-1];
-                    let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<MAP.R&&nc>=0&&nc<MAP.C&&m[nr][nc]===1);
+                    let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>0&&nr<MAP.R-1&&nc>0&&nc<MAP.C-1&&m[nr][nc]===1);
                     if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
-                m[MAP.R-1][MAP.C-1]=0; return m;
+                m[MAP.R-2][MAP.C-2]=0; return m;
+            },
+            isWall(x,y) {
+                let c = Math.floor(x/MAP.TW), r = Math.floor(y/MAP.TH);
+                return r<0||r>=MAP.R||c<0||c>=MAP.C||this.maze[r][c]===1;
             },
             die() {
                 if(this.god) return;
-                this.deaths++; 
-                localStorage.setItem('sm_deaths', this.deaths);
+                this.deaths++; localStorage.setItem('sm_deaths', this.deaths);
                 if(this.deaths % 5 === 0) {
-                    this.rageLevel += 0.2;
-                    const msg = RAGE_MESSAGES[Math.floor(Math.random()*RAGE_MESSAGES.length)];
+                    this.rageSize += 0.3;
                     const el = document.getElementById('rage-overlay');
-                    el.innerText = msg; 
-                    el.style.display = 'block';
-                    el.style.transform = `scale(${this.rageLevel})`;
-                    setTimeout(() => el.style.display = 'none', 1500);
+                    el.innerText = RAGE[Math.floor(Math.random()*RAGE.length)];
+                    el.style.display = 'block'; el.style.transform = `scale(${this.rageSize})`;
+                    setTimeout(()=>el.style.display='none', 1000);
                 }
                 this.init(this.sector);
             },
@@ -134,119 +116,103 @@
                 if(this.alive) {
                     this.player.tick();
                     this.entities = this.entities.filter(e => { e.tick(); return !e.dead; });
-                    this.particles = this.particles.filter(p => { p.tick(); return !p.dead; });
-                    // Win Condition
-                    if(this.player.x > MAP.W-MAP.TW && this.player.y > MAP.H-MAP.TH) this.init(this.sector+1);
+                    if(this.player.x > MAP.W-MAP.TW*2 && this.player.y > MAP.H-MAP.TH*2) this.init(this.sector+1);
                 }
                 this.draw(); requestAnimationFrame(()=>this.run());
             },
             draw() {
-                // Color swap back to Green if not Sector 21+
                 this.ctx.fillStyle = (this.sector >= 21) ? "#a020f0" : "#00ff41";
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW, MAP.TH);
                 this.entities.forEach(e => e.draw(this.ctx));
-                this.particles.forEach(p => p.draw(this.ctx));
                 this.player.draw(this.ctx);
-                // Exit point indicator
-                this.ctx.fillStyle = "#fff";
-                this.ctx.fillRect(MAP.W-10, MAP.H-MAP.TH, 10, MAP.TH);
+                this.ctx.fillStyle = "#fff"; this.ctx.fillRect(MAP.W-MAP.TW*1.5, MAP.H-MAP.TH*1.5, 10, 10);
             },
             adminJump(v) { if(v) this.init(parseInt(v)); UI.toggleAdmin(false); }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speed=5.2; this.cd=0; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speed=4.5; this.cd=0; }
             tick() {
                 let mx=0, my=0;
-                if(Core.keys.KeyW) my=-1; if(Core.keys.KeyS) my=1; if(Core.keys.KeyA) mx=-1; if(Core.keys.KeyD) mx=1;
-                if(joyOn) { mx=joyV.x; my=joyV.y; }
-                let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
-                if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
-                if(!Core.god) { this.ox -= 0.018; if(this.ox<=0) Core.die(); }
-                if(this.cd>0) this.cd--;
-                document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
+                if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1;
+                if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
+                if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1;
+                if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
+                
+                let nx = this.x + mx*this.speed, ny = this.y + my*this.speed;
+                if(!Core.isWall(nx, this.y)) this.x = nx;
+                if(!Core.isWall(this.x, ny)) this.y = ny;
+                
+                if(!Core.god) { this.ox -= 0.015; if(this.ox<=0) Core.die(); }
+                if(this.cd > 0) this.cd--;
+                document.getElementById('v-ox').innerText = Math.floor(this.ox);
                 document.getElementById('ox-bar').style.width = this.ox+"%";
-            }
-            isW(x,y) { 
-                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
-                return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; 
             }
             shoot() {
                 if(this.cd>0) return;
-                let targets = Core.entities.filter(e => !(e instanceof Bullet));
-                let a = 0; if(targets.length) a = Math.atan2(targets[0].y-this.y, targets[0].x-this.x);
+                let tar = Core.entities[0];
+                let a = tar ? Math.atan2(tar.y-this.y, tar.x-this.x) : 0;
                 Core.entities.push(new Bullet(this.x, this.y, a, true));
-                this.cd=12; if(!Core.god) this.ox-=2; Core.combo+="S"; checkCombo();
+                this.cd=15; if(!Core.god) this.ox-=2; Core.combo+="S"; checkCombo();
             }
-            warp() { 
-                let nx=this.x+130; 
-                if(!this.isW(nx,this.y)){
-                    this.x=nx; 
-                    if(!Core.god) this.ox-=10; 
-                    Core.combo+="W"; 
-                    checkCombo();
-                } 
+            warp() {
+                let nx = this.x + 120;
+                if(!Core.isWall(nx, this.y)) { this.x = nx; if(!Core.god) this.ox-=10; Core.combo+="W"; checkCombo(); }
             }
-            draw(ctx) { ctx.fillStyle=Core.god?"#ffd700":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
+            draw(ctx) { ctx.fillStyle=Core.god? "var(--gold)":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,8,0,Math.PI*2); ctx.fill(); }
         }
 
         class Bullet {
-            constructor(x,y,a,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*10; this.vy=Math.sin(a)*10; this.isP=p; this.hist=[]; }
+            constructor(x,y,a,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*10; this.vy=Math.sin(a)*10; this.isP=p; }
             tick() {
-                this.hist.push({x:this.x, y:this.y}); if(this.hist.length>6) this.hist.shift();
                 this.x+=this.vx; this.y+=this.vy;
-                let c=Math.floor(this.x/MAP.TW), r=Math.floor(this.y/MAP.TH);
-                // Hit wall logic
-                if(r>=0 && r<MAP.R && c>=0 && c<MAP.C && Core.maze[r][c]===1) { this.dead=true; }
-                if(this.isP) {
-                    Core.entities.forEach(e => { if(!(e instanceof Bullet) && Math.hypot(this.x-e.x,this.y-e.y)<25){ e.hp?e.hp--:e.dead=true; this.dead=true; }});
-                } else if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<15) Core.die();
-                if(this.x<0||this.x>MAP.W||this.y<0||this.y>MAP.H) this.dead=true;
+                if(Core.isWall(this.x, this.y)) this.dead=true;
+                if(this.isP) Core.entities.forEach(e => { if(!(e instanceof Bullet) && Math.hypot(this.x-e.x,this.y-e.y)<20){ e.hp?e.hp--:e.dead=true; this.dead=true; }});
+                else if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<12) Core.die();
             }
-            draw(ctx) {
-                this.hist.forEach((h,i) => { ctx.globalAlpha=i/6; ctx.fillStyle="#0cf"; ctx.fillRect(h.x-2,h.y-2,4,4); });
-                ctx.globalAlpha=1; ctx.fillStyle="#fff"; ctx.fillRect(this.x-3,this.y-3,6,6);
-            }
+            draw(ctx) { ctx.fillStyle=this.isP?"#0cf":"#f00"; ctx.fillRect(this.x-2,this.y-2,4,4); }
         }
 
         class Enemy {
-            constructor() { this.x=Math.random()*MAP.W; this.y=Math.random()*MAP.H; this.vx=2.5; }
-            tick() { this.x+=this.vx; if(Core.player.isW(this.x+this.vx,this.y)) this.vx*=-1; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<18) Core.die(); }
-            draw(ctx) { ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
+            constructor(x,y) { this.x=x; this.y=y; this.vx=2; }
+            tick() { 
+                this.x+=this.vx; 
+                if(Core.isWall(this.x+(this.vx*10), this.y)) this.vx*=-1; 
+                if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<15) Core.die(); 
+            }
+            draw(ctx) { ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
         }
 
         class DiddyBoss {
-            constructor(x,y){this.x=x;this.y=y;this.hp=100;this.max=100;this.vx=3.5;}
+            constructor(x,y){this.x=x;this.y=y;this.hp=100;this.vx=3.5;}
             tick(){
-                this.x+=this.vx; if(this.x<50||this.x>MAP.W-50) this.vx*=-1;
+                this.x+=this.vx; if(this.x<100||this.x>700) this.vx*=-1;
                 if(Math.random()<0.04) Core.entities.push(new Bullet(this.x,this.y,Math.PI/2,false));
-                if(this.hp<=0) { alert("SYSTEM CLEANSED"); location.reload(); }
+                if(this.hp<=0) { alert("VOID CLEANSED"); location.reload(); }
             }
-            draw(ctx){ ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); }
+            draw(ctx){ ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,40,0,Math.PI*2); ctx.fill(); }
         }
 
         function checkCombo() {
             let n = (user || localStorage.getItem('sm_user') || "").toUpperCase();
-            if(Core.combo.endsWith("SWWS") && n === "VIAAN2501") { UI.toggleAdmin(true); document.getElementById('gs').innerText = Core.god ? "ON" : "OFF"; }
-            if(Core.combo.length>10) Core.combo = Core.combo.slice(-4);
+            if(Core.combo.endsWith("SWWS") && n === "VIAAN2501") UI.toggleAdmin(true);
+            if(Core.combo.length > 8) Core.combo = Core.combo.slice(-4);
         }
 
         const UI = {
-            start() { user=document.getElementById('username').value.toUpperCase(); localStorage.setItem('sm_user',user); Core.boot(false); },
+            start() { user=document.getElementById('username').value.toUpperCase(); Core.boot(false); },
             toggleAdmin(s) { document.getElementById('admin-layer').style.display=s?'flex':'none'; }
         };
 
-        window.onkeydown=e=>{Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp();};
-        window.onkeyup=e=>Core.keys[e.code]=false;
-        let joyOn=false, joyV={x:0,y:0};
-        const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.onpointerdown=e=>{joyOn=true;jB.setPointerCapture(e.pointerId);};
-        jB.onpointermove=e=>{if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+50), dy=e.clientY-(r.top+50), d=Math.min(Math.hypot(dx,dy),40), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;};
-        jB.onpointerup=()=>{joyOn=false;joyV={x:0,y:0};jK.style.transform='translate(0,0)';};
+        window.addEventListener('keydown', e => { 
+            Core.keys[e.code] = true; 
+            if(e.code==='Space') Core.player.shoot(); 
+            if(e.code==='ShiftLeft') Core.player.warp(); 
+        });
+        window.addEventListener('keyup', e => Core.keys[e.code] = false);
 
         window.onload=()=>{
-            let n=localStorage.getItem('sm_user'); if(n) document.getElementById('username').value=n;
-            if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
+            if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='inline-block';
         };
     </script>
 </body>
