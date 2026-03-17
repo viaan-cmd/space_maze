@@ -163,12 +163,10 @@
                     let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>0&&nr<MAP.R-1&&nc>0&&nc<MAP.C-1&&m[nr][nc]===1);
                     if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
-                // --- THE "FIX": FORCE EXIT PATHS ---
-                m[MAP.R-2][MAP.C-2] = 0; // Exit tile
-                m[MAP.R-2][MAP.C-3] = 0; // Left of exit
-                m[MAP.R-3][MAP.C-2] = 0; // Above exit
-                m[MAP.R-2][MAP.C-4] = 0; // Extended corridor left
-                m[MAP.R-4][MAP.C-2] = 0; // Extended corridor up
+                // FINAL FIX: Guaranteed exit corridor
+                m[MAP.R-2][MAP.C-2] = 0; // Final path tile
+                m[MAP.R-2][MAP.C-1] = 0; // Hole in the wall
+                m[MAP.R-1][MAP.C-1] = 0; // THE EXIT CORNER
                 return m;
             },
             die() {
@@ -187,8 +185,8 @@
                     this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
-                // Larger win-zone trigger to prevent getting stuck
-                if(this.player.x > MAP.W - (MAP.TW * 1.5) && this.player.y > MAP.H - (MAP.TH * 1.5)) {
+                // Check if reached bottom right corner
+                if(this.player.x > MAP.W - (MAP.TW * 1.8) && this.player.y > MAP.H - (MAP.TH * 1.8)) {
                     if(this.sector === 202 && this.entities.some(e=>e instanceof DiddyBoss)) return;
                     this.init(this.sector + 1);
                 }
@@ -228,8 +226,8 @@
                 if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
-                // Collision with small padding
-                if(!this.isW(nx, ny) && !this.isW(nx+6, ny+6) && !this.isW(nx-6, ny-6)) { this.x=nx; this.y=ny; }
+                // Collision with small buffer
+                if(!this.isW(nx, ny) && !this.isW(nx+5, ny+5) && !this.isW(nx-5, ny-5)) { this.x=nx; this.y=ny; }
                 if(this.cd > 0) this.cd--;
                 if(!Core.infOx) { this.ox -= (1 / 60); if(this.ox <= 0) Core.die(); }
                 document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
