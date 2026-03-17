@@ -11,7 +11,7 @@
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
         
-        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; }
+        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.02)); z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; }
 
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
         #game-layer { display: none; }
@@ -59,8 +59,8 @@
         <div class="card neon-border">
             <input type="text" id="username" placeholder="ENTER USERNAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);" oninput="localStorage.setItem('sm_user', this.value)">
             <div class="mode-select">
-                <button class="btn mode-btn active" id="pc-mode" onclick="setMode('pc')">PC (HIDDEN HUD)</button>
-                <button class="btn mode-btn" id="mobile-mode" onclick="setMode('mobile')">MOBILE (JOYSTICK)</button>
+                <button class="btn mode-btn active" id="pc-mode" onclick="setMode('pc')">PC</button>
+                <button class="btn mode-btn" id="mobile-mode" onclick="setMode('mobile')">MOBILE</button>
             </div>
             <button class="btn" onclick="UI.startCutscene()">START MISSION</button>
             <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
@@ -92,10 +92,10 @@
             <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
         </div>
         <div id="leaderboard">
-            DEATH LOG:<br>
-            - PILOT_X: 42<br>
-            - NOOB_1: 105<br>
-            - <span id="local-name">YOU</span>: <span id="local-deaths">0</span>
+            DATA LOG:<br>
+            - <span id="local-name">YOU</span><br>
+            - DEATHS: <span id="local-deaths">0</span><br>
+            - MAX SEC: <span id="max-sec">1</span>
         </div>
         <canvas id="stage"></canvas>
         <div id="boss-hud"><div id="boss-bar"></div></div>
@@ -123,7 +123,7 @@
         }
         
         const Core = {
-            sector: 1, active: false, entities: [], keys: {}, combo: "", time: 0, paused: false, infOx: false, deaths: 0, rageSize: 1.5,
+            sector: 1, active: false, entities: [], keys: {}, combo: "", paused: false, infOx: false, deaths: 0,
             boot(resume) {
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
@@ -137,7 +137,10 @@
             init(n) {
                 this.sector = parseInt(n); this.active = true; this.entities = [];
                 localStorage.setItem('sm_save', n);
+                let max = parseInt(localStorage.getItem('sm_max_sec')) || 1;
+                if(this.sector > max && this.sector < 999) localStorage.setItem('sm_max_sec', this.sector);
                 document.getElementById('local-deaths').innerText = this.deaths;
+                document.getElementById('max-sec').innerText = localStorage.getItem('sm_max_sec') || 1;
                 document.getElementById('local-name').innerText = (document.getElementById('username').value || "YOU").toUpperCase();
                 const isSpecial = (n === 21 || n === 202 || n === 999);
                 document.getElementById('override-msg').innerText = (n === 21) ? "SYSTEM OVERRIDE: VOID REACHED" : "";
@@ -160,18 +163,21 @@
                     let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>0&&nr<MAP.R-1&&nc>0&&nc<MAP.C-1&&m[nr][nc]===1);
                     if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
-                // ENSURE EXIT IS CLEAR: Force the bottom right corner to be empty space
-                m[MAP.R-2][MAP.C-2]=0; m[MAP.R-2][MAP.C-3]=0; m[MAP.R-3][MAP.C-2]=0;
+                // --- THE "FIX": FORCE EXIT PATHS ---
+                m[MAP.R-2][MAP.C-2] = 0; // Exit tile
+                m[MAP.R-2][MAP.C-3] = 0; // Left of exit
+                m[MAP.R-3][MAP.C-2] = 0; // Above exit
+                m[MAP.R-2][MAP.C-4] = 0; // Extended corridor left
+                m[MAP.R-4][MAP.C-2] = 0; // Extended corridor up
                 return m;
             },
             die() {
                 if(this.infOx) return;
                 this.deaths++; localStorage.setItem('sm_deaths', this.deaths);
-                this.rageSize += 0.2;
                 const el = document.getElementById('rage-overlay');
                 el.innerText = RAGE_LIST[Math.floor(Math.random()*RAGE_LIST.length)];
-                el.style.display = 'block'; el.style.fontSize = this.rageSize + "rem";
-                setTimeout(() => el.style.display = 'none', 2500); 
+                el.style.display = 'block';
+                setTimeout(() => el.style.display = 'none', 2000); 
                 this.init(this.sector);
             },
             update() {
@@ -181,26 +187,31 @@
                     this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
-                // Trigger exit
-                if(this.player.x > MAP.W - MAP.TW && this.player.y > MAP.H - MAP.TH) {
+                // Larger win-zone trigger to prevent getting stuck
+                if(this.player.x > MAP.W - (MAP.TW * 1.5) && this.player.y > MAP.H - (MAP.TH * 1.5)) {
                     if(this.sector === 202 && this.entities.some(e=>e instanceof DiddyBoss)) return;
                     this.init(this.sector + 1);
                 }
             },
             draw() {
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.ctx.shadowBlur = 15;
+                this.ctx.save();
+                this.ctx.shadowBlur = 10;
                 this.ctx.shadowColor = (this.sector === 21) ? "var(--glitch)" : "#00ff41";
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2);
-                
-                // EXIT PORTAL (BLUE SQUARE)
+                this.ctx.restore();
+
+                this.ctx.save();
+                this.ctx.beginPath();
                 this.ctx.shadowBlur = 15;
-                this.ctx.shadowColor = "#0cf";
-                this.ctx.fillStyle = "#0cf"; 
-                this.ctx.fillRect(MAP.W - MAP.TW + 2, MAP.H - MAP.TH + 2, MAP.TW - 4, MAP.TH - 4);
-                
-                this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
+                this.ctx.shadowColor = "#00ccff";
+                this.ctx.fillStyle = "#00ccff"; 
+                this.ctx.fillRect(MAP.W - MAP.TW + 5, MAP.H - MAP.TH + 5, MAP.TW - 10, MAP.TH - 10);
+                this.ctx.restore();
+
+                this.entities.forEach(e => e.draw(this.ctx)); 
+                this.player.draw(this.ctx);
             },
             run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
             adminJump(v) { if(v) { this.init(parseInt(v)); UI.toggleAdmin(false); } },
@@ -217,7 +228,8 @@
                 if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
-                if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
+                // Collision with small padding
+                if(!this.isW(nx, ny) && !this.isW(nx+6, ny+6) && !this.isW(nx-6, ny-6)) { this.x=nx; this.y=ny; }
                 if(this.cd > 0) this.cd--;
                 if(!Core.infOx) { this.ox -= (1 / 60); if(this.ox <= 0) Core.die(); }
                 document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
@@ -227,10 +239,7 @@
                 if(this.cd <= 0 && (this.ox > 2 || Core.infOx)) {
                     let enemies = Core.entities.filter(e => e instanceof Enemy || e instanceof DiddyBoss);
                     let nearest = null; let minDist = Infinity;
-                    enemies.forEach(e => {
-                        let d = Math.hypot(e.x - this.x, e.y - this.y);
-                        if(d < minDist) { minDist = d; nearest = e; }
-                    });
+                    enemies.forEach(e => { let d = Math.hypot(e.x - this.x, e.y - this.y); if(d < minDist) { minDist = d; nearest = e; } });
                     let angle = nearest ? Math.atan2(nearest.y - this.y, nearest.x - this.x) : 0;
                     Core.entities.push(new Bullet(this.x, this.y, angle, "#fff", true)); 
                     if(!Core.infOx) this.ox -= 2.0; 
@@ -244,82 +253,54 @@
                 }
             }
             isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
-            draw(ctx) { ctx.shadowColor="#fff"; ctx.shadowBlur = 15; ctx.fillStyle=Core.infOx? "var(--gold)":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
+            draw(ctx) { ctx.save(); ctx.beginPath(); ctx.shadowColor="#fff"; ctx.shadowBlur = 15; ctx.fillStyle=Core.infOx? "var(--gold)":"#fff"; ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+        }
+
+        class Enemy { 
+            constructor() { 
+                let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry) || Math.hypot(rx-10, ry-10) < 150); 
+                this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; 
+            } 
+            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); } 
+            draw(ctx) { ctx.save(); ctx.beginPath(); ctx.shadowColor="#ff0033"; ctx.shadowBlur = 15; ctx.fillStyle="#ff0033"; ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); ctx.restore(); } 
         }
 
         class Bullet {
             constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*12; this.vy=Math.sin(a)*12; this.c=c; this.isPlayer=p; }
             tick() { 
-                this.x+=this.vx; this.y+=this.vy; 
-                if(Core.isWall(this.x,this.y)) this.dead=true;
+                this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)) this.dead=true;
                 if(this.isPlayer) { Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<30){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } }); } 
                 else { if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y) < 15) Core.die(); } 
             }
-            draw(ctx) { ctx.shadowBlur = 10; ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-3,this.y-3,6,6); }
+            draw(ctx) { ctx.save(); ctx.beginPath(); ctx.shadowBlur = 10; ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-3,this.y-3,6,6); ctx.restore(); }
         }
 
-        class Oil { constructor(x,y) { this.x=x; this.y=y; this.r=45; this.life=400; } tick() { this.life--; if(this.life<=0) this.dead=true; } draw(ctx) { ctx.shadowBlur=0; ctx.fillStyle="rgba(46, 8, 84, 0.6)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); } }
-
-        class Enemy { 
-            constructor() { 
-                let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry) || Math.hypot(rx-10, ry-10) < 100); 
-                this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; 
-            } 
-            tick() { 
-                this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;} 
-                if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); 
-            } 
-            draw(ctx) { 
-                ctx.shadowColor="#ff0033"; 
-                ctx.shadowBlur = 15; 
-                ctx.fillStyle="#ff0033"; // HARD FORCED RED
-                ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); 
-            } 
-        }
-        Core.isWall = (x,y) => { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; };
+        class Oil { constructor(x,y) { this.x=x; this.y=y; this.r=45; this.life=400; } tick() { this.life--; if(this.life<=0) this.dead=true; } draw(ctx) { ctx.save(); ctx.beginPath(); ctx.shadowBlur=0; ctx.fillStyle="rgba(46, 8, 84, 0.6)"; ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.restore(); } }
 
         class DiddyBoss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=150; this.max=150; this.vx=3.5; this.vy=3.5; this.oilCd=100; this.shootCd=90; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(this.x<50 || this.x>MAP.W-50) this.vx*=-1; if(this.y<50 || this.y>MAP.H-50) this.vy*=-1; this.oilCd--; if(this.oilCd<=0) { Core.entities.push(new Oil(this.x, this.y)); this.oilCd=120; } this.shootCd--; if(this.shootCd<=0) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(Core.player.y-this.y, Core.player.x-this.x), "var(--glitch)", false)); this.shootCd=80; } document.getElementById('boss-bar').style.width = (this.hp/this.max*100) + "%"; if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45) Core.die(); }
-            draw(ctx) { ctx.shadowColor="var(--glitch)"; ctx.shadowBlur=25; ctx.fillStyle="var(--glitch)"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); }
+            constructor(x,y) { this.x=x; this.y=y; this.hp=6; this.max=6; this.vx=4.5; this.vy=4.5; this.oilCd=80; this.shootCd=60; }
+            tick() { this.x+=this.vx; this.y+=this.vy; if(this.x<50 || this.x>MAP.W-50) this.vx*=-1; if(this.y<50 || this.y>MAP.H-50) this.vy*=-1; this.oilCd--; if(this.oilCd<=0) { Core.entities.push(new Oil(this.x, this.y)); this.oilCd=100; } this.shootCd--; if(this.shootCd<=0) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(Core.player.y-this.y, Core.player.x-this.x), "var(--glitch)", false)); this.shootCd=70; } document.getElementById('boss-bar').style.width = (this.hp/this.max*100) + "%"; if(this.hp<=0) this.dead=true; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45) Core.die(); }
+            draw(ctx) { ctx.save(); ctx.beginPath(); ctx.shadowColor="var(--glitch)"; ctx.shadowBlur=25; ctx.fillStyle="var(--glitch)"; ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); ctx.restore(); }
         }
 
+        Core.isWall = (x,y) => { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; };
         function checkAdmin() {
             let name = (document.getElementById('username').value || "").toUpperCase().trim();
-            if(Core.combo.includes("SWWS") && name === "VIAAN2501") {
-                UI.toggleAdmin(true);
-                Core.combo = ""; 
-            }
+            if(Core.combo.includes("SWWS") && name === "VIAAN2501") { UI.toggleAdmin(true); Core.combo = ""; }
             if(Core.combo.length > 20) Core.combo = Core.combo.slice(-4);
         }
-
         const UI = {
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; },
             startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> SYSTEM_INITIALIZATION...\n> MOVEMENT: WASD / ARROWS\n> COMBAT: SPACE (AUTO-LOCKS NEAREST)\n> WARP: SHIFT (JUMP 130PX)\n> PAUSE: 'P' KEY | RESTART: 'R' KEY\n> WARNING: SHOOTING COSTS 2% OX. WARPING COSTS 10% OX."); },
             playGlitchCutscene() { document.getElementById('game-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; document.getElementById('typewriter').style.color = "var(--glitch)"; this.type("ERROR: SECTOR JUMP DETECTED...\n\n[DIDDY]: See you at sector 202..."); },
             type(t) { let i = 0; const c = document.getElementById('typewriter'); c.innerHTML = ""; document.getElementById('skip-btn').style.display = 'none'; const f = () => { if(i < t.length) { c.innerHTML += t[i]==='\n'?'<br>':t[i]; i++; setTimeout(f, 30); } else document.getElementById('skip-btn').style.display = 'block'; }; f(); }
         };
-
-        window.onkeydown=e=>{ 
-            Core.keys[e.code]=true; 
-            if(e.code==='ShiftLeft' || e.code==='ShiftRight') Core.player.warp(); 
-            if(e.code==='Space') { e.preventDefault(); Core.player.shoot(); }
-            if(e.code==='KeyP') { Core.paused = !Core.paused; document.getElementById('v-paused').style.display = Core.paused ? 'inline' : 'none'; }
-            if(e.code==='KeyR') Core.init(Core.sector);
-        };
+        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='ShiftLeft' || e.code==='ShiftRight') Core.player.warp(); if(e.code==='Space') { e.preventDefault(); Core.player.shoot(); } if(e.code==='KeyP') { Core.paused = !Core.paused; document.getElementById('v-paused').style.display = Core.paused ? 'inline' : 'none'; } if(e.code==='KeyR') Core.init(Core.sector); };
         window.onkeyup=e=>Core.keys[e.code]=false;
-        
         let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
         jB.onpointerdown=(e)=>{ if(controlMode==='mobile') joyOn=true; }; 
-        window.onpointermove=e=>{ 
-            if(!joyOn) return; 
-            let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), dist=Math.hypot(dx,dy), max=45, angle=Math.atan2(dy,dx);
-            let clampedDist = Math.min(dist, max);
-            joyV={ x: Math.cos(angle) * (clampedDist / max), y: Math.sin(angle) * (clampedDist / max) };
-            jK.style.transform=`translate(${Math.cos(angle)*clampedDist}px,${Math.sin(angle)*clampedDist}px)`; 
-        };
+        window.onpointermove=e=>{ if(!joyOn) return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), dist=Math.hypot(dx,dy), max=45, angle=Math.atan2(dy,dx); let clampedDist = Math.min(dist, max); joyV={ x: Math.cos(angle) * (clampedDist / max), y: Math.sin(angle) * (clampedDist / max) }; jK.style.transform=`translate(${Math.cos(angle)*clampedDist}px,${Math.sin(angle)*clampedDist}px)`; };
         window.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
-        
         window.onload = () => { 
             const savedUser = localStorage.getItem('sm_user');
             if(savedUser) document.getElementById('username').value = savedUser;
