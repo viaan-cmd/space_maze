@@ -6,12 +6,11 @@
     <title>SPACE MAZE | NEON GOD BUILD FINAL</title>
     <style>
         :root { 
-            --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --glitch: #a020f0; --oil: #ffd700; /* Yellow Oil */
+            --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --glitch: #a020f0; --oil: #ffd700;
         }
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
         
-        /* CRT Screen Overlay Effect */
         body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; }
 
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
@@ -56,13 +55,13 @@
     </div>
 
     <div id="cutscene-layer" class="layer" style="display:none;">
-        <div id="typewriter" style="padding:40px; text-align:left; font-size: 1.1rem; line-height: 1.5;"></div>
+        <div id="typewriter" style="padding:40px; text-align:left; font-size: 1.1rem; line-height: 1.5; width: 80%;"></div>
         <button class="btn" id="skip-btn" style="width:200px; display:none;" onclick="Core.boot(false)">PROCEED ></button>
     </div>
 
     <div id="death-screen" class="layer" style="display:none; z-index: 1200; background: rgba(0,0,0,0.9);">
-        <div class="card neon-border" style="border-color: var(--danger); box-shadow: 0 0 20px var(--danger);">
-            <h1 class="neon-text" style="color:var(--danger); font-size: 2rem;">MISSION FAILED</h1>
+        <div class="card neon-border" style="border-color: var(--danger);">
+            <h1 class="neon-text" style="color:var(--danger);">MISSION FAILED</h1>
             <button class="btn" style="border-color: var(--danger); color: var(--danger);" onclick="retrySector()">RETRY SECTOR</button>
             <button class="btn" onclick="location.reload()">MAIN MENU</button>
         </div>
@@ -79,10 +78,11 @@
     <div id="admin-layer" class="layer" style="display:none; z-index:2000; background: rgba(0,0,0,0.98);">
         <div class="card neon-border" style="border-color: var(--danger);">
             <h2 style="color:var(--danger); margin-top:0;">ROOT_ACCESS</h2>
+            <p style="font-size: 0.8rem; color: var(--danger);">AUTH: VIAN2501</p>
             <input type="number" id="jump-level" placeholder="SECTOR #" class="admin-input">
             <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.adminJump(document.getElementById('jump-level').value)">WARP TO SECTOR</button>
             <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.toggleInfOx()">INF OXYGEN: <span id="inf-ox-status">OFF</span></button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="p.shd=true">GIVE SHIELD</button>
+            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.toggleGodMode()">GOD MODE: <span id="god-status">OFF</span></button>
             <button class="btn" style="margin-top:20px;" onclick="UI.toggleAdmin(false)">EXIT ROOT</button>
         </div>
     </div>
@@ -95,7 +95,6 @@
         </div>
         <canvas id="stage"></canvas>
         <div id="boss-hud"><div id="boss-bar"></div></div>
-        
         <div id="mobile-controls">
             <div class="zone left-zone">
                 <div class="act-btn" onpointerdown="Core.player.warp()">WARP</div>
@@ -109,59 +108,41 @@
 
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
-        
+        let user = localStorage.getItem('sm_user') || "";
+
         const Core = {
-            sector: 1, active: false, entities: [], particles: [], keys: {}, combo: "", paused: false, infOx: false, alive: false,
+            sector: 1, active: false, entities: [], particles: [], keys: {}, combo: "", paused: false, infOx: false, god: false, alive: false,
             boot(resume) {
                 if(resume) this.sector = parseInt(localStorage.getItem('sm_save')) || 1;
-                user = localStorage.getItem('sm_user') || "PILOT";
+                user = document.getElementById('username').value || localStorage.getItem('sm_user') || "PILOT";
+                localStorage.setItem('sm_user', user);
+                
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('cutscene-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
-                // Detect mobile to show controls
                 if('ontouchstart' in window) document.getElementById('mobile-controls').style.display = 'flex';
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
                 this.alive = true;
                 this.init(this.sector);
-                this.run();
+                if(!this.loopStarted) { this.run(); this.loopStarted = true; }
             },
             init(n) {
                 this.sector = parseInt(n); this.active = true; this.entities = []; this.particles = [];
                 localStorage.setItem('sm_save', n);
-                localStorage.setItem('sm_user', user);
                 const isSpecial = (n === 21 || n === 202);
                 this.maze = isSpecial ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
-                
-                // Safe Spawning logic
-                if(n === 21 || n === 202) {
-                    this.player = new Player(400, 500); 
-                } else {
-                    this.player = new Player(MAP.TW/2, MAP.TH/2);
-                }
-                
+                this.player = new Player(MAP.TW/2, MAP.TH/2);
                 document.getElementById('v-sec').innerText = n;
                 document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
                 
-                if(n === 21) { 
-                    this.active = false; // Pause logic for cutscene
-                    setTimeout(() => {
-                        alert(`DIDDY: "I've been watching you, ${user}..."`);
-                        this.active = true;
-                    }, 500);
-                    // Portals
-                    this.entities.push(new Portal(200, 300, 22), new Portal(600, 300, 22)); 
-                } else if(n === 202) { 
-                    this.entities.push(new DiddyBoss(400, 300)); 
-                } else { 
-                    genMaze(0,0); maze[ROWS-1][COLS-1]=0; // Exit guaranteed open
-                    for(let i=0; i<Math.min(3 + n, 15); i++) {
-                        let spot = getOpenSpot(); ens.push({x:spot.x, y:spot.y, dx:3, dy:3});
-                    }
-                    // Power-ups
-                    ['shd','ox','spd','rpd'].forEach(t => { 
-                        if(Math.random()>0.3){ let s=getOpenSpot(); items.push({x:s.x, y:s.y, type:t}); }
-                    });
+                if(n === 21) {
+                    this.entities.push(new Portal(200, 300, 22), new Portal(600, 300, 22));
+                } else if(n === 202) {
+                    this.entities.push(new DiddyBoss(400, 300));
+                } else {
+                    let count = Math.min(3 + Math.floor(n/2), 15);
+                    for(let i=0; i<count; i++) this.entities.push(new Enemy());
                 }
             },
             createMaze() {
@@ -170,264 +151,156 @@
                 while(s.length) {
                     let [r,c] = s[s.length-1];
                     let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<MAP.R&&nc>=0&&nc<MAP.C&&m[nr][nc]===1);
-                    if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
+                    if(ns.length) { 
+                        let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; 
+                        m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); 
+                    } else s.pop();
                 }
+                m[MAP.R-1][MAP.C-1] = 0; m[MAP.R-2][MAP.C-1] = 0; m[MAP.R-1][MAP.C-2] = 0;
                 return m;
             },
-            togglePause() {
-                if(!this.alive) return;
-                this.paused = !this.paused;
-                document.getElementById('pause-layer').style.display = this.paused ? 'flex' : 'none';
-            },
-            createExplosion(x, y, color) {
-                for(let i=0; i<15; i++) this.particles.push(new Particle(x, y, color));
-            },
+            togglePause() { if(this.alive) { this.paused = !this.paused; document.getElementById('pause-layer').style.display = this.paused ? 'flex' : 'none'; } },
+            createExplosion(x,y,color) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,color)); },
             update() {
                 if(!this.active || this.paused || !this.alive) return;
                 this.player.tick();
-                
-                // Entities (Oil, Portals, Enemyes, Boss)
                 for(let i=this.entities.length-1; i>=0; i--) {
                     if(this.entities[i].tick) this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
-                
-                // Particles
                 for(let i=this.particles.length-1; i>=0; i--) {
                     this.particles[i].tick();
                     if(this.particles[i].dead) this.particles.splice(i,1);
                 }
-
-                // Sector Exit Collision
-                if(this.player.x > MAP.W-MAP.TW && this.player.y > MAP.H-MAP.TH) {
-                    if(this.sector === 202 && this.entities.some(e=>e instanceof DiddyBoss)) return;
-                    this.init(this.sector + 1);
-                }
+                if(this.player.x > MAP.W-MAP.TW && this.player.y > MAP.H-MAP.TH) this.init(this.sector + 1);
             },
             draw() {
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                
-                // Portals logic drawn first
-                this.ctx.shadowBlur = 0;
                 this.entities.forEach(e => { if(e instanceof Oil || e instanceof Portal) e.draw(this.ctx); });
-                
-                // Maze
                 this.ctx.shadowBlur = 10;
                 this.ctx.shadowColor = (this.sector >= 21) ? "#a020f0" : "#00ff41";
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) { for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2); }
-                
-                // Exit (Cyan)
-                if(this.sector !== 21 && this.sector !== 202) {
-                    this.ctx.fillStyle = "#0cf"; this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                }
-                
-                // Active entities & Particles drawn top
+                if(this.sector < 21) { this.ctx.fillStyle = "#0cf"; this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH); }
                 this.entities.forEach(e => { if(!(e instanceof Oil || e instanceof Portal)) e.draw(this.ctx); });
                 this.particles.forEach(p => p.draw(this.ctx));
                 this.player.draw(this.ctx);
             },
             run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
             adminJump(v) { if(v) { this.init(parseInt(v)); UI.toggleAdmin(false); } },
-            toggleInfOx() { this.infOx = !this.infOx; document.getElementById('inf-ox-status').innerText = this.infOx ? "ON" : "OFF"; }
+            toggleInfOx() { this.infOx = !this.infOx; document.getElementById('inf-ox-status').innerText = this.infOx ? "ON" : "OFF"; },
+            toggleGodMode() { this.god = !this.god; document.getElementById('god-status').innerText = this.god ? "ON" : "OFF"; }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speedBase=5.5; this.speed=5.5; this.cd=0; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speed=5.5; this.cd=0; }
             tick() {
                 let mx=0, my=0;
-                this.speed = this.speedBase;
-                // Oil interaction logic for speed
-                Core.entities.forEach(e => {
-                    if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) this.speed = 1.8; 
-                });
-
+                let s = this.speed;
+                Core.entities.forEach(e => { if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) s = Core.god ? this.speed : 2; });
                 if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
                 if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
-                let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
+                let nx=this.x+mx*s, ny=this.y+my*s;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
                 if(this.cd > 0) this.cd--;
-                if(!Core.infOx) this.ox -= (1 / 65); 
-                if(this.ox <= 0) die("OXYGEN DEPLETED");
+                if(!Core.infOx) this.ox -= (1/65); 
+                if(this.ox <= 0 && !Core.god) die();
                 document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
                 document.getElementById('ox-bar').style.width = Math.min(100, this.ox)+"%";
             }
             shoot() {
-                if(!Core.alive || Core.paused) return;
-                if(this.cd <= 0) {
-                    // Refined Auto-Aim targeting nearest enemy/boss logic for auto-aim
-                    let targets = Core.entities.filter(e => e instanceof Enemy || e instanceof DiddyBoss);
-                    let nearest = null; let minDist = 500;
-                    targets.forEach(e => {
-                        let d = Math.hypot(e.x - this.x, e.y - this.y);
-                        if(d < minDist) { minDist = d; nearest = e; }
-                    });
-                    
-                    let angle = nearest ? Math.atan2(nearest.y - this.y, nearest.x - this.x) : 0;
-                    Core.entities.push(new Bullet(this.x, this.y, angle, "#fff", true)); 
-                    this.cd = 12; 
-                    Core.combo += "S"; checkCombo();
-                }
+                if(!Core.alive || Core.paused || this.cd > 0) return;
+                let targets = Core.entities.filter(e => e instanceof Enemy || e instanceof DiddyBoss);
+                let nearest = null; let minD = 500;
+                targets.forEach(e => { let d = Math.hypot(e.x-this.x, e.y-this.y); if(d<minD){minD=d; nearest=e;} });
+                let a = nearest ? Math.atan2(nearest.y-this.y, nearest.x-this.x) : 0;
+                Core.entities.push(new Bullet(this.x, this.y, a, "#fff", true)); 
+                this.cd = 12; Core.combo += "S"; checkCombo();
             }
-            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=COLS||Core.maze[r][c]===1; }
-            draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
-            warp() { 
-                if(!Core.alive || Core.paused) return;
-                let nx = this.x + 130;
-                if(!this.isW(nx, this.y)) { this.x = nx; if(!Core.infOx) this.ox -= 8; Core.combo += "W"; checkCombo(); }
-            }
+            warp() { if(!Core.alive || Core.paused) return; let nx=this.x+130; if(!this.isW(nx,this.y)){this.x=nx; if(!Core.infOx) this.ox-=8; Core.combo+="W"; checkCombo();} }
+            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
+            draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle=Core.god?"var(--gold)":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
         }
 
-        // SWWS admin combo logic for combo
-        function checkCombo() {
-            if(Core.combo.endsWith("SWWS")) { UI.toggleAdmin(true); Core.combo = ""; }
-            if(Core.combo.length > 10) Core.combo = Core.combo.slice(-4);
+        function checkCombo() { 
+            if(Core.combo.endsWith("SWWS")){ 
+                if(user === "vian2501") UI.toggleAdmin(true); 
+                Core.combo=""; 
+            } 
+            if(Core.combo.length>10) Core.combo=Core.combo.slice(-4); 
         }
 
-        // Particle effect logic for particles
         class Particle {
-            constructor(x, y, color) {
-                this.x = x; this.y = y; this.dead = false;
-                this.vx = (Math.random() - 0.5) * 8;
-                this.vy = (Math.random() - 0.5) * 8;
-                this.size = Math.random() * 4 + 1;
-                this.color = color;
-                this.life = 0; this.maxLife = Math.random() * 30 + 10;
-            }
-            tick() {
-                this.x += this.vx; this.y += this.vy; this.life++;
-                this.size *= 0.96;
-                if(this.life >= this.maxLife) this.dead = true;
-            }
-            draw(ctx) {
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = Math.max(0, 1 - (this.life / this.maxLife));
-                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-                ctx.globalAlpha = 1;
-            }
+            constructor(x,y,c) { this.x=x; this.y=y; this.c=c; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; this.life=1; }
+            tick() { this.x+=this.vx; this.y+=this.vy; this.life-=0.03; if(this.life<=0) this.dead=true; }
+            draw(ctx) { ctx.globalAlpha=this.life; ctx.fillStyle=this.c; ctx.fillRect(this.x,this.y,3,3); ctx.globalAlpha=1; }
         }
 
         class Bullet {
-            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*14; this.vy=Math.sin(a)*14; this.c=c; this.isPlayer=p; }
-            tick() { 
-                this.x+=this.vx; this.y+=this.vy; 
+            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*12; this.vy=Math.sin(a)*12; this.c=c; this.isP=p; }
+            tick() {
+                this.x+=this.vx; this.y+=this.vy;
                 if(this.x<0||this.x>MAP.W||this.y<0||this.y>MAP.H) this.dead=true;
-                
-                if(this.isPlayer) { 
-                    Core.entities.forEach(e=>{ 
-                        if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<35){ 
-                            if(e instanceof DiddyBoss) e.hp--; 
-                            else { Core.createExplosion(e.x, e.y, "var(--danger)"); e.dead=true; }
-                            this.dead=true; 
-                        } 
-                    }); 
-                } else { if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y) < 15) die("SHOCKED BY VIRUS"); } 
+                if(this.isP) {
+                    Core.entities.forEach(e => { if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<30){ if(e instanceof DiddyBoss) e.hp--; else {Core.createExplosion(e.x,e.y,"red"); e.dead=true;} this.dead=true; } });
+                } else if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<15 && !Core.god) die();
             }
-            draw(ctx) { ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-3,this.y-3,6,6); }
+            draw(ctx) { ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-2,this.y-2,5,5); }
         }
 
-        // Yellow oil splatter logic for oil
-        class Oil { constructor(x,y) { this.x=x; this.y=y; this.r=45; this.life=400; this.color="var(--oil)"; /* CSS Yellow */ } tick() { this.life--; if(this.life<=0) this.dead=true; } draw(ctx) { ctx.shadowBlur=0; ctx.fillStyle="rgba(255, 215, 0, 0.4)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); } }
-        class Portal { constructor(x,y,target) { this.x=x; this.y=y; this.target=target; } tick(){ if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<30) Core.init(this.target); } draw(ctx){ ctx.shadowColor="#0cf"; ctx.fillStyle="#0cf"; ctx.fillRect(this.x-15, this.y-15, 30, 30); ctx.fillStyle="#fff"; ctx.fillText("SEC "+this.target, this.x-20, this.y-25); } }
+        class Oil { constructor(x,y){this.x=x;this.y=y;this.r=40;this.life=300;} tick(){this.life--; if(this.life<=0)this.dead=true;} draw(ctx){ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill();} }
+        class Portal { constructor(x,y,t){this.x=x;this.y=y;this.t=t;} tick(){if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<30) Core.init(this.t);} draw(ctx){ctx.fillStyle="#0cf"; ctx.fillRect(this.x-15,this.y-15,30,30); ctx.fillStyle="#fff"; ctx.fillText("SEC "+this.t,this.x-20,this.y-20);} }
 
         class DiddyBoss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=150; this.max=150; this.vx=3; this.vy=3; this.oilCd=100; this.shootCd=40; }
-            tick() { 
-                this.x+=this.vx; this.y+=this.vy; 
-                if(this.x<50 || this.x>MAP.W-50) this.vx*=-1; if(this.y<50 || this.y>MAP.H-50) this.vy*=-1; 
-                
-                // Yellow Oil spawn logic diddy spawn logic oil yellow diddy spawn oil yellow diddy spawn yellow logic yellow color logic diddy spawn diddy spawn logic diddy spawn yellow color diddy logic yellow diddy logic yellow color complete diddy boss complete logic diddy boss complete diddy complete diddy logic diddy spawn complete diddy diddy spawn complete
-                this.oilCd--;
-                if(this.oilCd <= 0) {
-                    Core.entities.push(new Oil(this.x, this.y));
-                    this.oilCd = 120; // reset CD
-                }
-                
-                // Shoot (Purple)
-                this.shootCd--; if(this.shootCd<=0) { Core.entities.push(new Bullet(this.x, this.y, Math.atan2(Core.player.y-this.y, Core.player.x-this.x), "#f0f", false)); this.shootCd=60; } 
-                
-                // HP bar diddy bar visible bar HP complete diddy complete logic diddy complete diddy logic boss complete HP complete boss complete logic boss complete logic HP diddy boss complete visible complete HP diddy visual health bar diddy visible health diddy diddy boss complete visisble health bar diddy diddy visual health diddy logic diddy visible health visual health diddy boss complete visisble diddy complete visible diddy visible health visible health boss health complete diddy diddy logic visible logic diddy visible diddy logic visible health complete diddy visible
-                document.getElementById('boss-bar').style.width = (this.hp/this.max*100) + "%"; 
-                
-                // Death purple completed logic boss complete logic purple purple boss diddy purple completed boss logic diddy purple logic diddy diddy complete purple boss logic purple boss visible visibility diddy boss purple boss diddy logic visible complete complete diddy invisible logic visibly complete visible complete visibly visibly invisibly complete invisibly diddy invisibly visible invisibly boss invisible invisible death boss complete death logic boss complete death diddy complete logic visibly invisibly logic invisibly visible death visible visible complete diddy diddy logic invisibly visibly invisibly death visibly invisible invisibility death invisibly visibility complete invisibly invisibility complete completed purple invisibly visibility purple visibly invisibility purple incomplete visible visibility visible invisible visible invisibly visibly visible invisibility
-                if(this.hp<=0) {
-                    alert("VIRUS PURGED. GRID SECURED."); localStorage.clear(); location.reload(); 
-                }
-                
-                // Player collision
-                if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45) die("CAUGHT BY DIDDY");
+            constructor(x,y){this.x=x;this.y=y;this.hp=150;this.max=150;this.vx=3;this.vy=3;this.oilCd=60;this.shootCd=40;}
+            tick() {
+                this.x+=this.vx; this.y+=this.vy; if(this.x<50||this.x>MAP.W-50)this.vx*=-1; if(this.y<50||this.y>MAP.H-50)this.vy*=-1;
+                this.oilCd--; if(this.oilCd<=0){Core.entities.push(new Oil(this.x,this.y)); this.oilCd=100;}
+                this.shootCd--; if(this.shootCd<=0){Core.entities.push(new Bullet(this.x,this.y,Math.atan2(Core.player.y-this.y,Core.player.x-this.x),"#f0f",false)); this.shootCd=50;}
+                document.getElementById('boss-bar').style.width=(this.hp/this.max*100)+"%";
+                if(this.hp<=0){alert("SYSTEM PURGED"); localStorage.clear(); location.reload();}
+                if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45 && !Core.god) die();
             }
-            draw(ctx) { ctx.shadowColor="#a020f0"; ctx.shadowBlur=25; ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); }
+            draw(ctx){ctx.shadowColor="#a020f0"; ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill();}
         }
 
-        class Enemy { 
-            constructor() { 
-                let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); 
-                this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; 
-            } 
-            tick() { 
-                this.x+=this.vx; this.y+=this.vy; 
-                if(Core.player.isW(this.x,this.y)){this.vx*=-1; this.vy*=-1;} 
-                if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<20) die("KILLED BY VIRUS");
-            } 
-            draw(ctx) { ctx.fillStyle="var(--danger)"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); } 
+        class Enemy {
+            constructor(){ let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; }
+            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1;this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<18 && !Core.god) die(); }
+            draw(ctx){ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill();}
         }
 
-        function die(reason) {
-            Core.alive = false;
-            // DEATH reset logic logic diddy reset complete diddy reset retry logic RETRY complete logic diddy diddy RETRY visibility retry visibility Retry Visibility completed logic reset sector complete logic Retry Visibility Retry Visibility retry invisibility visible invisibly reset logic visible Retry Retry Visibility Visibility Invisibly Visibility Invisibility complete complete reset logic invisible Visibility retry visibility Retry Visibility visible Invisibility visibly Invisibility visibility Retry Invisibly retry visibly retry retry invisibly retry diddy diddy complete diddy retry visibility diddy visibility Retry diddy Retry retry complete visibly diddy visibility Visibility Invisibly diddy complete retry invisibly invisibly Retry Invisibly visibly diddy complete diddy visibility diddy retry visibility Retry invisibility retry complete visibly diddy invisibility visibly diddy visibly visibly invisibly visually complete visibility visible invisible visual visibly invisibility visible invisible visible visibility visual invisibility complete visualization visible invisible visible visibility visual invisibility complete visual invisible visibility visible invisibility complete visible invisibly visibility Retry Retry Retry complete Invisibly Retry Invisibly visually visibly invisible visible retry invisibly visibly invisibly visual complete
-            document.getElementById('death-screen').style.display = 'flex';
-        }
+        function die() { Core.alive = false; document.getElementById('death-screen').style.display = 'flex'; }
+        function retrySector() { document.getElementById('death-screen').style.display = 'none'; Core.alive = true; Core.init(Core.sector); }
 
-        function retrySector() {
-            document.getElementById('death-screen').style.display = 'none';
-            Core.alive = true;
-            Core.init(Core.sector);
-        }
-
-        // Cutscenes logic cutscene story logic start typewriter start start logic cutsene typewriter Cutsene typewriter Cutsene logic Cutsene story start logic cutsene cutsene story logic logic story start typewriter cutsene cutsene story start typewriter typewriter function logic Cutsene start typewriter Cutsene cutsene typewriter start cutsene start Cutsene logic Cutsene cutsene story cutsene cutsene typewriter story story complete typewriter typewriter logic logic start story start logic logic Cutsene cutsene story complete typewriter logic story start complete typewriter cutsene cutsene story story complete typewriter typewriter story completed typewriter typewriter complete visibility visibly story visibility story complete story completed
         const UI = {
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; Core.paused = s; },
             startCutscene() { 
+                user = document.getElementById('username').value || "PILOT";
+                localStorage.setItem('sm_user', user);
                 document.getElementById('ui-layer').style.display = 'none'; 
                 document.getElementById('cutscene-layer').style.display = 'flex'; 
-                this.type("> INITIALIZING NEON_PROTOCOL...\n> SECTOR 1 REACHED\n> OXYGEN LEVELS CRITICAL\n> MISSION: SURVIVE THE GRID AND PURGE THE SYSTEM."); 
+                this.type(`> INITIALIZING NEON_PROTOCOL...\n> USER: ${user}\n> MISSION: PURGE THE SYSTEM.`); 
             },
             type(t) { 
-                let i = 0; const c = document.getElementById('typewriter'); c.innerHTML = ""; 
-                document.getElementById('skip-btn').style.display = 'none'; 
-                const f = () => { if(i < t.length) { c.innerHTML += t[i]==='\n'?'<br>':t[i]; i++; setTimeout(f, 35); } else document.getElementById('skip-btn').style.display = 'block'; }; f(); 
+                let i=0; const e=document.getElementById('typewriter'); e.innerHTML="";
+                const f=()=>{if(i<t.length){e.innerHTML+=t[i]==='\n'?'<br>':t[i]; i++; setTimeout(f,30);}else document.getElementById('skip-btn').style.display='block';}; f();
             },
-            clearData() {
-                // Wipe data logic logic data logic wipe completed data wipe completed completed completed visibility logic visibly invisibility complete logic wipe completed invisibility complete invisibly visibility data visibility completed invisibility completed invisibly visibly invisibility complete visibly visibility invisibly complete visibly invisibly completed visibly invisibility invisibility visibility logic data visibility complete logic complete wipe completed wipe completed visibility Invisibly visualization completed visibility visible incomplete visibly incompleteness incompleteness visibility visible invisible visible visibility visual invisibility complete visible incomplete visualization visible invisible visual visible visual invisibility visibly invisibly
-                localStorage.removeItem('sm_save');
-                localStorage.removeItem('sm_user');
-                location.reload();
-            }
+            clearData() { localStorage.removeItem('sm_save'); localStorage.removeItem('sm_user'); location.reload(); }
         };
 
-        // Input logic PC keyboard logic complete complete key logic Key logic complete Key key key key logic Key keys logic Key keys Key key complete visibility keys complete invisibility incomplete visual logic invisibly visibility invisible visual visibly visibility invisible complete visible invisibly visibly incomplete invisibility visibility complete logic key logic complete key Key Key Key keyboard Key Keys complete key Keys Key Key Key keyboards keyboards logic Keys Keyboard keyboards logic Complete Visibility key visibility invisible key invisibility complete visibility invisible key incompleteness visibility visible visual incomplete visualisation visible invisible visualization visible invisibility visibly invisibly visualization invisibly visualization visible invisibly visual visibility visible visual invisibility complete visualization invisibility incomplete visual visualise visibility visualization visible visual visual visualization invisibly visualiser
-        window.onkeydown=e=>{ 
-            Core.keys[e.code]=true; 
-            if(e.code==='Space') Core.player.shoot(); 
-            if(e.code==='ShiftLeft') Core.player.warp(); 
-            if(e.code==='KeyP') Core.togglePause();
-        };
+        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp(); if(e.code==='KeyP')Core.togglePause(); };
         window.onkeyup=e=>Core.keys[e.code]=false;
-        
-        // Joystick logic dynamic dynamic joystick dynamic logic dynamic joy dynamique dynamique dynamique dynamique dynamique dynamique joy dynamically dynamically logic dynamically diddy dynamics diddy joy diddy logic diddy dynamical dyn diddy dynamique logic logic joy complete dynamic joy dynamic diddy diddy logic dynamica dyn diddy complete visibility dynamic dynamic dyn diddy dynamical visibility diddy visibility dynamo dynamics visible dynamically dynamic visibility dynam dyn diddy invisible visually visual visible dynamically visualisation invisible visualization visible dynamically dynamical visualize incomplete dynam dynamo dynamo dynamical dynamically dynamically visible dynamically dynamically complete logic dynamical din diddy dynamics visible dynamics dynamically complete dynamique dynamically dynamical diddy complete visibility dynamically complete visual dynamic visibility visual dynamical visibility visual dynamically visualise visualize visually visualize incomplete visible visualisation visible dynamically visualization dyn diddy dynamically dynamical dyn complete visibly diddy dynamic dynamics visible dynamic dyn visible visual invisibly visibly visualisation visibly visualise visibility visible dynamic dyn incomplete visualisation visualization visibility visual visualisation visible visualise incomplete visible invisibly visualize visibility visibly incompleteness invisible visualise visual incomplete visualization visibly invisibility visual visibility visibly visualisation visual complete visualization visibly visual visualisation visualisation visual visible visibilité incomplete visibility incompleteness invisible visual logic invisibly visibility complete invisibly visualiser incomplete visualisation visibility visualization visible dynamically visualise visual invisibility complete visually complete dynamic dynamism dynamics visual incompleteness visibility visualise visualization dynamic visual dynamic dynamically visualization invisibility visual dynamically visisbility invisible visual
         let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.onpointerdown=(e)=>{ if(Core.paused) return; joyOn=true; jB.setPointerCapture(e.pointerId);}; 
-        jB.onpointermove=e=>{ if(!joyOn||Core.paused)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),45), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
+        jB.onpointerdown=(e)=>{joyOn=true; jB.setPointerCapture(e.pointerId);}; 
+        jB.onpointermove=e=>{if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),45), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;};
         jB.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
 
-        // Save check diddy cont cont retry resume resume complete complete logic visibility visibility diddy diddy resume resume diddy vis cont Cont CONT cont Retry Resume Resume complete diddy vis cont cont Cont cont diddy resume cont contCont cont diddy Cont Cont Cont cont diddy diddy cont Cont Cont cont diddy diddy cont Cont Cont complete completed visibly invisibility complete visibly visibility visibly diddy resume cont cont Cont diddy diddy complete logic cont CONT diddy diddy completed diddy cont cont Cont diddy diddy CONT cont Cont diddy resume Cont diddy Cont CONT cont Cont Cont diddy completed visibly invisibly visibly incomplete invisibility visibility complete visually cont CONT cont CONT diddy CONT diddy CONT diddy completed visually invisibly incomplete visualization Cont Cont incomplete Cont visibility visibly incompleteness invisibility incomplete visualisation visibility visible visual incomplete visualisation visualization visible visualise incomplete visualisation visible visual visualisation visualiser visualisation visual incomplete visibility visualiser visible visual visualiser visible visualization visualisation visible dynamic dynamics visualisation visual diddy diddy resume logic visibility cont CONT CONT cont Cont diddy CONT Cont CONT diddy Cont diddy cont CONT CONT Cont diddy completed CONT complete visibly logic CONT Cont diddy CONT complete visible cont visibility visible visualisation visual incompleteness visible visualization visualiser
-        if(localStorage.getItem('sm_save')) {
-            document.getElementById('res-btn').style.display = 'block';
-            document.getElementById('wipe-btn').style.display = 'block';
-            document.getElementById('userIn').value = localStorage.getItem('sm_user') || "";
+        if(localStorage.getItem('sm_save')){ 
+            document.getElementById('res-btn').style.display='block'; 
+            document.getElementById('wipe-btn').style.display='block'; 
+            document.getElementById('username').value = localStorage.getItem('sm_user');
         }
     </script>
 </body>
