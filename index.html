@@ -26,34 +26,43 @@
         #boss-bar { height: 100%; width: 100%; background: var(--danger); }
 
         #leaderboard { position: absolute; left: 20px; top: 120px; font-size: 0.8rem; background: rgba(0,0,0,0.7); padding: 10px; border-left: 2px solid var(--warp); color: var(--warp); }
-
         #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-weight: bold; text-shadow: 0 0 20px var(--danger); pointer-events: none; display: none; z-index: 1500; }
 
-        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: flex; z-index: 500; }
+        /* FEATURE: Toggleable Controls */
+        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 500; }
         .zone { position: absolute; bottom: 20px; width: 50%; height: 250px; pointer-events: none; }
         .left-zone { left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; pointer-events: auto; }
         .right-zone { right: 0; pointer-events: auto; }
 
         .act-btn { 
-            width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--warp); 
+            width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--warp); 
             color: var(--warp); display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; background: rgba(0,0,0,0.6); box-shadow: 0 0 15px var(--warp);
+            font-weight: bold; background: rgba(0,0,0,0.4); box-shadow: 0 0 10px var(--warp);
         }
-        .shoot-btn { border-color: #fff; color: #fff; box-shadow: 0 0 15px #fff; }
+        .shoot-btn { border-color: #fff; color: #fff; box-shadow: 0 0 10px #fff; }
 
-        #j-base { width: 130px; height: 130px; border: 3px solid var(--neon); border-radius: 50%; margin: 60px auto; position: relative; background: rgba(0,255,65,0.05); }
-        #j-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 37px; left: 37px; }
+        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 60px auto; position: relative; background: rgba(0,255,65,0.03); }
+        #j-knob { width: 45px; height: 45px; background: var(--neon); border-radius: 50%; position: absolute; top: 35px; left: 35px; }
 
-        .card { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 4px; width: 340px; text-align: center; }
+        .card { background: rgba(0,0,0,0.9); padding: 25px; border-radius: 4px; width: 340px; text-align: center; }
         .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; }
+        .btn:active { background: var(--neon); color: #000; }
         .admin-input { width: 100%; background: #111; border: 1px solid var(--danger); color: var(--danger); padding: 8px; margin: 5px 0; font-family: inherit; }
+        
+        .mode-select { display: flex; gap: 10px; margin-bottom: 10px; }
+        .mode-btn { flex: 1; font-size: 0.7rem; border-color: var(--warp); color: var(--warp); }
+        .mode-btn.active { background: var(--warp); color: #000; }
     </style>
 </head>
 <body>
     <div id="ui-layer" class="layer">
-        <h1 class="neon-text" style="font-size: 3rem;">SPACE MAZE</h1>
+        <h1 class="neon-text" style="font-size: 2.5rem; margin-bottom: 10px;">SPACE MAZE</h1>
         <div class="card neon-border">
             <input type="text" id="username" placeholder="ENTER USERNAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);">
+            <div class="mode-select">
+                <button class="btn mode-btn active" id="pc-mode" onclick="setMode('pc')">PC (HIDDEN HUD)</button>
+                <button class="btn mode-btn" id="mobile-mode" onclick="setMode('mobile')">MOBILE (JOYSTICK)</button>
+            </div>
             <button class="btn" onclick="UI.startCutscene()">START MISSION</button>
             <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
         </div>
@@ -106,12 +115,20 @@
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
         const RAGE_LIST = ["SKILL ISSUE.", "EMBARRASSING.", "PATHETIC.", "MY CAT PLAYS BETTER.", "LOL RAGED?"];
+        let controlMode = 'pc';
+
+        function setMode(m) {
+            controlMode = m;
+            document.getElementById('pc-mode').classList.toggle('active', m === 'pc');
+            document.getElementById('mobile-mode').classList.toggle('active', m === 'mobile');
+        }
         
         const Core = {
             sector: 1, active: false, entities: [], keys: {}, combo: "", time: 0, paused: false, infOx: false, deaths: 0, rageSize: 1.5,
             boot(resume) {
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
+                document.getElementById('mobile-controls').style.display = (controlMode === 'mobile') ? 'flex' : 'none';
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
                 this.deaths = parseInt(localStorage.getItem('sm_deaths')) || 0;
@@ -123,15 +140,12 @@
                 localStorage.setItem('sm_save', n);
                 document.getElementById('local-deaths').innerText = this.deaths;
                 document.getElementById('local-name').innerText = (document.getElementById('username').value || "YOU").toUpperCase();
-                
                 const isSpecial = (n === 21 || n === 202 || n === 999);
                 document.getElementById('override-msg').innerText = (n === 21) ? "SYSTEM OVERRIDE: VOID REACHED" : "";
-                
                 this.maze = isSpecial ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
                 this.player = new Player(MAP.TW+5, MAP.TH+5);
                 document.getElementById('v-sec').innerText = (n === 999) ? "???" : n;
                 document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
-
                 if(n === 202) { this.entities.push(new DiddyBoss(400, 300)); } 
                 else if(n === 999) { this.active = false; UI.playGlitchCutscene(); } 
                 else if(!isSpecial) { 
@@ -152,13 +166,11 @@
             die() {
                 if(this.infOx) return;
                 this.deaths++; localStorage.setItem('sm_deaths', this.deaths);
-                // CHANGE 3: Rage Bait happens every time you die
-                this.rageSize += 0.3; // Increment size slightly each time
+                this.rageSize += 0.2;
                 const el = document.getElementById('rage-overlay');
                 el.innerText = RAGE_LIST[Math.floor(Math.random()*RAGE_LIST.length)];
                 el.style.display = 'block'; el.style.fontSize = this.rageSize + "rem";
                 setTimeout(() => el.style.display = 'none', 2500); 
-                
                 this.init(this.sector);
             },
             update() {
@@ -179,12 +191,9 @@
                 this.ctx.shadowColor = (this.sector === 21) ? "var(--glitch)" : "#00ff41";
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2);
-                
-                // CHANGE 2: Blue block exit, made bigger (30x30)
                 this.ctx.shadowBlur = 0;
                 this.ctx.fillStyle = "#0cf"; 
-                this.ctx.fillRect(MAP.W-MAP.TW*1.5 - 7.5, MAP.H-MAP.TH*1.5 - 7.5, 30, 30);
-                
+                this.ctx.fillRect(MAP.W-MAP.TW-1, MAP.H-MAP.TH-1, MAP.TW-2, MAP.TH-2);
                 this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
             },
             run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
@@ -219,18 +228,13 @@
                     let angle = nearest ? Math.atan2(nearest.y - this.y, nearest.x - this.x) : 0;
                     Core.entities.push(new Bullet(this.x, this.y, angle, "#fff", true)); 
                     if(!Core.infOx) this.ox -= 2.0; 
-                    this.cd = 15; 
-                    Core.combo += "S"; checkAdmin();
+                    this.cd = 15; Core.combo += "S"; checkAdmin();
                 }
             }
             warp() {
                 if(this.ox > 10 || Core.infOx) {
                     let nx = this.x + 130;
-                    if(!this.isW(nx, this.y)) { 
-                        this.x = nx; 
-                        if(!Core.infOx) this.ox -= 10; 
-                        Core.combo += "W"; checkAdmin();
-                    }
+                    if(!this.isW(nx, this.y)) { this.x = nx; if(!Core.infOx) this.ox -= 10; Core.combo += "W"; checkAdmin(); }
                 }
             }
             isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
@@ -252,34 +256,16 @@
 
         class Enemy { 
             constructor() { 
-                let rx,ry; 
-                do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry)); 
-                this.x=rx; this.y=ry; 
-                this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; 
-                this.angle = 0;
+                let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry)); 
+                this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; 
             } 
             tick() { 
-                this.x+=this.vx; this.y+=this.vy; 
-                if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;} 
+                this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;} 
                 if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); 
-                this.angle += 0.1; // Rotation speed
             } 
             draw(ctx) { 
-                // CHANGE 1: Red Triangle Animator
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-                ctx.shadowColor="var(--danger)";
-                ctx.shadowBlur = 15;
-                ctx.fillStyle="var(--danger)";
-                ctx.beginPath();
-                // Draw Triangle
-                ctx.moveTo(0, -15);
-                ctx.lineTo(13, 10);
-                ctx.lineTo(-13, 10);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+                ctx.shadowColor="var(--danger)"; ctx.shadowBlur = 15; ctx.fillStyle="var(--danger)";
+                ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); 
             } 
         }
         Core.isWall = (x,y) => { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; };
@@ -308,15 +294,14 @@
             if(e.code==='ShiftLeft') Core.player.warp(); 
             if(e.code==='Space') { e.preventDefault(); Core.player.shoot(); }
             if(e.code==='KeyP') { Core.paused = !Core.paused; document.getElementById('v-paused').style.display = Core.paused ? 'inline' : 'none'; }
-            if(e.code==='KeyR') { Core.init(Core.sector); }
+            if(e.code==='KeyR') Core.init(Core.sector);
         };
         window.onkeyup=e=>Core.keys[e.code]=false;
         
         let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.onpointerdown=()=>{joyOn=true;}; 
-        window.onpointermove=e=>{ if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+65), dy=e.clientY-(r.top+65), d=Math.min(Math.hypot(dx,dy),50), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
+        jB.onpointerdown=()=>{ if(controlMode==='mobile') joyOn=true; }; 
+        window.onpointermove=e=>{ if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),45), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
         window.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
-
         window.onload = () => { if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display = 'block'; };
     </script>
 </body>
