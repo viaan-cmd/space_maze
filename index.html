@@ -25,10 +25,8 @@
         #boss-hud { position: absolute; bottom: 120px; width: 80%; max-width: 500px; height: 15px; border: 2px solid var(--danger); background: #000; display: none; z-index: 100; }
         #boss-bar { height: 100%; width: 100%; background: var(--danger); }
 
-        /* FEATURE: Leaderboard UI */
         #leaderboard { position: absolute; left: 20px; top: 120px; font-size: 0.8rem; background: rgba(0,0,0,0.7); padding: 10px; border-left: 2px solid var(--warp); color: var(--warp); }
 
-        /* FEATURE: Rage Overlay */
         #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-weight: bold; text-shadow: 0 0 20px var(--danger); pointer-events: none; display: none; z-index: 1500; }
 
         #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: flex; z-index: 500; }
@@ -154,13 +152,13 @@
             die() {
                 if(this.infOx) return;
                 this.deaths++; localStorage.setItem('sm_deaths', this.deaths);
-                if(this.deaths % 5 === 0) {
-                    this.rageSize += 0.5;
-                    const el = document.getElementById('rage-overlay');
-                    el.innerText = RAGE_LIST[Math.floor(Math.random()*RAGE_LIST.length)];
-                    el.style.display = 'block'; el.style.fontSize = this.rageSize + "rem";
-                    setTimeout(() => el.style.display = 'none', 2500); // Surprise stays longer
-                }
+                // CHANGE 3: Rage Bait happens every time you die
+                this.rageSize += 0.3; // Increment size slightly each time
+                const el = document.getElementById('rage-overlay');
+                el.innerText = RAGE_LIST[Math.floor(Math.random()*RAGE_LIST.length)];
+                el.style.display = 'block'; el.style.fontSize = this.rageSize + "rem";
+                setTimeout(() => el.style.display = 'none', 2500); 
+                
                 this.init(this.sector);
             },
             update() {
@@ -181,7 +179,12 @@
                 this.ctx.shadowColor = (this.sector === 21) ? "var(--glitch)" : "#00ff41";
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2);
-                this.ctx.fillStyle = "#fff"; this.ctx.fillRect(MAP.W-MAP.TW*1.5, MAP.H-MAP.TH*1.5, 15, 15);
+                
+                // CHANGE 2: Blue block exit, made bigger (30x30)
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = "#0cf"; 
+                this.ctx.fillRect(MAP.W-MAP.TW*1.5 - 7.5, MAP.H-MAP.TH*1.5 - 7.5, 30, 30);
+                
                 this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
             },
             run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
@@ -231,7 +234,7 @@
                 }
             }
             isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
-            draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle=Core.infOx? "var(--gold)":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
+            draw(ctx) { ctx.shadowColor="#fff"; ctx.shadowBlur = 15; ctx.fillStyle=Core.infOx? "var(--gold)":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
         }
 
         class Bullet {
@@ -242,12 +245,43 @@
                 if(this.isPlayer) { Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<30){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } }); } 
                 else { if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y) < 15) Core.die(); } 
             }
-            draw(ctx) { ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-3,this.y-3,6,6); }
+            draw(ctx) { ctx.shadowBlur = 10; ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-3,this.y-3,6,6); }
         }
 
         class Oil { constructor(x,y) { this.x=x; this.y=y; this.r=45; this.life=400; } tick() { this.life--; if(this.life<=0) this.dead=true; } draw(ctx) { ctx.shadowBlur=0; ctx.fillStyle="rgba(46, 8, 84, 0.6)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); } }
 
-        class Enemy { constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; } tick() { this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<18) Core.die(); } draw(ctx) { ctx.shadowColor="var(--danger)"; ctx.fillStyle="var(--danger)"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); } }
+        class Enemy { 
+            constructor() { 
+                let rx,ry; 
+                do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry)); 
+                this.x=rx; this.y=ry; 
+                this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; 
+                this.angle = 0;
+            } 
+            tick() { 
+                this.x+=this.vx; this.y+=this.vy; 
+                if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;} 
+                if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); 
+                this.angle += 0.1; // Rotation speed
+            } 
+            draw(ctx) { 
+                // CHANGE 1: Red Triangle Animator
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.shadowColor="var(--danger)";
+                ctx.shadowBlur = 15;
+                ctx.fillStyle="var(--danger)";
+                ctx.beginPath();
+                // Draw Triangle
+                ctx.moveTo(0, -15);
+                ctx.lineTo(13, 10);
+                ctx.lineTo(-13, 10);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            } 
+        }
         Core.isWall = (x,y) => { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; };
 
         class DiddyBoss {
