@@ -57,7 +57,7 @@
     <div id="ui-layer" class="layer">
         <h1 class="neon-text" style="font-size: 2.5rem; margin-bottom: 10px;">SPACE MAZE</h1>
         <div class="card neon-border">
-            <input type="text" id="username" placeholder="ENTER USERNAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);">
+            <input type="text" id="username" placeholder="ENTER USERNAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);" oninput="localStorage.setItem('sm_user', this.value)">
             <div class="mode-select">
                 <button class="btn mode-btn active" id="pc-mode" onclick="setMode('pc')">PC (HIDDEN HUD)</button>
                 <button class="btn mode-btn" id="mobile-mode" onclick="setMode('mobile')">MOBILE (JOYSTICK)</button>
@@ -78,7 +78,7 @@
             <input type="number" id="jump-level" placeholder="SECTOR NUMBER" class="admin-input">
             <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.adminJump(document.getElementById('jump-level').value)">JUMP TO SECTOR</button>
             <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.toggleInfOx()">GOD_MODE: <span id="inf-ox-status">OFF</span></button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.player.speedBase = 12">SPEED BOOST</button>
+            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.player.speedBase = 12; UI.toggleAdmin(false)">SPEED BOOST</button>
             <button class="btn" style="margin-top:20px;" onclick="UI.toggleAdmin(false)">EXIT ROOT</button>
         </div>
     </div>
@@ -160,7 +160,9 @@
                     let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>0&&nr<MAP.R-1&&nc>0&&nc<MAP.C-1&&m[nr][nc]===1);
                     if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
-                m[MAP.R-2][MAP.C-2]=0; return m;
+                // ENSURE EXIT IS CLEAR: Force the bottom right corner to be empty space
+                m[MAP.R-2][MAP.C-2]=0; m[MAP.R-2][MAP.C-3]=0; m[MAP.R-3][MAP.C-2]=0;
+                return m;
             },
             die() {
                 if(this.infOx) return;
@@ -179,7 +181,8 @@
                     this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
-                if(this.player.x > MAP.W-MAP.TW*2 && this.player.y > MAP.H-MAP.TH*2) {
+                // Trigger exit
+                if(this.player.x > MAP.W - MAP.TW && this.player.y > MAP.H - MAP.TH) {
                     if(this.sector === 202 && this.entities.some(e=>e instanceof DiddyBoss)) return;
                     this.init(this.sector + 1);
                 }
@@ -191,11 +194,11 @@
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2);
                 
-                // FIXED EXIT GATE SIZE
-                this.ctx.shadowBlur = 10;
+                // EXIT PORTAL (BLUE SQUARE)
+                this.ctx.shadowBlur = 15;
                 this.ctx.shadowColor = "#0cf";
                 this.ctx.fillStyle = "#0cf"; 
-                this.ctx.fillRect(MAP.W - MAP.TW, MAP.H - MAP.TH, MAP.TW, MAP.TH);
+                this.ctx.fillRect(MAP.W - MAP.TW + 2, MAP.H - MAP.TH + 2, MAP.TW - 4, MAP.TH - 4);
                 
                 this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
             },
@@ -259,7 +262,7 @@
 
         class Enemy { 
             constructor() { 
-                let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry)); 
+                let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.isWall(rx,ry) || Math.hypot(rx-10, ry-10) < 100); 
                 this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; 
             } 
             tick() { 
@@ -267,9 +270,9 @@
                 if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); 
             } 
             draw(ctx) { 
-                ctx.shadowColor="#ff0033"; // FORCED RED
+                ctx.shadowColor="#ff0033"; 
                 ctx.shadowBlur = 15; 
-                ctx.fillStyle="#ff0033";
+                ctx.fillStyle="#ff0033"; // HARD FORCED RED
                 ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); 
             } 
         }
@@ -282,9 +285,12 @@
         }
 
         function checkAdmin() {
-            let name = (document.getElementById('username').value || "").toUpperCase();
-            if(Core.combo.endsWith("SWWS") && name === "VIAAN2501") UI.toggleAdmin(true);
-            if(Core.combo.length > 10) Core.combo = Core.combo.slice(-4);
+            let name = (document.getElementById('username').value || "").toUpperCase().trim();
+            if(Core.combo.includes("SWWS") && name === "VIAAN2501") {
+                UI.toggleAdmin(true);
+                Core.combo = ""; 
+            }
+            if(Core.combo.length > 20) Core.combo = Core.combo.slice(-4);
         }
 
         const UI = {
@@ -296,7 +302,7 @@
 
         window.onkeydown=e=>{ 
             Core.keys[e.code]=true; 
-            if(e.code==='ShiftLeft') Core.player.warp(); 
+            if(e.code==='ShiftLeft' || e.code==='ShiftRight') Core.player.warp(); 
             if(e.code==='Space') { e.preventDefault(); Core.player.shoot(); }
             if(e.code==='KeyP') { Core.paused = !Core.paused; document.getElementById('v-paused').style.display = Core.paused ? 'inline' : 'none'; }
             if(e.code==='KeyR') Core.init(Core.sector);
@@ -307,22 +313,18 @@
         jB.onpointerdown=(e)=>{ if(controlMode==='mobile') joyOn=true; }; 
         window.onpointermove=e=>{ 
             if(!joyOn) return; 
-            let r=jB.getBoundingClientRect(), 
-                dx=e.clientX-(r.left+60), 
-                dy=e.clientY-(r.top+60), 
-                dist=Math.hypot(dx,dy), 
-                max=45, 
-                angle=Math.atan2(dy,dx);
-            
+            let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), dist=Math.hypot(dx,dy), max=45, angle=Math.atan2(dy,dx);
             let clampedDist = Math.min(dist, max);
-            joyV={
-                x: Math.cos(angle) * (clampedDist / max),
-                y: Math.sin(angle) * (clampedDist / max)
-            };
+            joyV={ x: Math.cos(angle) * (clampedDist / max), y: Math.sin(angle) * (clampedDist / max) };
             jK.style.transform=`translate(${Math.cos(angle)*clampedDist}px,${Math.sin(angle)*clampedDist}px)`; 
         };
         window.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
-        window.onload = () => { if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display = 'block'; };
+        
+        window.onload = () => { 
+            const savedUser = localStorage.getItem('sm_user');
+            if(savedUser) document.getElementById('username').value = savedUser;
+            if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display = 'block'; 
+        };
     </script>
 </body>
 </html>
