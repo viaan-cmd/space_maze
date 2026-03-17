@@ -28,7 +28,6 @@
         #leaderboard { position: absolute; left: 20px; top: 120px; font-size: 0.8rem; background: rgba(0,0,0,0.7); padding: 10px; border-left: 2px solid var(--warp); color: var(--warp); }
         #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-weight: bold; text-shadow: 0 0 20px var(--danger); pointer-events: none; display: none; z-index: 1500; }
 
-        /* FEATURE: Toggleable Controls */
         #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 500; }
         .zone { position: absolute; bottom: 20px; width: 50%; height: 250px; pointer-events: none; }
         .left-zone { left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; pointer-events: auto; }
@@ -191,9 +190,13 @@
                 this.ctx.shadowColor = (this.sector === 21) ? "var(--glitch)" : "#00ff41";
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2);
-                this.ctx.shadowBlur = 0;
+                
+                // FIXED EXIT GATE SIZE
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = "#0cf";
                 this.ctx.fillStyle = "#0cf"; 
-                this.ctx.fillRect(MAP.W-MAP.TW-1, MAP.H-MAP.TH-1, MAP.TW-2, MAP.TH-2);
+                this.ctx.fillRect(MAP.W - MAP.TW, MAP.H - MAP.TH, MAP.TW, MAP.TH);
+                
                 this.entities.forEach(e => e.draw(this.ctx)); this.player.draw(this.ctx);
             },
             run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
@@ -264,7 +267,9 @@
                 if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); 
             } 
             draw(ctx) { 
-                ctx.shadowColor="var(--danger)"; ctx.shadowBlur = 15; ctx.fillStyle="var(--danger)";
+                ctx.shadowColor="#ff0033"; // FORCED RED
+                ctx.shadowBlur = 15; 
+                ctx.fillStyle="#ff0033";
                 ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); 
             } 
         }
@@ -299,8 +304,23 @@
         window.onkeyup=e=>Core.keys[e.code]=false;
         
         let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.onpointerdown=()=>{ if(controlMode==='mobile') joyOn=true; }; 
-        window.onpointermove=e=>{ if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),45), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`; };
+        jB.onpointerdown=(e)=>{ if(controlMode==='mobile') joyOn=true; }; 
+        window.onpointermove=e=>{ 
+            if(!joyOn) return; 
+            let r=jB.getBoundingClientRect(), 
+                dx=e.clientX-(r.left+60), 
+                dy=e.clientY-(r.top+60), 
+                dist=Math.hypot(dx,dy), 
+                max=45, 
+                angle=Math.atan2(dy,dx);
+            
+            let clampedDist = Math.min(dist, max);
+            joyV={
+                x: Math.cos(angle) * (clampedDist / max),
+                y: Math.sin(angle) * (clampedDist / max)
+            };
+            jK.style.transform=`translate(${Math.cos(angle)*clampedDist}px,${Math.sin(angle)*clampedDist}px)`; 
+        };
         window.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
         window.onload = () => { if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display = 'block'; };
     </script>
