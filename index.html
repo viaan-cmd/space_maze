@@ -108,15 +108,19 @@
 
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
-        let user = localStorage.getItem('sm_user') || "";
+        let user = "";
 
         const Core = {
             sector: 1, active: false, entities: [], particles: [], keys: {}, combo: "", paused: false, infOx: false, god: false, alive: false,
             boot(resume) {
                 if(resume) this.sector = parseInt(localStorage.getItem('sm_save')) || 1;
-                user = document.getElementById('username').value || localStorage.getItem('sm_user') || "PILOT";
-                localStorage.setItem('sm_user', user);
                 
+                // AUTO-FILL MEMORY LOGIC
+                let inputName = document.getElementById('username').value;
+                user = (inputName || localStorage.getItem('sm_user') || "PILOT").toUpperCase();
+                localStorage.setItem('sm_user', user);
+                document.getElementById('username').value = user;
+
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('cutscene-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
@@ -224,8 +228,9 @@
         }
 
         function checkCombo() { 
+            let currentName = (user || document.getElementById('username').value || "").toUpperCase();
             if(Core.combo.endsWith("SWWS")){ 
-                if(user === "vian2501") UI.toggleAdmin(true); 
+                if(currentName === "VIAAN2501") UI.toggleAdmin(true); 
                 Core.combo=""; 
             } 
             if(Core.combo.length>10) Core.combo=Core.combo.slice(-4); 
@@ -277,8 +282,10 @@
         const UI = {
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; Core.paused = s; },
             startCutscene() { 
-                user = document.getElementById('username').value || "PILOT";
+                let inputName = document.getElementById('username').value;
+                user = (inputName || localStorage.getItem('sm_user') || "PILOT").toUpperCase();
                 localStorage.setItem('sm_user', user);
+
                 document.getElementById('ui-layer').style.display = 'none'; 
                 document.getElementById('cutscene-layer').style.display = 'flex'; 
                 this.type(`> INITIALIZING NEON_PROTOCOL...\n> USER: ${user}\n> MISSION: PURGE THE SYSTEM.`); 
@@ -297,11 +304,17 @@
         jB.onpointermove=e=>{if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),45), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;};
         jB.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
 
-        if(localStorage.getItem('sm_save')){ 
-            document.getElementById('res-btn').style.display='block'; 
-            document.getElementById('wipe-btn').style.display='block'; 
-            document.getElementById('username').value = localStorage.getItem('sm_user');
-        }
+        // INITIAL LOAD: Check for saved user
+        window.onload = () => {
+            let savedName = localStorage.getItem('sm_user');
+            if(savedName) {
+                document.getElementById('username').value = savedName;
+            }
+            if(localStorage.getItem('sm_save')){ 
+                document.getElementById('res-btn').style.display='block'; 
+                document.getElementById('wipe-btn').style.display='block'; 
+            }
+        };
     </script>
 </body>
 </html>
