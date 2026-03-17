@@ -3,151 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | NEON GOD BUILD FINAL</title>
+    <title>SPACE MAZE | VIAAN2501 FINAL</title>
     <style>
-        :root { 
-            --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --glitch: #a020f0; --oil: #ffd700;
-        }
+        :root { --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --purple: #a020f0; }
         * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        
         body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; }
-
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
         #game-layer { display: none; }
-        .neon-text { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }
-        .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon), inset 0 0 5px var(--neon); }
-        
-        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; font-size: 1.1rem; z-index: 100; pointer-events: none; font-weight: bold; }
-        #ox-bar-container { width: 120px; height: 10px; border: 1px solid var(--neon); margin-top: 5px; background: rgba(0,255,65,0.1); }
+        .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon); }
+        #hud { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; font-size: 1rem; z-index: 100; pointer-events: none; }
+        #ox-bar-container { width: 100px; height: 8px; border: 1px solid var(--neon); background: rgba(0,255,65,0.1); margin-top: 4px; }
         #ox-bar { height: 100%; width: 100%; background: var(--neon); transition: width 0.2s; }
-        
-        #boss-hud { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 300px; height: 15px; border: 2px solid var(--danger); background: #000; display: none; z-index: 100; }
-        #boss-bar { height: 100%; width: 100%; background: var(--danger); transition: width 0.1s; }
-
-        .pause-btn { pointer-events: auto; background: none; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-family: inherit; font-weight: bold; cursor: pointer; }
-
-        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 500; }
-        .zone { position: absolute; bottom: 20px; width: 50%; height: 250px; pointer-events: none; }
-        .left-zone { left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; pointer-events: auto; }
-        .right-zone { right: 0; pointer-events: auto; }
-
-        .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(0,0,0,0.6); box-shadow: 0 0 15px var(--warp); }
-        .shoot-btn { border-color: #fff; color: #fff; box-shadow: 0 0 15px #fff; }
-
-        #j-base { width: 120px; height: 120px; border: 3px solid var(--neon); border-radius: 50%; margin: 60px auto; position: relative; background: rgba(0,255,65,0.05); }
-        #j-knob { width: 45px; height: 45px; background: var(--neon); border-radius: 50%; position: absolute; top: 35px; left: 35px; }
-
-        .card { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 4px; width: 340px; text-align: center; }
-        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; }
-        .admin-input { width: 100%; background: #111; border: 1px solid var(--danger); color: var(--danger); padding: 8px; margin: 5px 0; font-family: inherit; }
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; }
+        #admin-layer { z-index: 2000; background: rgba(0,0,0,0.95); display: none; }
+        #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-weight: bold; text-shadow: 0 0 20px var(--danger); pointer-events: none; display: none; z-index: 1500; transition: transform 0.2s; }
+        #mobile-controls { position: absolute; inset: 0; pointer-events: none; display: none; }
+        .zone { position: absolute; bottom: 20px; width: 50%; height: 200px; pointer-events: auto; }
+        .left-zone { left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .right-zone { right: 0; }
+        .act-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: rgba(0,0,0,0.5); }
+        #j-base { width: 100px; height: 100px; border: 2px solid var(--neon); border-radius: 50%; margin: 50px auto; position: relative; }
+        #j-knob { width: 35px; height: 35px; background: var(--neon); border-radius: 50%; position: absolute; top: 32px; left: 32px; }
     </style>
 </head>
 <body>
     <div id="ui-layer" class="layer">
-        <h1 class="neon-text" style="font-size: 3rem; margin-bottom: 20px;">SPACE MAZE</h1>
-        <div class="card neon-border">
-            <input type="text" id="username" placeholder="ENTER PILOT NAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);">
-            <button class="btn" onclick="UI.startCutscene()">NEW MISSION</button>
-            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME MISSION</button>
-            <button class="btn" id="wipe-btn" style="display:none; border-color:var(--danger); color:var(--danger);" onclick="UI.clearData()">WIPE SAVE</button>
+        <h1 style="font-size: 3rem; text-shadow: 0 0 10px var(--neon);">SPACE MAZE</h1>
+        <div class="card neon-border" style="padding: 20px; width: 300px; text-align: center;">
+            <input type="text" id="username" placeholder="PILOT NAME" style="width:100%; background:#111; color:var(--neon); border:1px solid var(--neon); padding:8px; margin-bottom:10px;">
+            <button class="btn" onclick="UI.start()">START MISSION</button>
+            <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
         </div>
     </div>
 
-    <div id="cutscene-layer" class="layer" style="display:none;">
-        <div id="typewriter" style="padding:40px; text-align:left; font-size: 1.1rem; line-height: 1.5; width: 80%;"></div>
-        <button class="btn" id="skip-btn" style="width:200px; display:none;" onclick="Core.boot(false)">PROCEED ></button>
-    </div>
-
-    <div id="death-screen" class="layer" style="display:none; z-index: 1200; background: rgba(0,0,0,0.9);">
-        <div class="card neon-border" style="border-color: var(--danger);">
-            <h1 class="neon-text" style="color:var(--danger);">MISSION FAILED</h1>
-            <button class="btn" style="border-color: var(--danger); color: var(--danger);" onclick="retrySector()">RETRY SECTOR</button>
-            <button class="btn" onclick="location.reload()">MAIN MENU</button>
+    <div id="admin-layer" class="layer">
+        <div class="card neon-border" style="padding:20px; border-color:var(--danger); text-align:center;">
+            <h2 style="color:var(--danger);">ROOT: VIAAN2501</h2>
+            <input type="number" id="jump-level" placeholder="SECTOR" style="width:100%; background:#000; color:var(--danger); border:1px solid var(--danger); padding:5px;">
+            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.adminJump(document.getElementById('jump-level').value)">WARP</button>
+            <button class="btn" onclick="Core.god=!Core.god; UI.toggleAdmin(false)">GOD MODE: <span id="gs">OFF</span></button>
+            <button class="btn" onclick="UI.toggleAdmin(false)">EXIT</button>
         </div>
     </div>
 
-    <div id="pause-layer" class="layer" style="display:none; background: rgba(0,0,0,0.8); z-index: 1500;">
-        <div class="card neon-border" style="border-color: var(--gold);">
-            <h1 style="color:var(--gold);">SYSTEM PAUSED</h1>
-            <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="Core.togglePause()">RESUME</button>
-            <button class="btn" onclick="location.reload()">MAIN MENU</button>
-        </div>
-    </div>
-
-    <div id="admin-layer" class="layer" style="display:none; z-index:2000; background: rgba(0,0,0,0.98);">
-        <div class="card neon-border" style="border-color: var(--danger);">
-            <h2 style="color:var(--danger); margin-top:0;">ROOT_ACCESS</h2>
-            <p style="font-size: 0.8rem; color: var(--danger);">AUTH: VIAAN2501</p>
-            <input type="number" id="jump-level" placeholder="SECTOR #" class="admin-input">
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.adminJump(document.getElementById('jump-level').value)">WARP TO SECTOR</button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.toggleInfOx()">INF OXYGEN: <span id="inf-ox-status">OFF</span></button>
-            <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="Core.toggleGodMode()">GOD MODE: <span id="god-status">OFF</span></button>
-            <button class="btn" style="margin-top:20px;" onclick="UI.toggleAdmin(false)">EXIT ROOT</button>
-        </div>
-    </div>
+    <div id="rage-overlay">GET GOOD.</div>
 
     <div id="game-layer" class="layer">
         <div id="hud">
-            <div class="neon-text">SEC: <span id="v-sec">1</span></div>
-            <button class="pause-btn" onclick="Core.togglePause()">|| PAUSE</button>
+            <div>SEC: <span id="v-sec">1</span><br>DEATHS: <span id="v-deaths">0</span></div>
+            <div id="override-msg" style="color:var(--purple); font-weight:bold;"></div>
             <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
         </div>
         <canvas id="stage"></canvas>
-        <div id="boss-hud"><div id="boss-bar"></div></div>
         <div id="mobile-controls">
             <div class="zone left-zone">
                 <div class="act-btn" onpointerdown="Core.player.warp()">WARP</div>
-                <div class="act-btn shoot-btn" onpointerdown="Core.player.shoot()">FIRE</div>
+                <div class="act-btn" style="border-color:#fff; color:#fff;" onpointerdown="Core.player.shoot()">FIRE</div>
             </div>
-            <div class="zone right-zone">
-                <div id="j-base"><div id="j-knob"></div></div>
-            </div>
+            <div class="zone right-zone"><div id="j-base"><div id="j-knob"></div></div></div>
         </div>
     </div>
 
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
+        const RAGE_MESSAGES = ["GET GOOD.", "ARE YOU EVEN TRYING?", "MY GRANDMA PLAYS BETTER.", "EMBARRASSING.", "SKILL ISSUE.", "JUST QUIT.", "OXYGEN IS FOR WINNERS."];
         let user = "";
 
         const Core = {
-            sector: 1, active: false, entities: [], particles: [], keys: {}, combo: "", paused: false, infOx: false, god: false, alive: false,
+            sector: 1, entities: [], particles: [], keys: {}, combo: "", god: false, alive: false, deaths: 0, rageLevel: 1,
             boot(resume) {
                 if(resume) this.sector = parseInt(localStorage.getItem('sm_save')) || 1;
-                
-                // AUTO-FILL MEMORY LOGIC
-                let inputName = document.getElementById('username').value;
-                user = (inputName || localStorage.getItem('sm_user') || "PILOT").toUpperCase();
+                this.deaths = parseInt(localStorage.getItem('sm_deaths')) || 0;
+                user = (document.getElementById('username').value || localStorage.getItem('sm_user') || "PILOT").toUpperCase();
                 localStorage.setItem('sm_user', user);
-                document.getElementById('username').value = user;
-
                 document.getElementById('ui-layer').style.display = 'none';
-                document.getElementById('cutscene-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
                 if('ontouchstart' in window) document.getElementById('mobile-controls').style.display = 'flex';
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
-                this.alive = true;
-                this.init(this.sector);
+                this.alive = true; this.init(this.sector);
                 if(!this.loopStarted) { this.run(); this.loopStarted = true; }
             },
             init(n) {
-                this.sector = parseInt(n); this.active = true; this.entities = []; this.particles = [];
-                localStorage.setItem('sm_save', n);
-                const isSpecial = (n === 21 || n === 202);
-                this.maze = isSpecial ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
+                this.sector = n; localStorage.setItem('sm_save', n);
+                this.entities = []; this.particles = [];
+                
+                // Sector 21 is ONLY the override level
+                const isOverride = (n === 21);
+                const isBoss = (n === 202);
+                
+                document.getElementById('override-msg').innerText = isOverride ? "SYSTEM OVERRIDE: VOID REACHED" : "";
+                
+                // Generate Maze if not Sector 21 or Boss
+                this.maze = (isOverride || isBoss) ? Array.from({length:MAP.R},()=>Array(MAP.C).fill(0)) : this.createMaze();
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
                 document.getElementById('v-sec').innerText = n;
-                document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
+                document.getElementById('v-deaths').innerText = this.deaths;
                 
-                if(n === 21) {
-                    this.entities.push(new Portal(200, 300, 22), new Portal(600, 300, 22));
-                } else if(n === 202) {
-                    this.entities.push(new DiddyBoss(400, 300));
-                } else {
-                    let count = Math.min(3 + Math.floor(n/2), 15);
-                    for(let i=0; i<count; i++) this.entities.push(new Enemy());
-                }
+                if(isBoss) this.entities.push(new DiddyBoss(400, 300));
+                else if(!isOverride) { for(let i=0; i<Math.min(3+n, 15); i++) this.entities.push(new Enemy()); }
             },
             createMaze() {
                 let m = Array.from({length:MAP.R},()=>Array(MAP.C).fill(1));
@@ -155,165 +110,143 @@
                 while(s.length) {
                     let [r,c] = s[s.length-1];
                     let ns = [[r-2,c],[r+2,c],[r,c-2],[r,c+2]].filter(([nr,nc])=>nr>=0&&nr<MAP.R&&nc>=0&&nc<MAP.C&&m[nr][nc]===1);
-                    if(ns.length) { 
-                        let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; 
-                        m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); 
-                    } else s.pop();
+                    if(ns.length) { let [nr,nc] = ns[Math.floor(Math.random()*ns.length)]; m[nr][nc]=0; m[(r+nr)/2][(c+nc)/2]=0; s.push([nr,nc]); } else s.pop();
                 }
-                m[MAP.R-1][MAP.C-1] = 0; m[MAP.R-2][MAP.C-1] = 0; m[MAP.R-1][MAP.C-2] = 0;
-                return m;
+                m[MAP.R-1][MAP.C-1]=0; return m;
             },
-            togglePause() { if(this.alive) { this.paused = !this.paused; document.getElementById('pause-layer').style.display = this.paused ? 'flex' : 'none'; } },
-            createExplosion(x,y,color) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,color)); },
-            update() {
-                if(!this.active || this.paused || !this.alive) return;
-                this.player.tick();
-                for(let i=this.entities.length-1; i>=0; i--) {
-                    if(this.entities[i].tick) this.entities[i].tick();
-                    if(this.entities[i].dead) this.entities.splice(i,1);
+            die() {
+                if(this.god) return;
+                this.deaths++; 
+                localStorage.setItem('sm_deaths', this.deaths);
+                if(this.deaths % 5 === 0) {
+                    this.rageLevel += 0.2;
+                    const msg = RAGE_MESSAGES[Math.floor(Math.random()*RAGE_MESSAGES.length)];
+                    const el = document.getElementById('rage-overlay');
+                    el.innerText = msg; 
+                    el.style.display = 'block';
+                    el.style.transform = `scale(${this.rageLevel})`;
+                    setTimeout(() => el.style.display = 'none', 1500);
                 }
-                for(let i=this.particles.length-1; i>=0; i--) {
-                    this.particles[i].tick();
-                    if(this.particles[i].dead) this.particles.splice(i,1);
+                this.init(this.sector);
+            },
+            run() {
+                this.ctx.clearRect(0,0,MAP.W,MAP.H);
+                if(this.alive) {
+                    this.player.tick();
+                    this.entities = this.entities.filter(e => { e.tick(); return !e.dead; });
+                    this.particles = this.particles.filter(p => { p.tick(); return !p.dead; });
+                    // Win Condition
+                    if(this.player.x > MAP.W-MAP.TW && this.player.y > MAP.H-MAP.TH) this.init(this.sector+1);
                 }
-                if(this.player.x > MAP.W-MAP.TW && this.player.y > MAP.H-MAP.TH) this.init(this.sector + 1);
+                this.draw(); requestAnimationFrame(()=>this.run());
             },
             draw() {
-                this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.entities.forEach(e => { if(e instanceof Oil || e instanceof Portal) e.draw(this.ctx); });
-                this.ctx.shadowBlur = 10;
-                this.ctx.shadowColor = (this.sector >= 21) ? "#a020f0" : "#00ff41";
-                this.ctx.fillStyle = this.ctx.shadowColor;
-                for(let r=0; r<MAP.R; r++) { for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2); }
-                if(this.sector < 21) { this.ctx.fillStyle = "#0cf"; this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH); }
-                this.entities.forEach(e => { if(!(e instanceof Oil || e instanceof Portal)) e.draw(this.ctx); });
+                // Color swap back to Green if not Sector 21+
+                this.ctx.fillStyle = (this.sector >= 21) ? "#a020f0" : "#00ff41";
+                for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW, MAP.TH);
+                this.entities.forEach(e => e.draw(this.ctx));
                 this.particles.forEach(p => p.draw(this.ctx));
                 this.player.draw(this.ctx);
+                // Exit point indicator
+                this.ctx.fillStyle = "#fff";
+                this.ctx.fillRect(MAP.W-10, MAP.H-MAP.TH, 10, MAP.TH);
             },
-            run() { this.update(); this.draw(); requestAnimationFrame(()=>this.run()); },
-            adminJump(v) { if(v) { this.init(parseInt(v)); UI.toggleAdmin(false); } },
-            toggleInfOx() { this.infOx = !this.infOx; document.getElementById('inf-ox-status').innerText = this.infOx ? "ON" : "OFF"; },
-            toggleGodMode() { this.god = !this.god; document.getElementById('god-status').innerText = this.god ? "ON" : "OFF"; }
+            adminJump(v) { if(v) this.init(parseInt(v)); UI.toggleAdmin(false); }
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speed=5.5; this.cd=0; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speed=5.2; this.cd=0; }
             tick() {
                 let mx=0, my=0;
-                let s = this.speed;
-                Core.entities.forEach(e => { if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) s = Core.god ? this.speed : 2; });
-                if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
-                if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
+                if(Core.keys.KeyW) my=-1; if(Core.keys.KeyS) my=1; if(Core.keys.KeyA) mx=-1; if(Core.keys.KeyD) mx=1;
                 if(joyOn) { mx=joyV.x; my=joyV.y; }
-                let nx=this.x+mx*s, ny=this.y+my*s;
+                let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
-                if(this.cd > 0) this.cd--;
-                if(!Core.infOx) this.ox -= (1/65); 
-                if(this.ox <= 0 && !Core.god) die();
+                if(!Core.god) { this.ox -= 0.018; if(this.ox<=0) Core.die(); }
+                if(this.cd>0) this.cd--;
                 document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
-                document.getElementById('ox-bar').style.width = Math.min(100, this.ox)+"%";
+                document.getElementById('ox-bar').style.width = this.ox+"%";
+            }
+            isW(x,y) { 
+                let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); 
+                return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; 
             }
             shoot() {
-                if(!Core.alive || Core.paused || this.cd > 0) return;
-                let targets = Core.entities.filter(e => e instanceof Enemy || e instanceof DiddyBoss);
-                let nearest = null; let minD = 500;
-                targets.forEach(e => { let d = Math.hypot(e.x-this.x, e.y-this.y); if(d<minD){minD=d; nearest=e;} });
-                let a = nearest ? Math.atan2(nearest.y-this.y, nearest.x-this.x) : 0;
-                Core.entities.push(new Bullet(this.x, this.y, a, "#fff", true)); 
-                this.cd = 12; Core.combo += "S"; checkCombo();
+                if(this.cd>0) return;
+                let targets = Core.entities.filter(e => !(e instanceof Bullet));
+                let a = 0; if(targets.length) a = Math.atan2(targets[0].y-this.y, targets[0].x-this.x);
+                Core.entities.push(new Bullet(this.x, this.y, a, true));
+                this.cd=12; if(!Core.god) this.ox-=2; Core.combo+="S"; checkCombo();
             }
-            warp() { if(!Core.alive || Core.paused) return; let nx=this.x+130; if(!this.isW(nx,this.y)){this.x=nx; if(!Core.infOx) this.ox-=8; Core.combo+="W"; checkCombo();} }
-            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
-            draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle=Core.god?"var(--gold)":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
-        }
-
-        function checkCombo() { 
-            let currentName = (user || document.getElementById('username').value || "").toUpperCase();
-            if(Core.combo.endsWith("SWWS")){ 
-                if(currentName === "VIAAN2501") UI.toggleAdmin(true); 
-                Core.combo=""; 
-            } 
-            if(Core.combo.length>10) Core.combo=Core.combo.slice(-4); 
-        }
-
-        class Particle {
-            constructor(x,y,c) { this.x=x; this.y=y; this.c=c; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; this.life=1; }
-            tick() { this.x+=this.vx; this.y+=this.vy; this.life-=0.03; if(this.life<=0) this.dead=true; }
-            draw(ctx) { ctx.globalAlpha=this.life; ctx.fillStyle=this.c; ctx.fillRect(this.x,this.y,3,3); ctx.globalAlpha=1; }
+            warp() { 
+                let nx=this.x+130; 
+                if(!this.isW(nx,this.y)){
+                    this.x=nx; 
+                    if(!Core.god) this.ox-=10; 
+                    Core.combo+="W"; 
+                    checkCombo();
+                } 
+            }
+            draw(ctx) { ctx.fillStyle=Core.god?"#ffd700":"#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
         }
 
         class Bullet {
-            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*12; this.vy=Math.sin(a)*12; this.c=c; this.isP=p; }
+            constructor(x,y,a,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*10; this.vy=Math.sin(a)*10; this.isP=p; this.hist=[]; }
             tick() {
+                this.hist.push({x:this.x, y:this.y}); if(this.hist.length>6) this.hist.shift();
                 this.x+=this.vx; this.y+=this.vy;
-                if(this.x<0||this.x>MAP.W||this.y<0||this.y>MAP.H) this.dead=true;
+                let c=Math.floor(this.x/MAP.TW), r=Math.floor(this.y/MAP.TH);
+                // Hit wall logic
+                if(r>=0 && r<MAP.R && c>=0 && c<MAP.C && Core.maze[r][c]===1) { this.dead=true; }
                 if(this.isP) {
-                    Core.entities.forEach(e => { if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<30){ if(e instanceof DiddyBoss) e.hp--; else {Core.createExplosion(e.x,e.y,"red"); e.dead=true;} this.dead=true; } });
-                } else if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<15 && !Core.god) die();
+                    Core.entities.forEach(e => { if(!(e instanceof Bullet) && Math.hypot(this.x-e.x,this.y-e.y)<25){ e.hp?e.hp--:e.dead=true; this.dead=true; }});
+                } else if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<15) Core.die();
+                if(this.x<0||this.x>MAP.W||this.y<0||this.y>MAP.H) this.dead=true;
             }
-            draw(ctx) { ctx.shadowColor=this.c; ctx.fillStyle=this.c; ctx.fillRect(this.x-2,this.y-2,5,5); }
-        }
-
-        class Oil { constructor(x,y){this.x=x;this.y=y;this.r=40;this.life=300;} tick(){this.life--; if(this.life<=0)this.dead=true;} draw(ctx){ctx.fillStyle="rgba(255,215,0,0.3)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill();} }
-        class Portal { constructor(x,y,t){this.x=x;this.y=y;this.t=t;} tick(){if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<30) Core.init(this.t);} draw(ctx){ctx.fillStyle="#0cf"; ctx.fillRect(this.x-15,this.y-15,30,30); ctx.fillStyle="#fff"; ctx.fillText("SEC "+this.t,this.x-20,this.y-20);} }
-
-        class DiddyBoss {
-            constructor(x,y){this.x=x;this.y=y;this.hp=150;this.max=150;this.vx=3;this.vy=3;this.oilCd=60;this.shootCd=40;}
-            tick() {
-                this.x+=this.vx; this.y+=this.vy; if(this.x<50||this.x>MAP.W-50)this.vx*=-1; if(this.y<50||this.y>MAP.H-50)this.vy*=-1;
-                this.oilCd--; if(this.oilCd<=0){Core.entities.push(new Oil(this.x,this.y)); this.oilCd=100;}
-                this.shootCd--; if(this.shootCd<=0){Core.entities.push(new Bullet(this.x,this.y,Math.atan2(Core.player.y-this.y,Core.player.x-this.x),"#f0f",false)); this.shootCd=50;}
-                document.getElementById('boss-bar').style.width=(this.hp/this.max*100)+"%";
-                if(this.hp<=0){alert("SYSTEM PURGED"); localStorage.clear(); location.reload();}
-                if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<45 && !Core.god) die();
+            draw(ctx) {
+                this.hist.forEach((h,i) => { ctx.globalAlpha=i/6; ctx.fillStyle="#0cf"; ctx.fillRect(h.x-2,h.y-2,4,4); });
+                ctx.globalAlpha=1; ctx.fillStyle="#fff"; ctx.fillRect(this.x-3,this.y-3,6,6);
             }
-            draw(ctx){ctx.shadowColor="#a020f0"; ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill();}
         }
 
         class Enemy {
-            constructor(){ let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; }
-            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1;this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<18 && !Core.god) die(); }
-            draw(ctx){ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill();}
+            constructor() { this.x=Math.random()*MAP.W; this.y=Math.random()*MAP.H; this.vx=2.5; }
+            tick() { this.x+=this.vx; if(Core.player.isW(this.x+this.vx,this.y)) this.vx*=-1; if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<18) Core.die(); }
+            draw(ctx) { ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
         }
 
-        function die() { Core.alive = false; document.getElementById('death-screen').style.display = 'flex'; }
-        function retrySector() { document.getElementById('death-screen').style.display = 'none'; Core.alive = true; Core.init(Core.sector); }
+        class DiddyBoss {
+            constructor(x,y){this.x=x;this.y=y;this.hp=100;this.max=100;this.vx=3.5;}
+            tick(){
+                this.x+=this.vx; if(this.x<50||this.x>MAP.W-50) this.vx*=-1;
+                if(Math.random()<0.04) Core.entities.push(new Bullet(this.x,this.y,Math.PI/2,false));
+                if(this.hp<=0) { alert("SYSTEM CLEANSED"); location.reload(); }
+            }
+            draw(ctx){ ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); }
+        }
+
+        function checkCombo() {
+            let n = (user || localStorage.getItem('sm_user') || "").toUpperCase();
+            if(Core.combo.endsWith("SWWS") && n === "VIAAN2501") { UI.toggleAdmin(true); document.getElementById('gs').innerText = Core.god ? "ON" : "OFF"; }
+            if(Core.combo.length>10) Core.combo = Core.combo.slice(-4);
+        }
 
         const UI = {
-            toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; Core.paused = s; },
-            startCutscene() { 
-                let inputName = document.getElementById('username').value;
-                user = (inputName || localStorage.getItem('sm_user') || "PILOT").toUpperCase();
-                localStorage.setItem('sm_user', user);
-
-                document.getElementById('ui-layer').style.display = 'none'; 
-                document.getElementById('cutscene-layer').style.display = 'flex'; 
-                this.type(`> INITIALIZING NEON_PROTOCOL...\n> USER: ${user}\n> MISSION: PURGE THE SYSTEM.`); 
-            },
-            type(t) { 
-                let i=0; const e=document.getElementById('typewriter'); e.innerHTML="";
-                const f=()=>{if(i<t.length){e.innerHTML+=t[i]==='\n'?'<br>':t[i]; i++; setTimeout(f,30);}else document.getElementById('skip-btn').style.display='block';}; f();
-            },
-            clearData() { localStorage.removeItem('sm_save'); localStorage.removeItem('sm_user'); location.reload(); }
+            start() { user=document.getElementById('username').value.toUpperCase(); localStorage.setItem('sm_user',user); Core.boot(false); },
+            toggleAdmin(s) { document.getElementById('admin-layer').style.display=s?'flex':'none'; }
         };
 
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp(); if(e.code==='KeyP')Core.togglePause(); };
+        window.onkeydown=e=>{Core.keys[e.code]=true; if(e.code==='Space')Core.player.shoot(); if(e.code==='ShiftLeft')Core.player.warp();};
         window.onkeyup=e=>Core.keys[e.code]=false;
-        let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
-        jB.onpointerdown=(e)=>{joyOn=true; jB.setPointerCapture(e.pointerId);}; 
-        jB.onpointermove=e=>{if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+60), dy=e.clientY-(r.top+60), d=Math.min(Math.hypot(dx,dy),45), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;};
-        jB.onpointerup=()=>{joyOn=false; joyV={x:0,y:0}; jK.style.transform='translate(0,0)';};
+        let joyOn=false, joyV={x:0,y:0};
+        const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
+        jB.onpointerdown=e=>{joyOn=true;jB.setPointerCapture(e.pointerId);};
+        jB.onpointermove=e=>{if(!joyOn)return; let r=jB.getBoundingClientRect(), dx=e.clientX-(r.left+50), dy=e.clientY-(r.top+50), d=Math.min(Math.hypot(dx,dy),40), a=Math.atan2(dy,dx); joyV={x:Math.cos(a),y:Math.sin(a)}; jK.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;};
+        jB.onpointerup=()=>{joyOn=false;joyV={x:0,y:0};jK.style.transform='translate(0,0)';};
 
-        // INITIAL LOAD: Check for saved user
-        window.onload = () => {
-            let savedName = localStorage.getItem('sm_user');
-            if(savedName) {
-                document.getElementById('username').value = savedName;
-            }
-            if(localStorage.getItem('sm_save')){ 
-                document.getElementById('res-btn').style.display='block'; 
-                document.getElementById('wipe-btn').style.display='block'; 
-            }
+        window.onload=()=>{
+            let n=localStorage.getItem('sm_user'); if(n) document.getElementById('username').value=n;
+            if(localStorage.getItem('sm_save')) document.getElementById('res-btn').style.display='block';
         };
     </script>
 </body>
