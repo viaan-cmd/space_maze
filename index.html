@@ -3,23 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE | MASTERPIECE</title>
+    <title>SPACE MAZE | GLOBAL SHAME EDITION</title>
     <style>
-        :root { --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --glitch: #a020f0; }
-        * { box-sizing: border-box; user-select: none; touch-action: none; }
+        :root { 
+            --neon: #00ff41; --warp: #00ccff; --danger: #ff0033; --gold: #ffd700; --bg: #000; --glitch: #a020f0; --oil: #2e0854;
+        }
+        * { box-sizing: border-box; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
         
+        /* Scanline Effect */
+        body::after { content: " "; position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.02)); z-index: 1000; background-size: 100% 3px, 3px 100%; pointer-events: none; }
+
         .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; }
         #game-layer { display: none; }
         .neon-border { border: 2px solid var(--neon); box-shadow: 0 0 15px var(--neon); }
         
-        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; }
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; font-size: 1.2rem; z-index: 100; pointer-events: none; font-weight: bold; }
         #ox-bar-container { width: 150px; height: 12px; border: 2px solid var(--neon); background: rgba(0,255,65,0.1); }
         #ox-bar { height: 100%; width: 100%; background: var(--neon); }
         
-        #boss-hud { position: absolute; bottom: 180px; width: 80%; height: 15px; border: 2px solid var(--danger); display: none; z-index: 100; }
+        #boss-hud { position: absolute; bottom: 180px; width: 80%; height: 15px; border: 2px solid var(--danger); background: #000; display: none; z-index: 100; }
         #boss-bar { height: 100%; width: 100%; background: var(--danger); }
 
+        #leaderboard { position: absolute; left: 20px; top: 100px; font-size: 0.8rem; background: rgba(0,0,0,0.8); padding: 15px; border-left: 3px solid var(--danger); color: #fff; width: 200px; z-index: 100; }
         #rage-overlay { position: absolute; top: 40%; width: 100%; text-align: center; color: var(--danger); font-size: 4rem; font-weight: bold; text-shadow: 0 0 30px var(--danger); pointer-events: none; display: none; z-index: 1500; }
 
         /* DIAMOND D-PAD */
@@ -29,40 +35,52 @@
         .right-zone { right: 0; pointer-events: auto; }
 
         #d-pad { position: relative; width: 160px; height: 160px; margin: 40px auto; pointer-events: auto; }
-        .d-btn { position: absolute; width: 50px; height: 50px; background: rgba(0,255,65,0.1); border: 2px solid var(--neon); color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 8px; }
-        .d-btn:active { background: var(--neon); color: #000; }
+        .d-btn { position: absolute; width: 50px; height: 50px; background: rgba(0, 255, 65, 0.1); border: 2px solid var(--neon); color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 8px; }
+        .d-btn:active { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
         #d-up { top: 0; left: 55px; } #d-down { bottom: 0; left: 55px; } #d-left { top: 55px; left: 0; } #d-right { top: 55px; right: 0; }
 
         .act-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--warp); color: var(--warp); display: flex; align-items: center; justify-content: center; font-weight: bold; background: rgba(0,0,0,0.4); }
         .shoot-btn { border-color: #fff; color: #fff; }
 
         .card { background: rgba(0,0,0,0.9); padding: 25px; border-radius: 4px; width: 340px; text-align: center; }
-        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; }
+        .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; }
+        .btn:active { background: var(--neon); color: #000; }
         
         #minimap { position: absolute; top: 80px; right: 20px; width: 120px; height: 90px; border: 1px solid var(--warp); background: rgba(0,0,0,0.8); z-index: 100; }
     </style>
 </head>
 <body>
     <div id="ui-layer" class="layer">
-        <h1 style="text-shadow: 0 0 10px var(--neon);">SPACE MAZE</h1>
+        <h1 style="text-shadow: 0 0 10px var(--neon); font-size: 2.5rem;">SPACE MAZE</h1>
         <div class="card neon-border">
-            <input type="text" id="username" placeholder="USERNAME" style="width:100%; background:#111; border:1px solid var(--neon); color:var(--neon); padding:8px; margin-bottom:10px;">
+            <input type="text" id="username" placeholder="ENTER USERNAME" style="width:100%; background:#111; border:1px solid var(--neon); color:var(--neon); padding:10px; margin-bottom:15px; font-family:inherit;">
             <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <button class="btn" onclick="setMode('pc')">PC</button>
-                <button class="btn" onclick="setMode('mobile')">MOBILE</button>
+                <button class="btn" id="pc-mode" onclick="setMode('pc')">PC</button>
+                <button class="btn" id="mobile-mode" onclick="setMode('mobile')">MOBILE</button>
             </div>
             <button class="btn" onclick="Core.boot()">START MISSION</button>
         </div>
     </div>
 
-    <div id="rage-overlay">SKILL ISSUE.</div>
+    <div id="rage-overlay">GET GOOD.</div>
 
     <div id="game-layer" class="layer">
         <div id="hud">
             <div>SEC: <span id="v-sec">1</span></div>
+            <div id="v-paused" style="color:var(--danger); display:none;">PAUSED</div>
             <div>OX: <span id="v-ox">100</span>%<div id="ox-bar-container"><div id="ox-bar"></div></div></div>
         </div>
+        
         <canvas id="minimap"></canvas>
+        
+        <div id="leaderboard">
+            <strong style="color:var(--danger)">GLOBAL LOG OF SHAME</strong><hr>
+            <div id="shame-list">
+                <span id="p-name">PLAYER</span>: <span id="p-deaths" style="color:var(--danger)">0</span> DEATHS<br>
+                MAX SEC: <span id="p-max" style="color:var(--warp)">1</span>
+            </div>
+        </div>
+
         <canvas id="stage"></canvas>
         <div id="boss-hud"><div id="boss-bar"></div></div>
         
@@ -88,29 +106,42 @@
         let controlMode = 'pc';
         let dPad = { up: false, down: false, left: false, right: false };
 
-        function setMode(m) { controlMode = m; }
+        function setMode(m) { 
+            controlMode = m; 
+            document.getElementById('pc-mode').style.background = m==='pc'?'var(--neon)':'#000';
+            document.getElementById('pc-mode').style.color = m==='pc'?'#000':'var(--neon)';
+            document.getElementById('mobile-mode').style.background = m==='mobile'?'var(--neon)':'#000';
+            document.getElementById('mobile-mode').style.color = m==='mobile'?'#000':'var(--neon)';
+        }
         function setDir(d, s) { dPad[d] = s; }
 
         const Core = {
-            sector: 1, entities: [], keys: {},
+            sector: 1, active: false, entities: [], keys: {}, deaths: 0,
             boot() {
+                this.name = document.getElementById('username').value || "PLAYER";
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
                 document.getElementById('mobile-controls').style.display = (controlMode === 'mobile') ? 'flex' : 'none';
                 this.ctx = document.getElementById('stage').getContext('2d');
                 this.mctx = document.getElementById('minimap').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
+                this.deaths = parseInt(localStorage.getItem('sm_deaths')) || 0;
                 this.init(1);
                 if(!this.running) { this.run(); this.running = true; }
             },
             init(n) {
-                this.sector = n; this.entities = [];
-                // REVERTED TO ORIGINAL MAZE LOGIC
+                this.sector = n; this.active = true; this.entities = [];
+                // THE ORIGINAL MAZE GENERATOR
                 this.maze = this.createMaze();
                 this.player = new Player(MAP.TW+5, MAP.TH+5);
+                
                 document.getElementById('v-sec').innerText = n;
+                document.getElementById('p-name').innerText = this.name.toUpperCase();
+                document.getElementById('p-deaths').innerText = this.deaths;
+                document.getElementById('p-max').innerText = localStorage.getItem('sm_max_sec') || 1;
+                
                 document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
-                if(n === 202) this.entities.push(new DiddyBoss(400, 300));
+                if(n === 202) { this.entities.push(new DiddyBoss(400, 300)); } 
                 else { 
                     let count = Math.min(3 + Math.floor(n/4), 15); 
                     for(let i=0; i<count; i++) this.entities.push(new Enemy()); 
@@ -127,33 +158,43 @@
                 return m;
             },
             die() {
+                this.deaths++; localStorage.setItem('sm_deaths', this.deaths);
                 const el = document.getElementById('rage-overlay');
                 el.innerText = RAGE_LIST[Math.floor(Math.random()*RAGE_LIST.length)];
                 el.style.display = 'block';
-                setTimeout(() => el.style.display = 'none', 1500); 
+                setTimeout(() => el.style.display = 'none', 1200); 
                 this.init(this.sector);
             },
             update() {
+                if(this.paused) return;
                 this.player.tick();
                 for(let i=this.entities.length-1; i>=0; i--) {
                     this.entities[i].tick();
                     if(this.entities[i].dead) this.entities.splice(i,1);
                 }
-                if(this.player.x > MAP.W - MAP.TW && this.player.y > MAP.H - MAP.TH) this.init(this.sector + 1);
+                if(this.player.x > MAP.W - MAP.TW && this.player.y > MAP.H - MAP.TH) {
+                    if(this.sector === 202 && this.entities.some(e=>e instanceof DiddyBoss)) return;
+                    if(this.sector > (parseInt(localStorage.getItem('sm_max_sec'))||0)) localStorage.setItem('sm_max_sec', this.sector);
+                    this.init(this.sector + 1);
+                }
             },
             draw() {
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
-                this.ctx.fillStyle = "#00ff41";
+                // Draw Maze Walls
+                this.ctx.fillStyle = "var(--neon)";
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW, r*MAP.TH, MAP.TW, MAP.TH);
-                this.ctx.fillStyle = "#00ccff"; this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
-                this.entities.forEach(e => e.draw(this.ctx));
+                // Draw Exit Portal
+                this.ctx.fillStyle = "var(--warp)"; 
+                this.ctx.fillRect(MAP.W - MAP.TW + 5, MAP.H - MAP.TH + 5, MAP.TW - 10, MAP.TH - 10);
+
+                this.entities.forEach(e => e.draw(this.ctx)); 
                 this.player.draw(this.ctx);
                 this.drawMinimap();
             },
             drawMinimap() {
                 this.mctx.fillStyle = "black"; this.mctx.fillRect(0,0,120,90);
                 const mw = 120/MAP.C, mh = 90/MAP.R;
-                this.mctx.fillStyle = "#222";
+                this.mctx.fillStyle = "#333";
                 for(let r=0; r<MAP.R; r++) for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.mctx.fillRect(c*mw, r*mh, mw, mh);
                 this.mctx.fillStyle = "white"; this.mctx.fillRect((this.player.x/MAP.W)*120, (this.player.y/MAP.H)*90, 4, 4);
             },
@@ -161,57 +202,70 @@
         };
 
         class Player {
-            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speed=5; this.cd=0; }
+            constructor(x,y) { this.x=x; this.y=y; this.ox=100; this.speedBase=5.0; this.cd=0; }
             tick() {
+                let s = this.speedBase;
+                Core.entities.forEach(e => { if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) s = 1.5; });
                 let mx=0, my=0;
                 if(Core.keys.ArrowUp || dPad.up) my=-1; if(Core.keys.ArrowDown || dPad.down) my=1;
                 if(Core.keys.ArrowLeft || dPad.left) mx=-1; if(Core.keys.ArrowRight || dPad.right) mx=1;
-                let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
+                let nx=this.x+mx*s, ny=this.y+my*s;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
                 if(this.cd > 0) this.cd--;
-                this.ox -= 0.015; if(this.ox <= 0) Core.die();
+                this.ox -= 0.02; if(this.ox <= 0) Core.die();
                 document.getElementById('ox-bar').style.width = this.ox+"%";
             }
-            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
             shoot() {
                 if(this.cd <= 0) {
-                    Core.entities.push(new Bullet(this.x, this.y, 0, "#fff", true)); 
+                    let targets = Core.entities.filter(e => e instanceof Enemy || e instanceof DiddyBoss);
+                    let nearest = targets.sort((a,b)=>Math.hypot(a.x-this.x,a.y-this.y)-Math.hypot(b.x-this.x,b.y-this.y))[0];
+                    let angle = nearest ? Math.atan2(nearest.y-this.y, nearest.x-this.x) : 0;
+                    Core.entities.push(new Bullet(this.x, this.y, angle, "#fff", true)); 
                     this.ox -= 2; this.cd = 15;
                 }
             }
-            warp() { if(this.ox > 10) { this.x += 100; this.ox -= 10; } }
-            draw(ctx) { ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
+            warp() { if(this.ox > 10) { this.x += 120; this.ox -= 10; } }
+            isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
+            draw(ctx) { ctx.save(); ctx.shadowBlur=15; ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); ctx.restore(); }
         }
 
-        class Enemy {
-            constructor() { this.x=Math.random()*MAP.W; this.y=Math.random()*MAP.H; this.vx=3; this.vy=3; }
+        class Enemy { 
+            constructor() { 
+                this.x=Math.random()*MAP.W; this.y=Math.random()*MAP.H; this.vx=3.5; this.vy=3.5; 
+                while(Core.isWall(this.x,this.y) || Math.hypot(this.x-10, this.y-10)<150) { this.x=Math.random()*MAP.W; this.y=Math.random()*MAP.H; }
+            } 
             tick() { 
                 this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)){this.vx*=-1; this.vy*=-1;}
-                if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<15) Core.die();
-            }
-            draw(ctx) { ctx.fillStyle="#ff0033"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); }
+                if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<18) Core.die(); 
+            } 
+            draw(ctx) { ctx.save(); ctx.shadowBlur=10; ctx.shadowColor="red"; ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); ctx.restore(); } 
         }
 
         class DiddyBoss {
-            constructor(x,y) { this.x=x; this.y=y; this.hp=6; this.max=6; this.vx=4; this.vy=4; }
+            constructor(x,y) { this.x=x; this.y=y; this.hp=6; this.max=6; this.vx=4; this.vy=4; this.oilCd=80; }
             tick() { 
                 this.x+=this.vx; this.y+=this.vy; if(this.x<50 || this.x>MAP.W-50) this.vx*=-1; if(this.y<50 || this.y>MAP.H-50) this.vy*=-1;
+                this.oilCd--; if(this.oilCd<=0) { Core.entities.push(new Oil(this.x, this.y)); this.oilCd=100; }
                 document.getElementById('boss-bar').style.width = (this.hp/this.max*100) + "%"; if(this.hp<=0) this.dead=true;
+                if(Math.hypot(this.x-Core.player.x, this.y-Core.player.y)<45) Core.die();
             }
-            draw(ctx) { ctx.fillStyle="var(--glitch)"; ctx.beginPath(); ctx.arc(this.x,this.y,40,0,Math.PI*2); ctx.fill(); }
+            draw(ctx) { ctx.save(); ctx.shadowBlur=25; ctx.shadowColor="var(--glitch)"; ctx.fillStyle="var(--glitch)"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); ctx.restore(); }
         }
 
+        class Oil { constructor(x,y) { this.x=x; this.y=y; this.r=45; this.life=400; } tick() { this.life--; if(this.life<=0) this.dead=true; } draw(ctx) { ctx.save(); ctx.fillStyle="rgba(46, 8, 84, 0.5)"; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.restore(); } }
+
         class Bullet {
-            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=10; this.vy=0; this.isPlayer=p; }
+            constructor(x,y,a,c,p) { this.x=x; this.y=y; this.vx=Math.cos(a)*12; this.vy=Math.sin(a)*12; this.isPlayer=p; }
             tick() { 
-                this.x+=this.vx; if(Core.isWall(this.x,this.y)) this.dead=true;
-                if(this.isPlayer) Core.entities.forEach(e=>{ if(Math.hypot(this.x-e.x,this.y-e.y)<30){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } });
+                this.x+=this.vx; this.y+=this.vy; if(Core.isWall(this.x,this.y)) this.dead=true;
+                if(this.isPlayer) Core.entities.forEach(e=>{ if((e instanceof Enemy || e instanceof DiddyBoss) && Math.hypot(this.x-e.x,this.y-e.y)<35){ if(e instanceof DiddyBoss) e.hp--; else e.dead=true; this.dead=true; } });
             }
             draw(ctx) { ctx.fillStyle="#fff"; ctx.fillRect(this.x,this.y,5,5); }
         }
 
         Core.isWall = (x,y) => { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; };
-        window.onkeydown=e=>Core.keys[e.code]=true; window.onkeyup=e=>Core.keys[e.code]=false;
+        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='KeyP') Core.paused=!Core.paused; };
+        window.onkeyup=e=>Core.keys[e.code]=false;
     </script>
 </body>
 </html>
