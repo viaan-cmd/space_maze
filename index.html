@@ -85,16 +85,16 @@
         
         <div id="mobile-controls">
             <div class="zone left-zone">
-                <div class="act-btn" onpointerdown="Core.player.warp()">WARP</div>
-                <div class="act-btn shoot-btn" onpointerdown="Core.player.shoot()">SHOOT</div>
+                <div class="act-btn" onpointerdown="Core.handleCheat('W'); Core.player.warp()">WARP</div>
+                <div class="act-btn shoot-btn" onpointerdown="Core.handleCheat('S'); Core.player.shoot()">SHOOT</div>
             </div>
             <div class="zone right-zone">
                 <div id="j-base"><div id="j-knob"></div></div>
                 <div id="d-pad" style="display:none; width:130px; height:130px; margin:60px auto; position:relative;">
-                    <div class="dir-btn" style="top:0; left:42px;" onpointerdown="Core.setKey('ArrowUp',true)" onpointerup="Core.setKey('ArrowUp',false)" onpointerleave="Core.setKey('ArrowUp',false)">▲</div>
-                    <div class="dir-btn" style="bottom:0; left:42px;" onpointerdown="Core.setKey('ArrowDown',true)" onpointerup="Core.setKey('ArrowDown',false)" onpointerleave="Core.setKey('ArrowDown',false)">▼</div>
-                    <div class="dir-btn" style="top:42px; left:0;" onpointerdown="Core.setKey('ArrowLeft',true)" onpointerup="Core.setKey('ArrowLeft',false)" onpointerleave="Core.setKey('ArrowLeft',false)">◀</div>
-                    <div class="dir-btn" style="top:42px; right:0;" onpointerdown="Core.setKey('ArrowRight',true)" onpointerup="Core.setKey('ArrowRight',false)" onpointerleave="Core.setKey('ArrowRight',false)">▶</div>
+                    <div class="dir-btn" style="top:0; left:42px;" onpointerdown="Core.setKey('ArrowUp',true)" onpointerup="Core.setKey('ArrowUp',false)">▲</div>
+                    <div class="dir-btn" style="bottom:0; left:42px;" onpointerdown="Core.setKey('ArrowDown',true)" onpointerup="Core.setKey('ArrowDown',false)">▼</div>
+                    <div class="dir-btn" style="top:42px; left:0;" onpointerdown="Core.setKey('ArrowLeft',true)" onpointerup="Core.setKey('ArrowLeft',false)">◀</div>
+                    <div class="dir-btn" style="top:42px; right:0;" onpointerdown="Core.setKey('ArrowRight',true)" onpointerup="Core.setKey('ArrowRight',false)">▶</div>
                 </div>
             </div>
         </div>
@@ -103,26 +103,27 @@
     <script>
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
         const Core = {
-            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", time: 0, paused: false, infOx: false,
+            sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", cheatTimer: null, time: 0, paused: false, infOx: false,
             setKey(k, v) { this.keys[k] = v; },
+            handleCheat(key) {
+                clearTimeout(this.cheatTimer);
+                this.cheatSeq += key;
+                if (this.cheatSeq.endsWith("SWWS")) {
+                    UI.toggleAdmin(true);
+                    this.cheatSeq = "";
+                }
+                this.cheatTimer = setTimeout(() => { this.cheatSeq = ""; }, 2000);
+            },
             boot(resume) {
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
-                
-                // Handle control display
                 if(UI.ctrlMode === 'KEYBOARD') {
                     document.getElementById('mobile-controls').style.display = 'none';
                 } else {
                     document.getElementById('mobile-controls').style.display = 'flex';
-                    if(UI.ctrlMode === 'JOYSTICK') {
-                        document.getElementById('j-base').style.display = 'block';
-                        document.getElementById('d-pad').style.display = 'none';
-                    } else {
-                        document.getElementById('j-base').style.display = 'none';
-                        document.getElementById('d-pad').style.display = 'block';
-                    }
+                    document.getElementById('j-base').style.display = UI.ctrlMode === 'JOYSTICK' ? 'block' : 'none';
+                    document.getElementById('d-pad').style.display = UI.ctrlMode === 'D-PAD' ? 'block' : 'none';
                 }
-
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
                 this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
@@ -136,8 +137,7 @@
                 this.player = new Player(MAP.TW/2, MAP.TH/2);
                 document.getElementById('v-sec').innerText = (n === 999) ? "???" : n;
                 document.getElementById('boss-hud').style.display = (n === 202) ? 'block' : 'none';
-                if(n === 21) { this.entities.push(new Invite(160,160), new Invite(640,160), new Invite(400,480)); } 
-                else if(n === 202) { this.entities.push(new DiddyBoss(400, 300)); } 
+                if(n === 202) { this.entities.push(new DiddyBoss(400, 300)); } 
                 else if(n === 999) { this.active = false; UI.playGlitchCutscene(); } 
                 else { let count = Math.min(3 + Math.floor(n/10), 12); for(let i=0; i<count; i++) this.entities.push(new Enemy()); }
             },
@@ -167,7 +167,7 @@
             draw() {
                 this.ctx.clearRect(0,0,MAP.W,MAP.H);
                 this.ctx.shadowBlur = 15;
-                this.ctx.shadowColor = (this.sector === 21) ? "#500050" : (this.sector === 999 ? "#a020f0" : "#00ff41");
+                this.ctx.shadowColor = (this.sector === 999 ? "#a020f0" : "#00ff41");
                 this.ctx.fillStyle = this.ctx.shadowColor;
                 for(let r=0; r<MAP.R; r++) { for(let c=0; c<MAP.C; c++) if(this.maze[r][c]) this.ctx.fillRect(c*MAP.TW+1, r*MAP.TH+1, MAP.TW-2, MAP.TH-2); }
                 this.ctx.fillStyle = "#0cf"; this.ctx.fillRect(MAP.W-MAP.TW, MAP.H-MAP.TH, MAP.TW, MAP.TH);
@@ -190,7 +190,6 @@
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
                 if(this.cd > 0) this.cd--;
-                if(Core.keys.Space) this.shoot();
                 if(!Core.infOx) this.ox -= (1 / 60); 
                 if(this.ox <= 0) Core.init(Core.sector);
                 document.getElementById('v-ox').innerText = Math.max(0, Math.floor(this.ox));
@@ -204,7 +203,6 @@
                         let d = Math.hypot(e.x - this.x, e.y - this.y);
                         if(d < minDist) { minDist = d; nearest = e; }
                     });
-                    
                     let angle = nearest ? Math.atan2(nearest.y - this.y, nearest.x - this.x) : 0;
                     Core.entities.push(new Bullet(this.x, this.y, angle, "#fff", true)); 
                     if(!Core.infOx) this.ox -= 1.0; 
@@ -213,7 +211,7 @@
             }
             isW(x,y) { let c=Math.floor(x/MAP.TW), r=Math.floor(y/MAP.TH); return r<0||r>=MAP.R||c<0||c>=MAP.C||Core.maze[r][c]===1; }
             draw(ctx) { ctx.shadowColor="#fff"; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2); ctx.fill(); }
-            warp() { if(this.ox > 15 || Core.infOx) { this.x += 130; if(!Core.infOx) this.ox-=15; Core.cheatSeq += "W"; if(Core.cheatSeq.slice(-4)==="WWWW") UI.toggleAdmin(true); } }
+            warp() { if(this.ox > 15 || Core.infOx) { this.x += 130; if(!Core.infOx) this.ox-=15; } }
         }
 
         class Bullet {
@@ -239,18 +237,21 @@
         const UI = {
             ctrlMode: 'JOYSTICK',
             toggleCtrl() {
-                if(this.ctrlMode === 'JOYSTICK') this.ctrlMode = 'D-PAD';
-                else if(this.ctrlMode === 'D-PAD') this.ctrlMode = 'KEYBOARD';
-                else this.ctrlMode = 'JOYSTICK';
+                const modes = ['JOYSTICK', 'D-PAD', 'KEYBOARD'];
+                this.ctrlMode = modes[(modes.indexOf(this.ctrlMode) + 1) % modes.length];
                 document.getElementById('ctrl-btn').innerText = "CONTROLS: " + this.ctrlMode;
             },
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; },
-            startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> MISSION START: SECTOR 1\n> OXYGEN DEPLETING AT 1% PER SEC\n> TARGETING SYSTEM: AUTO-LOCK NEAREST\n> CONTROLS: SPACE/BTN (SHOOT) | SHIFT/BTN (WARP)"); },
+            startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> MISSION START: SECTOR 1\n> OXYGEN DEPLETING AT 1% PER SEC\n> TARGETING SYSTEM: AUTO-LOCK NEAREST\n> CONTROLS: SPACE (SHOOT) | SHIFT (WARP)"); },
             playGlitchCutscene() { document.getElementById('game-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; document.getElementById('typewriter').style.color = "var(--glitch)"; this.type("ERROR: SECTOR JUMP DETECTED...\n\n[DIDDY]: See you at sector 202..."); },
             type(t) { let i = 0; const c = document.getElementById('typewriter'); c.innerHTML = ""; document.getElementById('skip-btn').style.display = 'none'; const f = () => { if(i < t.length) { c.innerHTML += t[i]==='\n'?'<br>':t[i]; i++; setTimeout(f, 40); } else document.getElementById('skip-btn').style.display = 'block'; }; f(); }
         };
 
-        window.onkeydown=e=>{ Core.keys[e.code]=true; if(e.code==='ShiftLeft')Core.player.warp(); if(e.code==='Space')e.preventDefault(); };
+        window.onkeydown=e=>{ 
+            Core.keys[e.code]=true; 
+            if(e.code==='ShiftLeft') { Core.player.warp(); Core.handleCheat('W'); }
+            if(e.code==='Space') { e.preventDefault(); Core.player.shoot(); Core.handleCheat('S'); }
+        };
         window.onkeyup=e=>Core.keys[e.code]=false;
         
         let joyOn=false, joyV={x:0,y:0}; const jB=document.getElementById('j-base'), jK=document.getElementById('j-knob');
