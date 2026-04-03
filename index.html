@@ -40,6 +40,9 @@
         #j-base { width: 130px; height: 130px; border: 3px solid var(--neon); border-radius: 50%; margin: 60px auto; position: relative; background: rgba(0,255,65,0.05); }
         #j-knob { width: 50px; height: 50px; background: var(--neon); border-radius: 50%; position: absolute; top: 37px; left: 37px; }
 
+        .dir-btn { position:absolute; width:45px; height:45px; background:rgba(0,255,65,0.1); border:2px solid var(--neon); color:var(--neon); display:flex; align-items:center; justify-content:center; font-weight:bold; border-radius:8px; pointer-events:auto; font-size: 1.5rem; }
+        .dir-btn:active { background:rgba(0,255,65,0.6); box-shadow: 0 0 15px var(--neon); }
+
         .card { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 4px; width: 340px; text-align: center; }
         .btn { background: #000; border: 2px solid var(--neon); color: var(--neon); padding: 10px; margin: 5px 0; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; text-transform: uppercase; }
         .admin-input { width: 100%; background: #111; border: 1px solid var(--danger); color: var(--danger); padding: 8px; margin: 5px 0; font-family: inherit; }
@@ -51,6 +54,7 @@
         <div class="card neon-border">
             <input type="text" id="username" placeholder="ENTER USERNAME" class="admin-input" style="border-color: var(--neon); color: var(--neon);">
             <button class="btn" onclick="UI.startCutscene()">START MISSION</button>
+            <button class="btn" id="ctrl-btn" onclick="UI.toggleCtrl()" style="border-color:var(--warp); color:var(--warp);">CONTROLS: JOYSTICK</button>
             <button class="btn" id="res-btn" style="display:none; border-color:var(--gold); color:var(--gold);" onclick="Core.boot(true)">RESUME</button>
         </div>
     </div>
@@ -86,6 +90,12 @@
             </div>
             <div class="zone right-zone">
                 <div id="j-base"><div id="j-knob"></div></div>
+                <div id="d-pad" style="display:none; width:130px; height:130px; margin:60px auto; position:relative;">
+                    <div class="dir-btn" style="top:0; left:42px;" onpointerdown="Core.setKey('ArrowUp',true)" onpointerup="Core.setKey('ArrowUp',false)" onpointerleave="Core.setKey('ArrowUp',false)">▲</div>
+                    <div class="dir-btn" style="bottom:0; left:42px;" onpointerdown="Core.setKey('ArrowDown',true)" onpointerup="Core.setKey('ArrowDown',false)" onpointerleave="Core.setKey('ArrowDown',false)">▼</div>
+                    <div class="dir-btn" style="top:42px; left:0;" onpointerdown="Core.setKey('ArrowLeft',true)" onpointerup="Core.setKey('ArrowLeft',false)" onpointerleave="Core.setKey('ArrowLeft',false)">◀</div>
+                    <div class="dir-btn" style="top:42px; right:0;" onpointerdown="Core.setKey('ArrowRight',true)" onpointerup="Core.setKey('ArrowRight',false)" onpointerleave="Core.setKey('ArrowRight',false)">▶</div>
+                </div>
             </div>
         </div>
     </div>
@@ -94,10 +104,25 @@
         const MAP = { W:800, H:600, R:13, C:19, TW:800/19, TH:600/13 };
         const Core = {
             sector: 1, active: false, entities: [], keys: {}, cheatSeq: "", time: 0, paused: false, infOx: false,
+            setKey(k, v) { this.keys[k] = v; },
             boot(resume) {
                 document.getElementById('ui-layer').style.display = 'none';
                 document.getElementById('game-layer').style.display = 'flex';
-                document.getElementById('mobile-controls').style.display = 'flex';
+                
+                // Handle control display
+                if(UI.ctrlMode === 'KEYBOARD') {
+                    document.getElementById('mobile-controls').style.display = 'none';
+                } else {
+                    document.getElementById('mobile-controls').style.display = 'flex';
+                    if(UI.ctrlMode === 'JOYSTICK') {
+                        document.getElementById('j-base').style.display = 'block';
+                        document.getElementById('d-pad').style.display = 'none';
+                    } else {
+                        document.getElementById('j-base').style.display = 'none';
+                        document.getElementById('d-pad').style.display = 'block';
+                    }
+                }
+
                 this.ctx = document.getElementById('stage').getContext('2d');
                 document.getElementById('stage').width = MAP.W; document.getElementById('stage').height = MAP.H;
                 this.init(resume ? (parseInt(localStorage.getItem('sm_save')) || 1) : 1);
@@ -161,7 +186,7 @@
                 Core.entities.forEach(e => { if(e instanceof Oil && Math.hypot(e.x-this.x, e.y-this.y) < e.r) this.speed = 1.5; });
                 if(Core.keys.KeyW || Core.keys.ArrowUp) my=-1; if(Core.keys.KeyS || Core.keys.ArrowDown) my=1;
                 if(Core.keys.KeyA || Core.keys.ArrowLeft) mx=-1; if(Core.keys.KeyD || Core.keys.ArrowRight) mx=1;
-                if(joyOn) { mx=joyV.x; my=joyV.y; }
+                if(joyOn && UI.ctrlMode === 'JOYSTICK') { mx=joyV.x; my=joyV.y; }
                 let nx=this.x+mx*this.speed, ny=this.y+my*this.speed;
                 if(!this.isW(nx, ny)) { this.x=nx; this.y=ny; }
                 if(this.cd > 0) this.cd--;
@@ -173,7 +198,6 @@
             }
             shoot() {
                 if(this.cd <= 0 && (this.ox > 2 || Core.infOx)) {
-                    // AUTO-AIM LOGIC: Find closest enemy/boss
                     let enemies = Core.entities.filter(e => e instanceof Enemy || e instanceof DiddyBoss);
                     let nearest = null; let minDist = Infinity;
                     enemies.forEach(e => {
@@ -206,9 +230,20 @@
             draw(ctx) { ctx.shadowColor="#a020f0"; ctx.shadowBlur=25; ctx.fillStyle="#a020f0"; ctx.beginPath(); ctx.arc(this.x,this.y,45,0,Math.PI*2); ctx.fill(); }
         }
 
-        class Enemy { constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; } tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<20) Core.init(Core.sector); } draw(ctx) { ctx.fillStyle="var(--danger)"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); } }
+        class Enemy { 
+            constructor() { let rx,ry; do{rx=Math.random()*MAP.W; ry=Math.random()*MAP.H;}while(Core.player.isW(rx,ry)); this.x=rx; this.y=ry; this.vx=(Math.random()-0.5)*5; this.vy=(Math.random()-0.5)*5; } 
+            tick() { this.x+=this.vx; this.y+=this.vy; if(Core.player.isW(this.x,this.y)){this.vx*=-1; this.vy*=-1;} if(Math.hypot(this.x-Core.player.x,this.y-Core.player.y)<20) Core.init(Core.sector); } 
+            draw(ctx) { ctx.shadowColor="red"; ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(this.x,this.y,12,0,Math.PI*2); ctx.fill(); } 
+        }
 
         const UI = {
+            ctrlMode: 'JOYSTICK',
+            toggleCtrl() {
+                if(this.ctrlMode === 'JOYSTICK') this.ctrlMode = 'D-PAD';
+                else if(this.ctrlMode === 'D-PAD') this.ctrlMode = 'KEYBOARD';
+                else this.ctrlMode = 'JOYSTICK';
+                document.getElementById('ctrl-btn').innerText = "CONTROLS: " + this.ctrlMode;
+            },
             toggleAdmin(s) { document.getElementById('admin-layer').style.display = s?'flex':'none'; },
             startCutscene() { document.getElementById('ui-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; this.type("> MISSION START: SECTOR 1\n> OXYGEN DEPLETING AT 1% PER SEC\n> TARGETING SYSTEM: AUTO-LOCK NEAREST\n> CONTROLS: SPACE/BTN (SHOOT) | SHIFT/BTN (WARP)"); },
             playGlitchCutscene() { document.getElementById('game-layer').style.display = 'none'; document.getElementById('cutscene-layer').style.display = 'flex'; document.getElementById('typewriter').style.color = "var(--glitch)"; this.type("ERROR: SECTOR JUMP DETECTED...\n\n[DIDDY]: See you at sector 202..."); },
