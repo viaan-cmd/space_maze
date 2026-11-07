@@ -1,984 +1,2408 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SPACE MAZE</title>
-    <style>
-        :root {
-            --neon-green: #00ff66;
-            --neon-purple: #b026ff;
-            --neon-blue: #00f0ff;
-            --neon-yellow: #ffee00;
-            --neon-red: #ff2a2a;
-            --bg-dark: #050811;
-        }
-
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 0;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-dark);
-            color: var(--neon-green);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* UI Overlays */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 8, 17, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .hidden { display: none !important; }
-
-        h1 {
-            font-size: 2.5rem;
-            color: var(--neon-green);
-            text-shadow: 0 0 10px var(--neon-green);
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-
-        input[type="text"], input[type="password"] {
-            background: #000;
-            border: 2px solid var(--neon-green);
-            color: var(--neon-green);
-            padding: 12px;
-            font-size: 1.2rem;
-            border-radius: 5px;
-            outline: none;
-            margin-bottom: 15px;
-            text-align: center;
-            box-shadow: 0 0 8px rgba(0,255,102,0.3);
-        }
-
-        button {
-            background: transparent;
-            border: 2px solid var(--neon-green);
-            color: var(--neon-green);
-            padding: 10px 24px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: all 0.2s ease;
-            box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
-            margin: 5px;
-        }
-
-        button:hover {
-            background: var(--neon-green);
-            color: #000;
-            box-shadow: 0 0 15px var(--neon-green);
-        }
-
-        /* Terminal Text Styling */
-        .terminal-box {
-            background: #000;
-            border: 1px solid var(--neon-green);
-            padding: 20px;
-            max-width: 600px;
-            width: 100%;
-            text-align: left;
-            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
-            border-radius: 5px;
-            margin-bottom: 20px;
-            max-height: 50vh;
-            overflow-y: auto;
-        }
-
-        .terminal-box p {
-            margin-bottom: 10px;
-            line-height: 1.4;
-            font-size: 0.95rem;
-        }
-
-        /* Game Header Bar */
-        #game-ui {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 15px;
-            background: rgba(0, 0, 0, 0.6);
-            border-bottom: 2px solid var(--neon-green);
-            font-size: 1rem;
-        }
-
-        #canvas-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-grow: 1;
-            width: 100%;
-        }
-
-        canvas {
-            background-color: #000;
-            border: 2px solid var(--neon-green);
-            box-shadow: 0 0 20px rgba(0,255,102,0.2);
-            max-width: 100%;
-            max-height: 80vh;
-        }
-
-        /* Boss Bar */
-        #boss-hp-container {
-            position: absolute;
-            bottom: 20px;
-            width: 70%;
-            background: #222;
-            border: 2px solid var(--neon-purple);
-            height: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 0 10px var(--neon-purple);
-        }
-
-        #boss-hp-bar {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--neon-purple), #ff0077);
-            transition: width 0.1s ease;
-        }
-
-        /* Touch Controls for Mobile */
-        #mobile-controls {
-            width: 100%;
-            max-width: 800px;
-            height: 140px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        /* Diamond D-Pad */
-        .dpad {
-            position: relative;
-            width: 110px;
-            height: 110px;
-        }
-
-        .dpad-btn {
-            position: absolute;
-            width: 35px;
-            height: 35px;
-            background: rgba(0, 255, 102, 0.2);
-            border: 1px solid var(--neon-green);
-            color: var(--neon-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            border-radius: 5px;
-        }
-
-        .dpad-up { top: 0; left: 37.5px; }
-        .dpad-down { bottom: 0; left: 37.5px; }
-        .dpad-left { top: 37.5px; left: 0; }
-        .dpad-right { top: 37.5px; right: 0; }
-
-        /* Joystick Option */
-        .joystick-zone {
-            width: 110px;
-            height: 110px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--neon-green);
-            border-radius: 50%;
-            position: relative;
-            touch-action: none;
-        }
-
-        .joystick-knob {
-            width: 40px;
-            height: 40px;
-            background: var(--neon-green);
-            border-radius: 50%;
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            box-shadow: 0 0 10px var(--neon-green);
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SPACE MAZE // 50 SECTORS</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000000;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      touch-action: none;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .neon-text-green {
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.8), 0 0 24px rgba(0, 255, 102, 0.4);
+    }
+    .neon-text-purple {
+      text-shadow: 0 0 12px rgba(192, 38, 211, 0.9), 0 0 28px rgba(192, 38, 211, 0.5);
+    }
+    .neon-border-green {
+      box-shadow: 0 0 15px rgba(0, 255, 102, 0.25), inset 0 0 15px rgba(0, 255, 102, 0.1);
+    }
+    .glass-panel {
+      background: rgba(6, 12, 9, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .ctrl-btn {
+      transition: transform 0.08s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .ctrl-btn:active, .ctrl-btn.active-press {
+      transform: scale(0.92);
+    }
+    /* Custom Scrollbar for menu on very small screens */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #050a07;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #00ff66;
+      border-radius: 3px;
+    }
+  </style>
 </head>
-<body>
+<body class="relative w-full h-full bg-black overflow-hidden select-none">
 
-    <!-- Header UI -->
-    <div id="game-ui">
-        <div>SECTOR: <span id="ui-sector">1</span></div>
-        <div>KEYS: <span id="ui-keys">N/A</span></div>
-        <div>SCORE: <span id="ui-score">0</span></div>
-    </div>
+  <!-- MAIN GAME CANVAS -->
+  <canvas id="gameCanvas" class="block w-full h-full"></canvas>
 
-    <!-- Canvas Container -->
-    <div id="canvas-container">
-        <canvas id="gameCanvas" width="600" height="600"></canvas>
-        <div id="boss-hp-container" class="hidden">
-            <div id="boss-hp-bar"></div>
-        </div>
-    </div>
-
-    <!-- Mobile Controls Panel -->
-    <div id="mobile-controls" class="hidden">
-        <!-- D-Pad Layout -->
-        <div id="control-dpad" class="dpad">
-            <div class="dpad-btn dpad-up" id="btn-up">▲</div>
-            <div class="dpad-btn dpad-down" id="btn-down">▼</div>
-            <div class="dpad-btn dpad-left" id="btn-left">◄</div>
-            <div class="dpad-btn dpad-right" id="btn-right">►</div>
+  <!-- TOP HUD OVERLAY -->
+  <div id="hudOverlay" class="hidden pointer-events-none fixed inset-x-0 top-0 z-20 p-2.5 sm:p-4 flex flex-col gap-2">
+    <!-- Top Row: Bars, Sector Info, Utility Buttons -->
+    <div class="flex flex-wrap items-center justify-between gap-2 max-w-6xl mx-auto w-full">
+      
+      <!-- Left: Oxygen & Energy Bars -->
+      <div class="flex items-center gap-3 sm:gap-5 glass-panel border border-emerald-500/30 rounded-xl px-3 py-2 pointer-events-auto">
+        <!-- Oxygen Bar -->
+        <div class="w-28 sm:w-40">
+          <div class="flex justify-between items-center text-[10px] sm:text-xs font-bold tracking-wider text-cyan-300 mb-1 mono">
+            <span>OXYGEN</span>
+            <span id="oxyText">100%</span>
+          </div>
+          <div class="w-full h-2.5 bg-cyan-950/80 rounded-full overflow-hidden border border-cyan-500/40">
+            <div id="oxyBar" class="h-full bg-gradient-to-r from-cyan-500 to-sky-300 transition-all duration-75" style="width: 100%"></div>
+          </div>
         </div>
 
-        <!-- Joystick Layout -->
-        <div id="control-joystick" class="joystick-zone hidden">
-            <div class="joystick-knob" id="joystick-knob"></div>
+        <!-- Energy Bar -->
+        <div class="w-28 sm:w-40">
+          <div class="flex justify-between items-center text-[10px] sm:text-xs font-bold tracking-wider text-amber-300 mb-1 mono">
+            <span>ENERGY</span>
+            <span id="engText">100%</span>
+          </div>
+          <div class="w-full h-2.5 bg-amber-950/80 rounded-full overflow-hidden border border-amber-500/40">
+            <div id="engBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-75" style="width: 100%"></div>
+          </div>
         </div>
+      </div>
 
-        <div class="action-btns">
-            <button class="action-btn" id="btn-shoot">SHOOT</button>
-            <button class="action-btn" id="btn-warp">WARP</button>
+      <!-- Center: Sector & Enemy Status -->
+      <div class="glass-panel border border-emerald-500/40 rounded-xl px-3.5 py-1.5 flex items-center gap-3 sm:gap-5 pointer-events-auto">
+        <div class="text-center">
+          <div class="text-[9px] uppercase tracking-widest text-emerald-400/80 font-semibold">Sector</div>
+          <div id="sectorLabel" class="text-sm sm:text-lg font-black text-emerald-400 mono neon-text-green">01 / 50</div>
         </div>
+        <div class="h-6 w-px bg-emerald-500/20"></div>
+        <div class="text-center">
+          <div class="text-[9px] uppercase tracking-widest text-rose-400/80 font-semibold">Red Orbs</div>
+          <div id="orbsLabel" class="text-sm sm:text-lg font-black text-rose-400 mono">0</div>
+        </div>
+        <div class="h-6 w-px bg-emerald-500/20 hidden sm:block"></div>
+        <div class="hidden sm:block text-center">
+          <div class="text-[9px] uppercase tracking-widest text-emerald-400/80 font-semibold">FPS</div>
+          <div id="fpsLabel" class="text-xs sm:text-sm font-bold text-emerald-300 mono">60</div>
+        </div>
+      </div>
+
+      <!-- Right: Quick Controls & Menu -->
+      <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+        <button id="hudInputSwitchBtn" type="button" class="glass-panel hover:bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[11px] sm:text-xs font-bold px-2.5 py-2 rounded-lg transition mono" title="Switch Joystick / Diamond Keys">
+          CTRL: <span id="hudCtrlModeSpan">DIAMOND</span>
+        </button>
+        <button id="hudAudioBtn" type="button" class="glass-panel hover:bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[11px] sm:text-xs font-bold px-2.5 py-2 rounded-lg transition mono" title="Toggle Audio">
+          SFX: ON
+        </button>
+        <button id="hudMenuBtn" type="button" class="glass-panel hover:bg-emerald-950/80 border border-emerald-500/40 text-white text-[11px] sm:text-xs font-bold px-3 py-2 rounded-lg transition">
+          MENU
+        </button>
+      </div>
     </div>
 
-    <!-- Overlay: Username Entry -->
-    <div id="screen-login" class="overlay">
-        <h1 id="game-title">SPACE MAZE</h1>
-        <p style="margin-bottom: 15px; color: #888;">[SYSTEM ACCESS REQUIRED]</p>
-        <input type="text" id="username-input" placeholder="ENTER USERNAME" maxlength="12" autocomplete="off">
-        <button id="login-submit">AUTHENTICATE</button>
-    </div>
+    <!-- Active Power-Ups Row -->
+    <div id="activeBuffsRow" class="flex flex-wrap items-center justify-center gap-2 max-w-xl mx-auto"></div>
 
-    <!-- Overlay: Terminal Tutorial & Story -->
-    <div id="screen-tutorial" class="overlay hidden">
-        <h2 style="margin-bottom: 10px; color: var(--neon-green);">SYSTEM BRIEFING</h2>
-        <div class="terminal-box" id="terminal-content">
-            <!-- Dynamic Content Injected Here -->
+    <!-- SECTOR 50 DIDDY BOSS HEALTH BAR (Only visible on Sector 50 or Sector 5 Teaser) -->
+    <div id="bossHudContainer" class="hidden max-w-2xl w-full mx-auto mt-1 glass-panel border-2 border-fuchsia-500/70 rounded-xl p-2.5 shadow-[0_0_25px_rgba(192,38,211,0.45)]">
+      <div class="flex justify-between items-center mb-1">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-fuchsia-500 animate-ping"></span>
+          <span id="bossNameTitle" class="text-xs sm:text-sm font-black tracking-widest text-fuchsia-300 neon-text-purple mono">
+            THE DIDDY BOSS // OVERLORD ORB
+          </span>
         </div>
-        <button id="start-game-btn">INITIALIZE MATRIX</button>
+        <span id="bossHpLabel" class="text-xs sm:text-sm font-bold text-fuchsia-200 mono">100 / 100 HP (50 SHOTS)</span>
+      </div>
+      <div class="w-full h-4 bg-fuchsia-950/90 rounded-lg overflow-hidden border border-fuchsia-400/50 p-0.5">
+        <div id="bossHpBar" class="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-400 rounded transition-all duration-100" style="width: 100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPACT STORY / OBJECTIVE HUD PILL (Never blocks the screen) -->
+  <div id="cutsceneBanner" class="hidden fixed inset-x-0 top-16 sm:top-20 z-30 pointer-events-none flex justify-center px-3">
+    <div class="pointer-events-auto max-w-2xl w-full glass-panel border border-emerald-400/50 rounded-full px-4 py-1.5 flex items-center justify-between gap-3 shadow-[0_0_20px_rgba(0,255,102,0.2)]">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span id="cutsceneTag" class="shrink-0 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 mono">PROLOGUE</span>
+        <span id="cutsceneText" class="text-xs sm:text-sm font-semibold text-white truncate">Walk toward the dimensional portal ahead.</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <span id="cutsceneHint" class="hidden md:inline text-[11px] text-amber-300 font-bold mono"></span>
+        <button id="skipCutsceneBtn" type="button" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-400/50 text-emerald-200 transition mono">
+          SKIP &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ON-SCREEN GAMEPLAY CONTROLS (Left Movement + Right Action Cluster) -->
+  <div id="touchControlsOverlay" class="hidden fixed inset-x-0 bottom-0 z-20 pointer-events-none p-3 sm:p-6 flex items-end justify-between">
+    
+    <!-- LEFT SIDE: Either Virtual Joystick OR Diamond Arrow Keys -->
+    <div class="pointer-events-auto relative">
+      
+      <!-- 1. VIRTUAL JOYSTICK -->
+      <div id="joystickContainer" class="hidden relative w-36 h-36 sm:w-40 sm:h-40 rounded-full border-2 border-emerald-500/40 bg-emerald-950/30 backdrop-blur-md flex items-center justify-center shadow-[0_0_20px_rgba(0,255,102,0.15)]">
+        <div class="w-16 h-16 rounded-full border border-emerald-500/20 pointer-events-none"></div>
+        <div id="joystickKnob" class="absolute w-14 h-14 rounded-full bg-emerald-400/80 border-2 border-white shadow-[0_0_15px_#00ff66] pointer-events-none transition-transform duration-75" style="transform: translate(0px, 0px);"></div>
+      </div>
+
+      <!-- 2. DIAMOND ARROW KEYS CONFIGURATION -->
+      <div id="diamondContainer" class="relative w-40 h-40 sm:w-44 sm:h-44">
+        <!-- UP (Top of Diamond) -->
+        <button id="dpadUp" type="button" aria-label="Move Up" class="ctrl-btn absolute top-0 left-1/2 -translate-x-1/2 w-13 h-13 sm:w-14 sm:h-14 style-diamond-btn rounded-xl bg-emerald-950/75 border-2 border-emerald-400/60 text-emerald-300 flex items-center justify-center shadow-[0_0_12px_rgba(0,255,102,0.25)]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+        </button>
+        <!-- LEFT (Left of Diamond) -->
+        <button id="dpadLeft" type="button" aria-label="Move Left" class="ctrl-btn absolute left-0 top-1/2 -translate-y-1/2 w-13 h-13 sm:w-14 sm:h-14 style-diamond-btn rounded-xl bg-emerald-950/75 border-2 border-emerald-400/60 text-emerald-300 flex items-center justify-center shadow-[0_0_12px_rgba(0,255,102,0.25)]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <!-- RIGHT (Right of Diamond) -->
+        <button id="dpadRight" type="button" aria-label="Move Right" class="ctrl-btn absolute right-0 top-1/2 -translate-y-1/2 w-13 h-13 sm:w-14 sm:h-14 style-diamond-btn rounded-xl bg-emerald-950/75 border-2 border-emerald-400/60 text-emerald-300 flex items-center justify-center shadow-[0_0_12px_rgba(0,255,102,0.25)]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <!-- DOWN (Bottom of Diamond) -->
+        <button id="dpadDown" type="button" aria-label="Move Down" class="ctrl-btn absolute bottom-0 left-1/2 -translate-x-1/2 w-13 h-13 sm:w-14 sm:h-14 style-diamond-btn rounded-xl bg-emerald-950/75 border-2 border-emerald-400/60 text-emerald-300 flex items-center justify-center shadow-[0_0_12px_rgba(0,255,102,0.25)]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <!-- Center Diamond Core Accent -->
+        <div class="absolute inset-0 m-auto w-5 h-5 rotate-45 border border-emerald-500/40 bg-emerald-500/10 pointer-events-none"></div>
+      </div>
     </div>
 
-    <!-- Overlay: Cutscene / Lore Screen -->
-    <div id="screen-cutscene" class="overlay hidden">
-        <h2 id="cutscene-title" style="color: var(--neon-purple); margin-bottom: 15px;">ALERT</h2>
-        <div class="terminal-box" id="cutscene-text" style="border-color: var(--neon-purple);">
+    <!-- RIGHT SIDE: Action Buttons (Shoot, Warp, Auto-Aim Toggle, and Sector-50 Shield) -->
+    <div class="pointer-events-auto flex flex-col items-end gap-2.5">
+      
+      <!-- Top Row of Actions: Auto-Aim Toggle & Sector 50 Exclusive Shield Button -->
+      <div class="flex items-center gap-2.5">
+        <!-- SHIELD BUTTON (Strictly visible ONLY on Sector 50) -->
+        <button id="btnShield" type="button" class="hidden ctrl-btn px-3.5 py-2.5 rounded-2xl bg-cyan-950/90 border-2 border-cyan-400 text-cyan-200 font-black text-xs sm:text-sm tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.5)] flex items-center gap-1.5 mono">
+          <span>🛡️ SHIELD</span>
+          <span class="text-[10px] opacity-75">[E]</span>
+        </button>
+
+        <!-- AUTO-AIM TOGGLE BUTTON -->
+        <button id="btnAutoAim" type="button" class="ctrl-btn px-3.5 py-2.5 rounded-2xl bg-emerald-950/90 border-2 border-emerald-400 text-emerald-300 font-bold text-xs sm:text-sm tracking-wider shadow-[0_0_15px_rgba(0,255,102,0.3)] mono">
+          🎯 AUTO-AIM: <span id="autoAimStatus">ON</span>
+        </button>
+      </div>
+
+      <!-- Bottom Row of Actions: WARP & SHOOT -->
+      <div class="flex items-center gap-3">
+        <!-- WARP BUTTON -->
+        <button id="btnWarp" type="button" class="ctrl-btn w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-950/85 border-2 border-amber-400 text-amber-300 flex flex-col items-center justify-center shadow-[0_0_18px_rgba(251,191,36,0.35)]">
+          <span class="text-xs sm:text-sm font-black tracking-wider">WARP</span>
+          <span class="text-[9px] opacity-75 mono">[SHIFT]</span>
+        </button>
+
+        <!-- SHOOT BUTTON -->
+        <button id="btnShoot" type="button" class="ctrl-btn w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-rose-950/90 border-2 border-rose-500 text-rose-200 flex flex-col items-center justify-center shadow-[0_0_24px_rgba(244,63,94,0.45)]">
+          <span class="text-sm sm:text-base font-black tracking-wider">SHOOT</span>
+          <span class="text-[10px] opacity-75 mono">[SPACE]</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- START / PAUSE CONFIGURATION MENU MODAL -->
+  <div id="mainMenuModal" class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div class="max-w-lg w-full glass-panel border-2 border-emerald-500/60 rounded-3xl p-5 sm:p-7 neon-border-green my-auto">
+      
+      <!-- Title Header -->
+      <div class="text-center mb-5">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-2 mono">
+          <span class="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_#fff]"></span>
+          50 PROCEDURAL SECTORS // HIGH-FPS ENGINE
         </div>
-        <button id="cutscene-continue-btn">CONTINUE</button>
-    </div>
+        <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white neon-text-green">
+          SPACE <span class="text-emerald-400">MAZE</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-emerald-200/70 mt-1">
+          Navigate neon corridors, warp through phase barriers, blast bouncing red orbs, and survive the Sector 50 DIDDY Boss.
+        </p>
+      </div>
 
-    <!-- Overlay: Leaderboard & Menu -->
-    <div id="screen-menu" class="overlay hidden">
-        <h1>SPACE MAZE</h1>
-        <div class="terminal-box">
-            <h3 style="color: var(--neon-green); margin-bottom: 10px;">HIGH SCORES</h3>
-            <div id="leaderboard-list">No scores recorded yet.</div>
+      <!-- Configuration Grid -->
+      <div class="space-y-4">
+        
+        <!-- 1. Platform / Device Mode -->
+        <div class="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold uppercase tracking-wider text-emerald-300 mono">1. Gameplay Platform</label>
+            <span id="detectedDeviceBadge" class="text-[11px] text-emerald-400/90 mono">Detected: PC</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <button id="platAutoBtn" type="button" class="plat-btn py-2 px-2 rounded-xl text-xs font-bold border transition mono bg-emerald-500 text-black border-emerald-300">
+              AUTO-DETECT
+            </button>
+            <button id="platPcBtn" type="button" class="plat-btn py-2 px-2 rounded-xl text-xs font-bold border transition mono bg-black/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400">
+              PC MODE
+            </button>
+            <button id="platMobileBtn" type="button" class="plat-btn py-2 px-2 rounded-xl text-xs font-bold border transition mono bg-black/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400">
+              MOBILE MODE
+            </button>
+          </div>
         </div>
-        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-            <button id="menu-play-btn">START MISSION</button>
-            <button id="toggle-mobile-ctrl">MOBILE CONTROLS: OFF</button>
-            <button id="toggle-control-type" class="hidden">MOBILE UI: DPAD</button>
+
+        <!-- 2. Movement Control Style (Diamond Keys vs Virtual Joystick) -->
+        <div class="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold uppercase tracking-wider text-emerald-300 mono">2. On-Screen Movement</label>
+            <span class="text-[11px] text-emerald-400/80 mono">WASD / Arrows Always Active</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="ctrlDiamondBtn" type="button" class="ctrl-mode-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition mono bg-emerald-500 text-black border-emerald-300 flex items-center justify-center gap-1.5">
+              <span>❖</span> DIAMOND KEYS
+            </button>
+            <button id="ctrlJoystickBtn" type="button" class="ctrl-mode-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition mono bg-black/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400 flex items-center justify-center gap-1.5">
+              <span>🕹️</span> JOYSTICK
+            </button>
+          </div>
         </div>
-    </div>
 
-    <!-- Overlay: Admin Panel -->
-    <div id="screen-admin-pass" class="overlay hidden">
-        <h2 style="color: var(--neon-red);">ADMIN SECURITY ACCESS</h2>
-        <input type="password" id="admin-pass-input" placeholder="ENTER ACCESS CODE">
-        <button id="admin-pass-submit">VERIFY</button>
-        <button id="admin-pass-cancel">CANCEL</button>
-    </div>
-
-    <div id="screen-admin-panel" class="overlay hidden">
-        <h2 style="color: var(--neon-yellow);">SYSTEM OVERRIDE PANEL</h2>
-        <p style="margin-bottom: 15px;">AUTHENTICATED: USER viaan2014</p>
-        <div style="display: flex; flex-direction: column; gap: 10px; width: 250px;">
-            <button id="admin-skip-level">SKIP TO SECTOR 20</button>
-            <button id="admin-skip-boss">SKIP TO SECTOR 202</button>
-            <button id="admin-godmode">TOGGLE GOD MODE</button>
-            <button id="admin-close">EXIT PANEL</button>
+        <!-- 3. Sector Launch & Milestones Selector -->
+        <div class="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-2">
+            <label for="sectorSlider" class="text-xs font-bold uppercase tracking-wider text-emerald-300 mono">3. Select Starting Sector</label>
+            <span id="menuSectorDisplay" class="text-xs font-black text-emerald-400 mono">SECTOR 1 (WITH ORIGIN STORY)</span>
+          </div>
+          <input id="sectorSlider" type="range" min="1" max="50" value="1" class="w-full accent-emerald-400 cursor-pointer mb-2.5" />
+          <div class="grid grid-cols-3 gap-2">
+            <button id="presetSec1Btn" type="button" class="py-1.5 px-2 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-[11px] font-semibold text-emerald-200 transition mono">
+              Sec 1: Origin
+            </button>
+            <button id="presetSec5Btn" type="button" class="py-1.5 px-2 rounded-lg bg-purple-950/80 hover:bg-purple-900 border border-purple-500/40 text-[11px] font-semibold text-purple-200 transition mono">
+              Sec 5: Cutscene
+            </button>
+            <button id="presetSec50Btn" type="button" class="py-1.5 px-2 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-[11px] font-semibold text-rose-200 transition mono">
+              Sec 50: DIDDY Boss
+            </button>
+          </div>
         </div>
+
+        <!-- Feature Legend -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-center mono">
+          <div class="bg-black/60 border border-cyan-500/30 rounded-xl p-2 text-cyan-300">
+            <div class="font-bold">+O2 TANK</div>
+            <div class="text-[10px] opacity-75">Extra Oxygen</div>
+          </div>
+          <div class="bg-black/60 border border-yellow-500/30 rounded-xl p-2 text-yellow-300">
+            <div class="font-bold">⚡ SPEED</div>
+            <div class="text-[10px] opacity-75">Fast Thrusters</div>
+          </div>
+          <div class="bg-black/60 border border-orange-500/30 rounded-xl p-2 text-orange-300">
+            <div class="font-bold">🔥 STRENGTH</div>
+            <div class="text-[10px] opacity-75">2x Shot Dmg</div>
+          </div>
+          <div class="bg-black/60 border border-fuchsia-500/30 rounded-xl p-2 text-fuchsia-300">
+            <div class="font-bold">💀 ONE-TAP</div>
+            <div class="text-[10px] opacity-75">Insta-Kill Orbs</div>
+          </div>
+        </div>
+
+        <!-- Primary Launch Buttons -->
+        <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+          <button id="startMissionBtn" type="button" class="flex-1 py-3.5 px-5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-sm sm:text-base tracking-wider shadow-[0_0_25px_rgba(0,255,102,0.6)] transition">
+            LAUNCH SPACE MAZE
+          </button>
+          <button id="resumeMissionBtn" type="button" class="hidden py-3.5 px-5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm tracking-wider transition">
+            RESUME
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        /* --- GAME ENGINE & STATE MANAGEMENT --- */
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+  <!-- GAME OVER / VICTORY MODAL -->
+  <div id="endStateModal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="max-w-md w-full glass-panel border-2 border-emerald-500/60 rounded-3xl p-6 text-center neon-border-green">
+      <div id="endStateBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-2 mono bg-rose-500/20 text-rose-300 border border-rose-500/40">
+        SIGNAL LOST
+      </div>
+      <h2 id="endStateTitle" class="text-3xl font-black text-white mb-2">OXYGEN DEPLETED</h2>
+      <p id="endStateDesc" class="text-sm text-emerald-100/80 mb-5">
+        Your white core faded in the neon labyrinth.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-2.5">
+        <button id="retrySectorBtn" type="button" class="flex-1 py-3 px-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-sm tracking-wider transition">
+          RETRY SECTOR
+        </button>
+        <button id="endToMenuBtn" type="button" class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold text-sm transition">
+          MAIN MENU
+        </button>
+      </div>
+    </div>
+  </div>
 
-        const TILE_SIZE = 30;
-        const GRID_SIZE = 20; // 20x20 Grid = 600x600 Canvas
+  <script>
+    // =========================================================================
+    // SPACE MAZE // COMPLETE 60+ FPS GAME ENGINE
+    // =========================================================================
 
-        let gameState = {
-            username: "Player",
-            sector: 1,
-            score: 0,
-            godMode: false,
-            keysCollected: 0,
-            keysRequired: 0,
-            warpCooldown: 0,
-            isMobile: false,
-            controlType: 'dpad', // 'dpad' or 'joystick'
-            titleClicks: 0
-        };
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-        let player = {
-            x: 45, y: 45, radius: 10, speed: 3.5,
-            vx: 0, vy: 0, color: '#ffffff'
-        };
+    // UI Elements
+    const hudOverlay = document.getElementById('hudOverlay');
+    const oxyBar = document.getElementById('oxyBar');
+    const oxyText = document.getElementById('oxyText');
+    const engBar = document.getElementById('engBar');
+    const engText = document.getElementById('engText');
+    const sectorLabel = document.getElementById('sectorLabel');
+    const orbsLabel = document.getElementById('orbsLabel');
+    const fpsLabel = document.getElementById('fpsLabel');
+    const activeBuffsRow = document.getElementById('activeBuffsRow');
 
-        let maze = [];
-        let bullets = [];
-        let enemyBullets = [];
-        let enemies = [];
-        let powerups = [];
-        let splatters = [];
-        let boss = null;
-        let exitPortal = { x: 0, y: 0, unlocked: true };
+    const bossHudContainer = document.getElementById('bossHudContainer');
+    const bossNameTitle = document.getElementById('bossNameTitle');
+    const bossHpLabel = document.getElementById('bossHpLabel');
+    const bossHpBar = document.getElementById('bossHpBar');
 
-        let keysPressed = {};
-        let joystickVector = { x: 0, y: 0 };
+    const cutsceneBanner = document.getElementById('cutsceneBanner');
+    const cutsceneTag = document.getElementById('cutsceneTag');
+    const cutsceneText = document.getElementById('cutsceneText');
+    const cutsceneHint = document.getElementById('cutsceneHint');
+    const skipCutsceneBtn = document.getElementById('skipCutsceneBtn');
 
-        /* --- AUDIO SYSTEM (SYNTHESIZED WEB AUDIO) --- */
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(freq, type, duration) {
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
+    const touchControlsOverlay = document.getElementById('touchControlsOverlay');
+    const joystickContainer = document.getElementById('joystickContainer');
+    const joystickKnob = document.getElementById('joystickKnob');
+    const diamondContainer = document.getElementById('diamondContainer');
+
+    const dpadUp = document.getElementById('dpadUp');
+    const dpadDown = document.getElementById('dpadDown');
+    const dpadLeft = document.getElementById('dpadLeft');
+    const dpadRight = document.getElementById('dpadRight');
+
+    const btnShield = document.getElementById('btnShield');
+    const btnAutoAim = document.getElementById('btnAutoAim');
+    const autoAimStatus = document.getElementById('autoAimStatus');
+    const btnWarp = document.getElementById('btnWarp');
+    const btnShoot = document.getElementById('btnShoot');
+
+    const hudInputSwitchBtn = document.getElementById('hudInputSwitchBtn');
+    const hudCtrlModeSpan = document.getElementById('hudCtrlModeSpan');
+    const hudAudioBtn = document.getElementById('hudAudioBtn');
+    const hudMenuBtn = document.getElementById('hudMenuBtn');
+
+    const mainMenuModal = document.getElementById('mainMenuModal');
+    const detectedDeviceBadge = document.getElementById('detectedDeviceBadge');
+    const platAutoBtn = document.getElementById('platAutoBtn');
+    const platPcBtn = document.getElementById('platPcBtn');
+    const platMobileBtn = document.getElementById('platMobileBtn');
+    const ctrlDiamondBtn = document.getElementById('ctrlDiamondBtn');
+    const ctrlJoystickBtn = document.getElementById('ctrlJoystickBtn');
+    const sectorSlider = document.getElementById('sectorSlider');
+    const menuSectorDisplay = document.getElementById('menuSectorDisplay');
+    const presetSec1Btn = document.getElementById('presetSec1Btn');
+    const presetSec5Btn = document.getElementById('presetSec5Btn');
+    const presetSec50Btn = document.getElementById('presetSec50Btn');
+    const startMissionBtn = document.getElementById('startMissionBtn');
+    const resumeMissionBtn = document.getElementById('resumeMissionBtn');
+
+    const endStateModal = document.getElementById('endStateModal');
+    const endStateBadge = document.getElementById('endStateBadge');
+    const endStateTitle = document.getElementById('endStateTitle');
+    const endStateDesc = document.getElementById('endStateDesc');
+    const retrySectorBtn = document.getElementById('retrySectorBtn');
+    const endToMenuBtn = document.getElementById('endToMenuBtn');
+
+    // =========================================================================
+    // SYNTHESIZED SOUND ENGINE (Web Audio API - Zero External Files)
+    // =========================================================================
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'shoot') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(680, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.11);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.11);
+          osc.start(now);
+          osc.stop(now + 0.11);
+        } else if (type === 'explode') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.exponentialRampToValueAtTime(35, now + 0.28);
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.28);
+          osc.start(now);
+          osc.stop(now + 0.28);
+        } else if (type === 'warp') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(240, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.18);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } else if (type === 'powerup') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.setValueAtTime(660, now + 0.07);
+          osc.frequency.setValueAtTime(880, now + 0.14);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.24);
+          osc.start(now);
+          osc.stop(now + 0.24);
+        } else if (type === 'shield') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(640, now + 0.22);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'bossRocket') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.linearRampToValueAtTime(90, now + 0.25);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'slam') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(115, now);
+          osc.frequency.exponentialRampToValueAtTime(24, now + 0.55);
+          gain.gain.setValueAtTime(0.32, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.55);
+          osc.start(now);
+          osc.stop(now + 0.55);
+        } else if (type === 'hurt') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(130, now);
+          osc.frequency.linearRampToValueAtTime(60, now + 0.2);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // CONFIGURATION & GLOBAL GAME STATE
+    // =========================================================================
+    const isTouchHardware = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    detectedDeviceBadge.textContent = `Detected: ${isTouchHardware ? 'Mobile / Touch' : 'PC / Desktop'}`;
+
+    const config = {
+      platformMode: 'auto', // 'auto', 'pc', 'mobile'
+      controlStyle: 'diamond', // 'diamond' or 'joystick'
+      autoAim: true,
+      selectedStartSector: 1
+    };
+
+    let gameState = 'MENU'; // 'MENU', 'PROLOGUE', 'SECTOR_5_CUTSCENE', 'PLAYING', 'PAUSED', 'GAMEOVER', 'VICTORY'
+    let currentSector = 1;
+    let hasPlayedOrigin = false;
+
+    // Viewport & Camera
+    let viewWidth = window.innerWidth;
+    let viewHeight = window.innerHeight;
+    const camera = { x: 0, y: 0 };
+
+    // Maze Grid Constants
+    let CELL_SIZE = 76;
+    let mazeCols = 11;
+    let mazeRows = 11;
+    let mazeGrid = []; // 2D array of cells: { r, c, walls: {top,right,bottom,left}, phaseBarriers: {top,right,bottom,left} }
+    let wallSegments = []; // [{x1,y1,x2,y2, isPhaseBarrier}]
+    let exitPortal = { x: 0, y: 0, radius: 22, angle: 0 };
+
+    // Player Entity (Glowing White Dot)
+    const player = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      radius: 10,
+      baseSpeed: 235,
+      oxygen: 100,
+      maxOxygen: 100,
+      energy: 100,
+      maxEnergy: 100,
+      warpTimer: 0,
+      warpCooldown: 0,
+      warpDirX: 1,
+      warpDirY: 0,
+      lastMoveDirX: 1,
+      lastMoveDirY: 0,
+      aimAngle: 0,
+      lockedTarget: null,
+      shieldActive: false,
+      shieldTimer: 0,
+      shieldCooldown: 0,
+      invulnTimer: 0,
+      // Active Buffs (seconds remaining)
+      buffs: {
+        speed: 0,
+        strength: 0,
+        oneTap: 0
+      },
+      trail: []
+    };
+
+    // Dynamic Entities
+    let redOrbs = [];
+    let bullets = [];
+    let bossRockets = [];
+    let oilSplatters = [];
+    let powerUps = [];
+    let particles = [];
+
+    // DIDDY Boss State (Active in Sector 5 Cutscene & Sector 50 Final Showdown)
+    const diddyBoss = {
+      active: false,
+      x: 0,
+      y: 0,
+      vx: 110,
+      vy: 95,
+      radius: 46,
+      hp: 100,
+      maxHp: 100, // 100 HP => 50 standard shots (2 dmg per standard shot)
+      rocketTimer: 2.2,
+      oilTimer: 1.8,
+      pulseAngle: 0,
+      flashTimer: 0
+    };
+
+    // Cutscene & Sector 5 Mansion State
+    const cutscene = {
+      timer: 0,
+      phase: 0,
+      portalX: 520,
+      portalY: 0,
+      streetLength: 620,
+      keysCollected: 0,
+      totalKeys: 3,
+      mansionKeys: [],
+      portalUnlocked: false,
+      bossSlamScale: 1,
+      bossQuote: '',
+      shakeTimer: 0,
+      mansionDecor: []
+    };
+
+    // Input Tracking
+    const keys = {};
+    const dpadState = { up: false, down: false, left: false, right: false };
+    const joystickState = { active: false, dx: 0, dy: 0, originX: 0, originY: 0, touchId: null };
+
+    // =========================================================================
+    // RESPONSIVE RESIZE HANDLER
+    // =========================================================================
+    function resizeCanvas() {
+      viewWidth = window.innerWidth;
+      viewHeight = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(viewWidth * dpr);
+      canvas.height = Math.floor(viewHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      CELL_SIZE = Math.max(64, Math.min(88, Math.floor(Math.min(viewWidth, viewHeight) * 0.13)));
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // =========================================================================
+    // MENU & UI CONTROLS WIRING
+    // =========================================================================
+    function updatePlatformUI() {
+      const btns = [
+        { el: platAutoBtn, mode: 'auto' },
+        { el: platPcBtn, mode: 'pc' },
+        { el: platMobileBtn, mode: 'mobile' }
+      ];
+      btns.forEach(b => {
+        if (config.platformMode === b.mode) {
+          b.el.className = 'plat-btn py-2 px-2 rounded-xl text-xs font-bold border transition mono bg-emerald-500 text-black border-emerald-300';
+        } else {
+          b.el.className = 'plat-btn py-2 px-2 rounded-xl text-xs font-bold border transition mono bg-black/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400';
+        }
+      });
+      syncOnScreenControlsVisibility();
+    }
+
+    function updateControlStyleUI() {
+      if (config.controlStyle === 'diamond') {
+        ctrlDiamondBtn.className = 'ctrl-mode-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition mono bg-emerald-500 text-black border-emerald-300 flex items-center justify-center gap-1.5';
+        ctrlJoystickBtn.className = 'ctrl-mode-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition mono bg-black/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400 flex items-center justify-center gap-1.5';
+        diamondContainer.classList.remove('hidden');
+        joystickContainer.classList.add('hidden');
+        hudCtrlModeSpan.textContent = 'DIAMOND';
+      } else {
+        ctrlJoystickBtn.className = 'ctrl-mode-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition mono bg-emerald-500 text-black border-emerald-300 flex items-center justify-center gap-1.5';
+        ctrlDiamondBtn.className = 'ctrl-mode-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition mono bg-black/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400 flex items-center justify-center gap-1.5';
+        joystickContainer.classList.remove('hidden');
+        diamondContainer.classList.add('hidden');
+        hudCtrlModeSpan.textContent = 'JOYSTICK';
+      }
+    }
+
+    function syncOnScreenControlsVisibility() {
+      const inActivePlay = (gameState === 'PLAYING' || gameState === 'PROLOGUE' || gameState === 'SECTOR_5_CUTSCENE');
+      if (!inActivePlay) {
+        touchControlsOverlay.classList.add('hidden');
+        return;
+      }
+      // Show on-screen controls in Mobile mode, Auto-detect on touch/compact screens, or always accessible so user can click/tap diamond keys, joystick, shoot, warp, auto-aim, and Sector 50 shield
+      touchControlsOverlay.classList.remove('hidden');
+      updateControlStyleUI();
+    }
+
+    platAutoBtn.addEventListener('click', () => { config.platformMode = 'auto'; updatePlatformUI(); });
+    platPcBtn.addEventListener('click', () => { config.platformMode = 'pc'; updatePlatformUI(); });
+    platMobileBtn.addEventListener('click', () => { config.platformMode = 'mobile'; updatePlatformUI(); });
+
+    ctrlDiamondBtn.addEventListener('click', () => { config.controlStyle = 'diamond'; updateControlStyleUI(); });
+    ctrlJoystickBtn.addEventListener('click', () => { config.controlStyle = 'joystick'; updateControlStyleUI(); });
+
+    hudInputSwitchBtn.addEventListener('click', () => {
+      config.controlStyle = config.controlStyle === 'diamond' ? 'joystick' : 'diamond';
+      updateControlStyleUI();
+    });
+
+    hudAudioBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      hudAudioBtn.textContent = `SFX: ${soundEnabled ? 'ON' : 'OFF'}`;
+    });
+
+    hudMenuBtn.addEventListener('click', () => {
+      if (gameState === 'PLAYING' || gameState === 'PROLOGUE' || gameState === 'SECTOR_5_CUTSCENE') {
+        gameState = 'PAUSED';
+        resumeMissionBtn.classList.remove('hidden');
+        mainMenuModal.classList.remove('hidden');
+      }
+    });
+
+    resumeMissionBtn.addEventListener('click', () => {
+      mainMenuModal.classList.add('hidden');
+      if (cutsceneBanner.classList.contains('hidden')) {
+        gameState = 'PLAYING';
+      } else {
+        gameState = currentSector === 5 ? 'SECTOR_5_CUTSCENE' : 'PROLOGUE';
+      }
+      syncOnScreenControlsVisibility();
+    });
+
+    function updateSectorSliderLabel(val) {
+      const sec = parseInt(val, 10);
+      config.selectedStartSector = sec;
+      sectorSlider.value = sec;
+      if (sec === 1) {
+        menuSectorDisplay.textContent = 'SECTOR 1 (ORIGIN PROLOGUE)';
+      } else if (sec === 5) {
+        menuSectorDisplay.textContent = 'SECTOR 5 (THE MANSION & DIDDY INTRO)';
+      } else if (sec === 50) {
+        menuSectorDisplay.textContent = 'SECTOR 50 (FINAL DIDDY BOSS)';
+      } else {
+        menuSectorDisplay.textContent = `SECTOR ${sec} / 50`;
+      }
+    }
+
+    sectorSlider.addEventListener('input', (e) => updateSectorSliderLabel(e.target.value));
+    presetSec1Btn.addEventListener('click', () => updateSectorSliderLabel(1));
+    presetSec5Btn.addEventListener('click', () => updateSectorSliderLabel(5));
+    presetSec50Btn.addEventListener('click', () => updateSectorSliderLabel(50));
+
+    startMissionBtn.addEventListener('click', () => {
+      initAudio();
+      mainMenuModal.classList.add('hidden');
+      endStateModal.classList.add('hidden');
+      currentSector = config.selectedStartSector;
+      player.oxygen = 100;
+      player.energy = 100;
+      player.buffs.speed = 0;
+      player.buffs.strength = 0;
+      player.buffs.oneTap = 0;
+      if (currentSector === 1) {
+        startOriginPrologue();
+      } else {
+        loadSector(currentSector);
+      }
+    });
+
+    retrySectorBtn.addEventListener('click', () => {
+      initAudio();
+      endStateModal.classList.add('hidden');
+      player.oxygen = 100;
+      player.energy = 100;
+      player.buffs.speed = 0;
+      player.buffs.strength = 0;
+      player.buffs.oneTap = 0;
+      loadSector(currentSector);
+    });
+
+    endToMenuBtn.addEventListener('click', () => {
+      endStateModal.classList.add('hidden');
+      resumeMissionBtn.classList.add('hidden');
+      mainMenuModal.classList.remove('hidden');
+      gameState = 'MENU';
+    });
+
+    skipCutsceneBtn.addEventListener('click', () => {
+      if (gameState === 'PROLOGUE') {
+        cutsceneBanner.classList.add('hidden');
+        hasPlayedOrigin = true;
+        loadSector(1);
+      } else if (gameState === 'SECTOR_5_CUTSCENE') {
+        cutsceneBanner.classList.add('hidden');
+        bossHudContainer.classList.add('hidden');
+        diddyBoss.active = false;
+        loadSector(6);
+      }
+    });
+
+    // =========================================================================
+    // ORIGIN STORY PROLOGUE (Walking down a street -> Falling into Portal)
+    // =========================================================================
+    function startOriginPrologue() {
+      gameState = 'PROLOGUE';
+      hudOverlay.classList.remove('hidden');
+      cutsceneBanner.classList.remove('hidden');
+      bossHudContainer.classList.add('hidden');
+      btnShield.classList.add('hidden');
+      syncOnScreenControlsVisibility();
+
+      sectorLabel.textContent = 'PROLOGUE';
+      orbsLabel.textContent = '0';
+
+      cutscene.timer = 0;
+      cutscene.phase = 0;
+      cutscene.streetLength = 640;
+      cutscene.portalX = 520;
+      cutscene.portalY = 0;
+
+      player.x = 80;
+      player.y = 0;
+      player.vx = 0;
+      player.vy = 0;
+      player.trail = [];
+      redOrbs = [];
+      bullets = [];
+      particles = [];
+      oilSplatters = [];
+      bossRockets = [];
+      powerUps = [];
+
+      cutsceneTag.textContent = 'ORIGIN STORY // THE STREET';
+      cutsceneText.textContent = 'You are strolling down a quiet midnight avenue when a violent dimensional rift tears open the pavement ahead...';
+      cutsceneHint.textContent = 'Walk right toward the glowing portal (or press SKIP)';
+    }
+
+    // =========================================================================
+    // SECTOR 5 INTERACTIVE MANSION MAZE + KEYS + DIDDY BOSS SLAM INTRO
+    // =========================================================================
+    function startSector5Cutscene() {
+      gameState = 'SECTOR_5_CUTSCENE';
+      hudOverlay.classList.remove('hidden');
+      cutsceneBanner.classList.remove('hidden');
+      bossHudContainer.classList.add('hidden');
+      btnShield.classList.add('hidden');
+      syncOnScreenControlsVisibility();
+
+      sectorLabel.textContent = '05 / 50';
+      cutscene.timer = 0;
+      cutscene.phase = 0; // 0: Exploring Mansion for 3 Keys, 1: Portal Unlocked, 2: Boss Slamming Down, 3: Boss Taunt
+      cutscene.keysCollected = 0;
+      cutscene.totalKeys = 3;
+      cutscene.portalUnlocked = false;
+      cutscene.bossSlamScale = 3.2;
+      cutscene.bossQuote = '';
+      cutscene.shakeTimer = 0;
+
+      // Reset entities
+      redOrbs = [];
+      bullets = [];
+      particles = [];
+      oilSplatters = [];
+      bossRockets = [];
+      powerUps = [];
+      wallSegments = [];
+      diddyBoss.active = false;
+
+      // Build the Grand Neon Mansion Floorplan (-480..480 X, -360..360 Y)
+      const mw = 480;
+      const mh = 360;
+      // Outer Mansion Walls
+      wallSegments.push({ x1: -mw, y1: -mh, x2: mw, y2: -mh, isPhase: false });
+      wallSegments.push({ x1: mw, y1: -mh, x2: mw, y2: mh, isPhase: false });
+      wallSegments.push({ x1: -mw, y1: mh, x2: mw, y2: mh, isPhase: false });
+      wallSegments.push({ x1: -mw, y1: -mh, x2: -mw, y2: mh, isPhase: false });
+
+      // West Wing Rooms (Library & Study) with doorways
+      wallSegments.push({ x1: -160, y1: -mh, x2: -160, y2: -110, isPhase: false });
+      wallSegments.push({ x1: -160, y1: -30, x2: -160, y2: 110, isPhase: false });
+      wallSegments.push({ x1: -160, y1: 190, x2: -160, y2: mh, isPhase: false });
+      wallSegments.push({ x1: -mw, y1: 0, x2: -280, y2: 0, isPhase: false });
+      wallSegments.push({ x1: -210, y1: 0, x2: -160, y2: 0, isPhase: true }); // Warpable laser gate in West Wing
+
+      // East Wing Rooms (Vault & Dining Hall) with doorways
+      wallSegments.push({ x1: 160, y1: -mh, x2: 160, y2: -190, isPhase: false });
+      wallSegments.push({ x1: 160, y1: -110, x2: 160, y2: 40, isPhase: false });
+      wallSegments.push({ x1: 160, y1: 120, x2: 160, y2: mh, isPhase: false });
+      wallSegments.push({ x1: 160, y1: 0, x2: 260, y2: 0, isPhase: false });
+      wallSegments.push({ x1: 340, y1: 0, x2: mw, y2: 0, isPhase: false });
+
+      // North Sanctum Partition (Grand Courtyard where the Locked Portal sits)
+      wallSegments.push({ x1: -160, y1: -140, x2: -55, y2: -140, isPhase: false });
+      wallSegments.push({ x1: 55, y1: -140, x2: 160, y2: -140, isPhase: false });
+
+      // Mansion Decorative Pillars & Grand Staircase Carpets (for rendering)
+      cutscene.mansionDecor = [
+        { type: 'rug', x: -110, y: 120, w: 220, h: 190, label: 'GRAND FOYER' },
+        { type: 'rug', x: -430, y: -310, w: 220, h: 260, label: 'WEST LIBRARY' },
+        { type: 'rug', x: -430, y: 50, w: 220, h: 260, label: 'SHADOW STUDY' },
+        { type: 'rug', x: 210, y: -310, w: 220, h: 260, label: 'ROYAL VAULT' },
+        { type: 'rug', x: 210, y: 50, w: 220, h: 260, label: 'BANQUET HALL' },
+        { type: 'rug', x: -120, y: -320, w: 240, h: 150, label: 'PORTAL SANCTUM' }
+      ];
+
+      // 3 Golden Mansion Keys hidden in the wings
+      cutscene.mansionKeys = [
+        { x: -320, y: -200, radius: 14, collected: false, room: 'West Library', bob: 0 },
+        { x: 320, y: -200, radius: 14, collected: false, room: 'Royal Vault', bob: 2.1 },
+        { x: 320, y: 200, radius: 14, collected: false, room: 'Banquet Hall', bob: 4.2 }
+      ];
+
+      // Mansion Guard Red Orbs patrolling the wings
+      const guards = [
+        { x: -300, y: -120, vx: 125, vy: 95 },
+        { x: -300, y: 180, vx: -120, vy: 110 },
+        { x: 300, y: -140, vx: 130, vy: -105 },
+        { x: 300, y: 160, vx: -125, vy: -115 },
+        { x: 0, y: 40, vx: 140, vy: 0 }
+      ];
+      guards.forEach((g, idx) => {
+        redOrbs.push({
+          x: g.x,
+          y: g.y,
+          vx: g.vx,
+          vy: g.vy,
+          radius: 11,
+          hp: 2,
+          maxHp: 2,
+          pulse: idx
+        });
+      });
+
+      // Spawn Extra Oxygen & Speed in West Study
+      powerUps.push({ x: -320, y: 200, radius: 12, type: 'oxygen', bobOffset: 0 });
+      powerUps.push({ x: 0, y: 120, radius: 12, type: 'speed', bobOffset: 1.5 });
+
+      // Locked Mansion Portal in the North Sanctum
+      exitPortal.x = 0;
+      exitPortal.y = -245;
+      exitPortal.radius = 28;
+      exitPortal.angle = 0;
+
+      // Spawn Player at Grand Foyer Entrance (Bottom Center)
+      player.x = 0;
+      player.y = 270;
+      player.vx = 0;
+      player.vy = 0;
+      player.oxygen = 100;
+      player.energy = 100;
+      player.trail = [];
+
+      orbsLabel.textContent = `KEYS: 0/3`;
+      cutsceneTag.textContent = 'SECTOR 05 // THE MANSION';
+      cutsceneText.textContent = 'Find all 3 Golden Keys in the Mansion rooms to unlock the Sanctum Portal!';
+      cutsceneHint.textContent = 'KEYS: 0 / 3';
+    }
+
+    function startPlayableSector5AfterCutscene() {
+      loadSector(6);
+    }
+
+    // =========================================================================
+    // PROCEDURAL MAZE & SECTOR GENERATOR (Sectors 1 to 50)
+    // =========================================================================
+    function seededRandom(seed) {
+      let s = seed % 2147483647;
+      if (s <= 0) s += 2147483646;
+      return function() {
+        s = (s * 16807) % 2147483647;
+        return (s - 1) / 2147483646;
+      };
+    }
+
+    function loadSector(sec) {
+      currentSector = Math.max(1, Math.min(50, sec));
+      cutsceneBanner.classList.add('hidden');
+      hudOverlay.classList.remove('hidden');
+
+      // Sector 5 triggers the playable DIDDY Boss introduction cutscene first
+      if (currentSector === 5) {
+        startSector5Cutscene();
+        return;
+      }
+
+      gameState = 'PLAYING';
+      buildProceduralSector(currentSector);
+      syncOnScreenControlsVisibility();
+    }
+
+    function buildProceduralSector(sec) {
+      // Reset collections
+      redOrbs = [];
+      bullets = [];
+      bossRockets = [];
+      oilSplatters = [];
+      powerUps = [];
+      particles = [];
+      wallSegments = [];
+      player.trail = [];
+      player.shieldActive = false;
+      player.shieldTimer = 0;
+
+      // Replenish a bit of oxygen/energy on new sector entry
+      player.oxygen = Math.min(100, player.oxygen + 35);
+      player.energy = 100;
+
+      sectorLabel.textContent = `${String(sec).padStart(2, '0')} / 50`;
+
+      // Check if Sector 50 Final Boss Battle
+      if (sec === 50) {
+        btnShield.classList.remove('hidden');
+        bossHudContainer.classList.remove('hidden');
+        bossNameTitle.textContent = 'SECTOR 50 FINAL BOSS // THE DIDDY BOSS';
+        buildSector50BossArena();
+        return;
+      } else {
+        btnShield.classList.add('hidden');
+        bossHudContainer.classList.add('hidden');
+        diddyBoss.active = false;
+      }
+
+      // Standard Procedural Maze Dimensions scale with sector
+      const dim = Math.min(15, 7 + Math.floor(sec / 6) * 2);
+      mazeCols = dim;
+      mazeRows = dim;
+
+      const rng = seededRandom(sec * 9973 + 1337);
+
+      // Initialize grid
+      mazeGrid = [];
+      for (let r = 0; r < mazeRows; r++) {
+        const row = [];
+        for (let c = 0; c < mazeCols; c++) {
+          row.push({
+            r, c,
+            visited: false,
+            walls: { top: true, right: true, bottom: true, left: true },
+            phaseBarriers: { top: false, right: false, bottom: false, left: false }
+          });
+        }
+        mazeGrid.push(row);
+      }
+
+      // Depth-first search recursive backtracker
+      const stack = [];
+      const startCell = mazeGrid[0][0];
+      startCell.visited = true;
+      stack.push(startCell);
+
+      while (stack.length > 0) {
+        const curr = stack[stack.length - 1];
+        const neighbors = [];
+        const dirs = [
+          { dr: -1, dc: 0, w1: 'top', w2: 'bottom' },
+          { dr: 0, dc: 1, w1: 'right', w2: 'left' },
+          { dr: 1, dc: 0, w1: 'bottom', w2: 'top' },
+          { dr: 0, dc: -1, w1: 'left', w2: 'right' }
+        ];
+        for (const d of dirs) {
+          const nr = curr.r + d.dr;
+          const nc = curr.c + d.dc;
+          if (nr >= 0 && nr < mazeRows && nc >= 0 && nc < mazeCols && !mazeGrid[nr][nc].visited) {
+            neighbors.push({ cell: mazeGrid[nr][nc], d });
+          }
         }
 
-        /* --- PROCEDURAL MAZE GENERATION (DFS) --- */
-        function generateMaze(cols, rows) {
-            let grid = Array(rows).fill().map(() => Array(cols).fill(1));
-            
-            function walk(r, c) {
-                grid[r][c] = 0;
-                let dirs = [[-2,0], [2,0], [0,-2], [0,2]].sort(() => Math.random() - 0.5);
-                for (let [dr, dc] of dirs) {
-                    let nr = r + dr, nc = c + dc;
-                    if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 && grid[nr][nc] === 1) {
-                        grid[r + dr/2][c + dc/2] = 0;
-                        walk(nr, nc);
-                    }
-                }
-            }
-            walk(1, 1);
-            return grid;
+        if (neighbors.length > 0) {
+          const pick = neighbors[Math.floor(rng() * neighbors.length)];
+          curr.walls[pick.d.w1] = false;
+          pick.cell.walls[pick.d.w2] = false;
+
+          // Add occasional Warp-only phase barriers on open passages (so player uses WARP button to dash through)
+          if (( curr.r + curr.c > 2 ) && rng() < 0.14) {
+            curr.phaseBarriers[pick.d.w1] = true;
+            pick.cell.phaseBarriers[pick.d.w2] = true;
+          }
+
+          pick.cell.visited = true;
+          stack.push(pick.cell);
+        } else {
+          stack.pop();
+        }
+      }
+
+      // Braid some extra loops so bouncing red orbs have dynamic rooms
+      for (let r = 1; r < mazeRows - 1; r++) {
+        for (let c = 1; c < mazeCols - 1; c++) {
+          if (rng() < 0.22) {
+            mazeGrid[r][c].walls.right = false;
+            mazeGrid[r][c + 1].walls.left = false;
+          }
+          if (rng() < 0.22) {
+            mazeGrid[r][c].walls.bottom = false;
+            mazeGrid[r + 1][c].walls.top = false;
+          }
+        }
+      }
+
+      // Convert grid walls to geometric line segments for crisp rendering & circle-segment collision
+      const halfW = (mazeCols * CELL_SIZE) / 2;
+      const halfH = (mazeRows * CELL_SIZE) / 2;
+
+      for (let r = 0; r < mazeRows; r++) {
+        for (let c = 0; c < mazeCols; c++) {
+          const x1 = c * CELL_SIZE - halfW;
+          const y1 = r * CELL_SIZE - halfH;
+          const x2 = x1 + CELL_SIZE;
+          const y2 = y1 + CELL_SIZE;
+          const cell = mazeGrid[r][c];
+
+          if (r === 0 && cell.walls.top) {
+            wallSegments.push({ x1, y1, x2, y2: y1, isPhase: false });
+          }
+          if (c === 0 && cell.walls.left) {
+            wallSegments.push({ x1, y1, x2: x1, y2, isPhase: false });
+          }
+          if (cell.walls.right) {
+            wallSegments.push({ x1: x2, y1, x2, y2, isPhase: false });
+          } else if (cell.phaseBarriers.right) {
+            wallSegments.push({ x1: x2, y1, x2, y2, isPhase: true });
+          }
+          if (cell.walls.bottom) {
+            wallSegments.push({ x1, y1: y2, x2, y2, isPhase: false });
+          } else if (cell.phaseBarriers.bottom) {
+            wallSegments.push({ x1, y1: y2, x2, y2, isPhase: true });
+          }
+        }
+      }
+
+      // Place Player at Top-Left Cell (0,0)
+      player.x = 0.5 * CELL_SIZE - halfW;
+      player.y = 0.5 * CELL_SIZE - halfH;
+      player.vx = 0;
+      player.vy = 0;
+
+      // Place Exit Portal at Bottom-Right Cell
+      exitPortal.x = (mazeCols - 0.5) * CELL_SIZE - halfW;
+      exitPortal.y = (mazeRows - 0.5) * CELL_SIZE - halfH;
+      exitPortal.radius = 22;
+
+      // Spawn Bouncing Red Orbs across the maze
+      const numOrbs = Math.min(24, 4 + Math.floor(sec * 0.65));
+      for (let i = 0; i < numOrbs; i++) {
+        let rr = Math.floor(rng() * mazeRows);
+        let cc = Math.floor(rng() * mazeCols);
+        if (rr < 2 && cc < 2) {
+          rr = Math.min(mazeRows - 1, rr + 2);
+          cc = Math.min(mazeCols - 1, cc + 2);
+        }
+        const ox = (cc + 0.5) * CELL_SIZE - halfW;
+        const oy = (rr + 0.5) * CELL_SIZE - halfH;
+        const ang = rng() * Math.PI * 2;
+        const spd = 95 + Math.min(90, sec * 1.8);
+        redOrbs.push({
+          x: ox,
+          y: oy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          radius: 11,
+          hp: 2 + Math.floor(sec / 18),
+          maxHp: 2 + Math.floor(sec / 18),
+          pulse: rng() * Math.PI * 2
+        });
+      }
+
+      // Spawn Collectible Power-Ups (Extra Oxygen, Speed Boost, Strength Boost, One-Tap)
+      const powerTypes = ['oxygen', 'speed', 'strength', 'onetap'];
+      const numPickups = 3 + (sec % 3);
+      for (let i = 0; i < numPickups; i++) {
+        const rr = Math.floor(rng() * mazeRows);
+        const cc = Math.floor(rng() * mazeCols);
+        if (rr === 0 && cc === 0) continue;
+        const px = (cc + 0.5) * CELL_SIZE - halfW;
+        const py = (rr + 0.5) * CELL_SIZE - halfH;
+        const pType = powerTypes[(i + sec) % powerTypes.length];
+        powerUps.push({
+          x: px,
+          y: py,
+          radius: 12,
+          type: pType,
+          bobOffset: rng() * Math.PI * 2
+        });
+      }
+
+      orbsLabel.textContent = String(redOrbs.length);
+    }
+
+    // =========================================================================
+    // SECTOR 50 FINAL BOSS ARENA (THE DIDDY BOSS - 100 HP / 50 SHOTS)
+    // =========================================================================
+    function buildSector50BossArena() {
+      const arenaW = 860;
+      const arenaH = 660;
+      const hw = arenaW / 2;
+      const hh = arenaH / 2;
+
+      // Outer neon perimeter walls
+      wallSegments.push({ x1: -hw, y1: -hh, x2: hw, y2: -hh, isPhase: false });
+      wallSegments.push({ x1: hw, y1: -hh, x2: hw, y2: hh, isPhase: false });
+      wallSegments.push({ x1: -hw, y1: hh, x2: hw, y2: hh, isPhase: false });
+      wallSegments.push({ x1: -hw, y1: -hh, x2: -hw, y2: hh, isPhase: false });
+
+      // Interior tactical neon pillars + phase barriers to warp through
+      const pillars = [
+        { x: -220, y: -150, s: 70 },
+        { x: 220, y: -150, s: 70 },
+        { x: -220, y: 150, s: 70 },
+        { x: 220, y: 150, s: 70 }
+      ];
+      pillars.forEach(p => {
+        const hs = p.s / 2;
+        wallSegments.push({ x1: p.x - hs, y1: p.y - hs, x2: p.x + hs, y2: p.y - hs, isPhase: false });
+        wallSegments.push({ x1: p.x + hs, y1: p.y - hs, x2: p.x + hs, y2: p.y + hs, isPhase: false });
+        wallSegments.push({ x1: p.x - hs, y1: p.y + hs, x2: p.x + hs, y2: p.y + hs, isPhase: false });
+        wallSegments.push({ x1: p.x - hs, y1: p.y - hs, x2: p.x - hs, y2: p.y + hs, isPhase: false });
+      });
+
+      // Phase laser bridges between pillars
+      wallSegments.push({ x1: -220, y1: -115, x2: -220, y2: 115, isPhase: true });
+      wallSegments.push({ x1: 220, y1: -115, x2: 220, y2: 115, isPhase: true });
+
+      // Place Player near bottom
+      player.x = 0;
+      player.y = 240;
+      player.vx = 0;
+      player.vy = 0;
+
+      // Activate DIDDY Boss (100 HP = 50 standard shots of 2 dmg)
+      diddyBoss.active = true;
+      diddyBoss.x = 0;
+      diddyBoss.y = -120;
+      diddyBoss.vx = 135;
+      diddyBoss.vy = 105;
+      diddyBoss.radius = 50;
+      diddyBoss.hp = 100;
+      diddyBoss.maxHp = 100;
+      diddyBoss.rocketTimer = 1.8;
+      diddyBoss.oilTimer = 1.4;
+      updateBossHud();
+
+      // Add 4 escort red orbs
+      const corners = [
+        { x: -320, y: -220 },
+        { x: 320, y: -220 },
+        { x: -320, y: 220 },
+        { x: 320, y: 220 }
+      ];
+      corners.forEach((c, idx) => {
+        redOrbs.push({
+          x: c.x,
+          y: c.y,
+          vx: (idx % 2 === 0 ? 1 : -1) * 130,
+          vy: (idx < 2 ? 1 : -1) * 130,
+          radius: 12,
+          hp: 2,
+          maxHp: 2,
+          pulse: idx
+        });
+      });
+
+      // Spawn arena power-ups
+      powerUps.push({ x: -350, y: 0, radius: 13, type: 'oxygen', bobOffset: 0 });
+      powerUps.push({ x: 350, y: 0, radius: 13, type: 'speed', bobOffset: 1.5 });
+      powerUps.push({ x: 0, y: -260, radius: 13, type: 'strength', bobOffset: 3.1 });
+
+      // Exit portal unlocks after Boss is defeated
+      exitPortal.x = 0;
+      exitPortal.y = 0;
+      exitPortal.radius = 28;
+      orbsLabel.textContent = 'BOSS';
+    }
+
+    function updateBossHud() {
+      const hpClamped = Math.max(0, Math.ceil(diddyBoss.hp));
+      const shotsLeft = Math.ceil(hpClamped / 2);
+      bossHpLabel.textContent = `${hpClamped} / 100 HP (${shotsLeft} SHOTS)`;
+      bossHpBar.style.width = `${(hpClamped / diddyBoss.maxHp) * 100}%`;
+    }
+
+    // =========================================================================
+    // PARTICLE EXPLOSION ENGINE (1-Second Radial Fade Out)
+    // =========================================================================
+    function spawnExplosion(x, y, colorHex, count = 28, speedScale = 1) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+        const speed = (45 + Math.random() * 165) * speedScale;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 2 + Math.random() * 3.2,
+          color: colorHex,
+          life: 1.0,      // Clears away after 1.0 second
+          maxLife: 1.0
+        });
+      }
+    }
+
+    // =========================================================================
+    // COMBAT & ABILITIES: SHOOT, AUTO-AIM, WARP, SECTOR-50 SHIELD
+    // =========================================================================
+    function findNearestTarget() {
+      let best = null;
+      let bestDist = Infinity;
+
+      // Prioritize Red Orbs and DIDDY Boss
+      for (const orb of redOrbs) {
+        const d = Math.hypot(orb.x - player.x, orb.y - player.y);
+        if (d < bestDist && d < 620) {
+          bestDist = d;
+          best = orb;
+        }
+      }
+      if (diddyBoss.active && diddyBoss.hp > 0) {
+        const d = Math.hypot(diddyBoss.x - player.x, diddyBoss.y - player.y);
+        if (d < bestDist && d < 750) {
+          bestDist = d;
+          best = diddyBoss;
+        }
+      }
+      return best;
+    }
+
+    function triggerShoot() {
+      if (gameState !== 'PLAYING' && gameState !== 'SECTOR_5_CUTSCENE') return;
+      initAudio();
+
+      if (player.energy < 6) return;
+      player.energy = Math.max(0, player.energy - 6);
+
+      // Determine firing angle: Auto-Aim target if enabled and in range, otherwise movement direction
+      let fireAngle = player.aimAngle;
+      const target = config.autoAim ? findNearestTarget() : null;
+      if (target) {
+        fireAngle = Math.atan2(target.y - player.y, target.x - player.x);
+        player.aimAngle = fireAngle;
+      } else if (Math.hypot(player.lastMoveDirX, player.lastMoveDirY) > 0.01) {
+        fireAngle = Math.atan2(player.lastMoveDirY, player.lastMoveDirX);
+        player.aimAngle = fireAngle;
+      }
+
+      const bulletSpeed = 620;
+      // Standard shot deals 2 damage (so 100 HP DIDDY Boss takes 50 shots)
+      let dmg = 2;
+      if (player.buffs.strength > 0) dmg = 4;
+
+      bullets.push({
+        x: player.x + Math.cos(fireAngle) * (player.radius + 4),
+        y: player.y + Math.sin(fireAngle) * (player.radius + 4),
+        vx: Math.cos(fireAngle) * bulletSpeed,
+        vy: Math.sin(fireAngle) * bulletSpeed,
+        radius: 4.5,
+        damage: dmg,
+        oneTap: player.buffs.oneTap > 0,
+        life: 1.35,
+        trail: []
+      });
+
+      playSound('shoot');
+    }
+
+    function triggerWarp() {
+      if (gameState !== 'PLAYING' && gameState !== 'PROLOGUE' && gameState !== 'SECTOR_5_CUTSCENE') return;
+      initAudio();
+      if (player.warpCooldown > 0 || player.energy < 22) return;
+
+      player.energy = Math.max(0, player.energy - 22);
+      player.warpTimer = 0.22;
+      player.warpCooldown = 0.55;
+
+      let dx = player.lastMoveDirX;
+      let dy = player.lastMoveDirY;
+      const mag = Math.hypot(dx, dy);
+      if (mag < 0.05) {
+        dx = Math.cos(player.aimAngle);
+        dy = Math.sin(player.aimAngle);
+      } else {
+        dx /= mag;
+        dy /= mag;
+      }
+      player.warpDirX = dx;
+      player.warpDirY = dy;
+
+      spawnExplosion(player.x, player.y, '#fde047', 14, 0.7);
+      playSound('warp');
+    }
+
+    function triggerShield() {
+      // Strictly available on Sector 50
+      if (currentSector !== 50 || gameState !== 'PLAYING') return;
+      initAudio();
+      if (player.shieldActive || player.shieldCooldown > 0 || player.energy < 25) return;
+
+      player.energy = Math.max(0, player.energy - 25);
+      player.shieldActive = true;
+      player.shieldTimer = 3.2;
+      player.shieldCooldown = 5.0;
+      playSound('shield');
+    }
+
+    // Wire Action Buttons
+    btnAutoAim.addEventListener('click', () => {
+      initAudio();
+      config.autoAim = !config.autoAim;
+      autoAimStatus.textContent = config.autoAim ? 'ON' : 'OFF';
+      if (config.autoAim) {
+        btnAutoAim.className = 'ctrl-btn px-3.5 py-2.5 rounded-2xl bg-emerald-950/90 border-2 border-emerald-400 text-emerald-300 font-bold text-xs sm:text-sm tracking-wider shadow-[0_0_15px_rgba(0,255,102,0.3)] mono';
+      } else {
+        btnAutoAim.className = 'ctrl-btn px-3.5 py-2.5 rounded-2xl bg-zinc-900/90 border-2 border-zinc-500 text-zinc-300 font-bold text-xs sm:text-sm tracking-wider mono';
+      }
+    });
+
+    btnShoot.addEventListener('pointerdown', (e) => { e.preventDefault(); triggerShoot(); });
+    btnWarp.addEventListener('pointerdown', (e) => { e.preventDefault(); triggerWarp(); });
+    btnShield.addEventListener('pointerdown', (e) => { e.preventDefault(); triggerShield(); });
+
+    // Wire Diamond D-Pad Buttons
+    function bindDiamondButton(el, dirKey) {
+      const start = (e) => {
+        e.preventDefault();
+        initAudio();
+        dpadState[dirKey] = true;
+        el.classList.add('active-press');
+      };
+      const end = (e) => {
+        e.preventDefault();
+        dpadState[dirKey] = false;
+        el.classList.remove('active-press');
+      };
+      el.addEventListener('pointerdown', start);
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointerleave', end);
+      el.addEventListener('pointercancel', end);
+    }
+    bindDiamondButton(dpadUp, 'up');
+    bindDiamondButton(dpadDown, 'down');
+    bindDiamondButton(dpadLeft, 'left');
+    bindDiamondButton(dpadRight, 'right');
+
+    // Wire Virtual Joystick
+    joystickContainer.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      initAudio();
+      const rect = joystickContainer.getBoundingClientRect();
+      joystickState.active = true;
+      joystickState.touchId = e.pointerId;
+      joystickState.originX = rect.left + rect.width / 2;
+      joystickState.originY = rect.top + rect.height / 2;
+      updateJoystickFromEvent(e);
+      joystickContainer.setPointerCapture(e.pointerId);
+    });
+
+    joystickContainer.addEventListener('pointermove', (e) => {
+      if (!joystickState.active || e.pointerId !== joystickState.touchId) return;
+      updateJoystickFromEvent(e);
+    });
+
+    function resetJoystick() {
+      joystickState.active = false;
+      joystickState.touchId = null;
+      joystickState.dx = 0;
+      joystickState.dy = 0;
+      joystickKnob.style.transform = 'translate(0px, 0px)';
+    }
+
+    joystickContainer.addEventListener('pointerup', resetJoystick);
+    joystickContainer.addEventListener('pointercancel', resetJoystick);
+
+    function updateJoystickFromEvent(e) {
+      const maxRadius = 42;
+      let vx = e.clientX - joystickState.originX;
+      let vy = e.clientY - joystickState.originY;
+      const dist = Math.hypot(vx, vy);
+      if (dist > maxRadius) {
+        vx = (vx / dist) * maxRadius;
+        vy = (vy / dist) * maxRadius;
+      }
+      joystickState.dx = vx / maxRadius;
+      joystickState.dy = vy / maxRadius;
+      joystickKnob.style.transform = `translate(${vx}px, ${vy}px)`;
+    }
+
+    // Keyboard Controls
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        triggerShoot();
+      } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK') {
+        e.preventDefault();
+        triggerWarp();
+      } else if (e.code === 'KeyE') {
+        e.preventDefault();
+        triggerShield();
+      } else if (e.code === 'KeyQ') {
+        btnAutoAim.click();
+      } else if (e.code === 'Escape') {
+        hudMenuBtn.click();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    // =========================================================================
+    // CIRCLE VS LINE SEGMENT COLLISION PHYSICS
+    // =========================================================================
+    function resolveCircleSegmentCollision(entity, seg, bounce = false) {
+      const dx = seg.x2 - seg.x1;
+      const dy = seg.y2 - seg.y1;
+      const lenSq = dx * dx + dy * dy;
+      let t = 0;
+      if (lenSq > 0) {
+        t = ((entity.x - seg.x1) * dx + (entity.y - seg.y1) * dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+      }
+      const closestX = seg.x1 + t * dx;
+      const closestY = seg.y1 + t * dy;
+      const distX = entity.x - closestX;
+      const distY = entity.y - closestY;
+      const distSq = distX * distX + distY * distY;
+      const minRadius = entity.radius + 3;
+
+      if (distSq < minRadius * minRadius) {
+        const dist = Math.sqrt(distSq) || 0.001;
+        const nx = distX / dist;
+        const ny = distY / dist;
+        const overlap = minRadius - dist;
+        entity.x += nx * overlap;
+        entity.y += ny * overlap;
+
+        if (bounce) {
+          const dot = entity.vx * nx + entity.vy * ny;
+          if (dot < 0) {
+            entity.vx -= 2 * dot * nx;
+            entity.vy -= 2 * dot * ny;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // =========================================================================
+    // MAIN PHYSICS & LOGIC UPDATE STEP (Delta-Time Driven)
+    // =========================================================================
+    function getMovementInputVector() {
+      let ix = 0;
+      let iy = 0;
+      if (keys['ArrowUp'] || keys['KeyW'] || dpadState.up) iy -= 1;
+      if (keys['ArrowDown'] || keys['KeyS'] || dpadState.down) iy += 1;
+      if (keys['ArrowLeft'] || keys['KeyA'] || dpadState.left) ix -= 1;
+      if (keys['ArrowRight'] || keys['KeyD'] || dpadState.right) ix += 1;
+
+      if (joystickState.active) {
+        ix += joystickState.dx;
+        iy += joystickState.dy;
+      }
+
+      const mag = Math.hypot(ix, iy);
+      if (mag > 1) {
+        ix /= mag;
+        iy /= mag;
+      }
+      return { ix, iy, mag: Math.min(1, mag) };
+    }
+
+    function updateGame(dt) {
+      // Update Particles in all active states
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.life -= dt;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      if (gameState === 'PROLOGUE') {
+        updatePrologue(dt);
+        return;
+      }
+      if (gameState === 'SECTOR_5_CUTSCENE') {
+        updateSector5Cutscene(dt);
+        return;
+      }
+      if (gameState !== 'PLAYING') return;
+
+      // 1. Update Timers & Buffs
+      if (player.warpTimer > 0) player.warpTimer = Math.max(0, player.warpTimer - dt);
+      if (player.warpCooldown > 0) player.warpCooldown = Math.max(0, player.warpCooldown - dt);
+      if (player.invulnTimer > 0) player.invulnTimer = Math.max(0, player.invulnTimer - dt);
+
+      if (player.shieldActive) {
+        player.shieldTimer -= dt;
+        if (player.shieldTimer <= 0) {
+          player.shieldActive = false;
+        }
+      }
+      if (player.shieldCooldown > 0) {
+        player.shieldCooldown = Math.max(0, player.shieldCooldown - dt);
+      }
+
+      let buffsChanged = false;
+      ['speed', 'strength', 'oneTap'].forEach(k => {
+        if (player.buffs[k] > 0) {
+          player.buffs[k] = Math.max(0, player.buffs[k] - dt);
+          buffsChanged = true;
+        }
+      });
+      if (buffsChanged) renderBuffBadges();
+
+      // 2. Oxygen & Energy Management
+      player.oxygen = Math.max(0, player.oxygen - 1.55 * dt);
+      player.energy = Math.min(player.maxEnergy, player.energy + 14.5 * dt);
+
+      if (player.oxygen <= 0) {
+        triggerGameOver('OXYGEN DEPLETED', 'Your oxygen reserves ran dry in the deep space labyrinth.');
+        return;
+      }
+
+      // 3. Player Movement & Oil Slowdown Check
+      const input = getMovementInputVector();
+      if (input.mag > 0.05) {
+        player.lastMoveDirX = input.ix;
+        player.lastMoveDirY = input.iy;
+      }
+
+      // Check if standing in DIDDY Boss Oil Splatter
+      let inOil = false;
+      for (const oil of oilSplatters) {
+        if (Math.hypot(player.x - oil.x, player.y - oil.y) < oil.radius) {
+          inOil = true;
+          if (!player.shieldActive) {
+            player.oxygen = Math.max(0, player.oxygen - 4.5 * dt);
+          }
+          break;
+        }
+      }
+
+      let moveSpeed = player.baseSpeed;
+      if (player.buffs.speed > 0) moveSpeed *= 1.48;
+      if (inOil && !player.shieldActive) moveSpeed *= 0.48;
+
+      if (player.warpTimer > 0) {
+        player.vx = player.warpDirX * 640;
+        player.vy = player.warpDirY * 640;
+      } else {
+        player.vx = input.ix * moveSpeed;
+        player.vy = input.iy * moveSpeed;
+      }
+
+      // Sub-step movement so high-speed Warp never tunnels through solid green walls,
+      // while allowing Warp to phase ONLY through yellow dashed walls (seg.isPhase === true)
+      const moveSteps = player.warpTimer > 0 ? 8 : 2;
+      const stepDt = dt / moveSteps;
+      for (let sIdx = 0; sIdx < moveSteps; sIdx++) {
+        player.x += player.vx * stepDt;
+        player.y += player.vy * stepDt;
+        for (const seg of wallSegments) {
+          if (seg.isPhase && player.warpTimer > 0) continue;
+          resolveCircleSegmentCollision(player, seg, false);
+        }
+      }
+
+      // Record glowing trail
+      player.trail.push({ x: player.x, y: player.y, alpha: 0.7 });
+      if (player.trail.length > 14) player.trail.shift();
+
+      // Auto-Aim Lock Update
+      player.lockedTarget = config.autoAim ? findNearestTarget() : null;
+      if (player.lockedTarget) {
+        player.aimAngle = Math.atan2(player.lockedTarget.y - player.y, player.lockedTarget.x - player.x);
+      } else if (input.mag > 0.05) {
+        player.aimAngle = Math.atan2(input.iy, input.ix);
+      }
+
+      // 4. Update Bouncing Red Orbs (Cannot pass through walls)
+      for (let i = redOrbs.length - 1; i >= 0; i--) {
+        const orb = redOrbs[i];
+        orb.pulse += dt * 5;
+        orb.x += orb.vx * dt;
+        orb.y += orb.vy * dt;
+
+        for (const seg of wallSegments) {
+          resolveCircleSegmentCollision(orb, seg, true);
         }
 
-        /* --- SECTOR INITIALIZATION --- */
-        function loadSector(sectorNum) {
-            gameState.sector = sectorNum;
-            document.getElementById('ui-sector').innerText = sectorNum;
-            bullets = [];
-            enemyBullets = [];
-            enemies = [];
-            powerups = [];
-            splatters = [];
-            boss = null;
-            gameState.keysCollected = 0;
+        // Check collision with Player
+        const distToPlayer = Math.hypot(orb.x - player.x, orb.y - player.y);
+        if (distToPlayer < orb.radius + player.radius) {
+          if (player.shieldActive || player.warpTimer > 0) {
+            // Bounce orb away harmlessly
+            const nx = (orb.x - player.x) / (distToPlayer || 1);
+            const ny = (orb.y - player.y) / (distToPlayer || 1);
+            orb.vx = nx * 200;
+            orb.vy = ny * 200;
+          } else if (player.invulnTimer <= 0) {
+            player.oxygen = Math.max(0, player.oxygen - 16);
+            player.invulnTimer = 0.65;
+            spawnExplosion(player.x, player.y, '#fb7185', 14, 0.7);
+            playSound('hurt');
+          }
+        }
+      }
 
-            document.getElementById('boss-hp-container').classList.add('hidden');
+      // 5. Update DIDDY Boss (Sector 50)
+      if (diddyBoss.active && diddyBoss.hp > 0) {
+        diddyBoss.pulseAngle += dt * 4;
+        if (diddyBoss.flashTimer > 0) diddyBoss.flashTimer = Math.max(0, diddyBoss.flashTimer - dt);
 
-            if (sectorNum === 202) {
-                // SECTOR 202: DIDDY's Mansion (No Maze)
-                maze = Array(GRID_SIZE).fill().map((_, r) => 
-                    Array(GRID_SIZE).fill().map((_, c) => 
-                        (r === 0 || r === GRID_SIZE - 1 || c === 0 || c === GRID_SIZE - 1) ? 1 : 0
-                    )
-                );
-                player.x = 300; player.y = 500;
-                
-                // Spawn Boss
-                boss = {
-                    x: 300, y: 150, radius: 30, hp: 100, maxHp: 100,
-                    vx: 2, vy: 1.5, shootTimer: 0
-                };
-                document.getElementById('boss-hp-container').classList.remove('hidden');
-                document.getElementById('boss-hp-bar').style.width = '100%';
-                gameState.keysRequired = 0;
-                exitPortal.unlocked = false;
+        diddyBoss.x += diddyBoss.vx * dt;
+        diddyBoss.y += diddyBoss.vy * dt;
+
+        // Bounce DIDDY Boss off outer arena walls
+        for (const seg of wallSegments) {
+          if (!seg.isPhase) {
+            resolveCircleSegmentCollision(diddyBoss, seg, true);
+          }
+        }
+
+        // Boss Ability 1: Release Oil Splatters
+        diddyBoss.oilTimer -= dt;
+        if (diddyBoss.oilTimer <= 0) {
+          diddyBoss.oilTimer = 2.1;
+          oilSplatters.push({
+            x: diddyBoss.x + (Math.random() - 0.5) * 60,
+            y: diddyBoss.y + (Math.random() - 0.5) * 60,
+            radius: 36 + Math.random() * 18,
+            life: 11.0
+          });
+          if (oilSplatters.length > 10) oilSplatters.shift();
+        }
+
+        // Boss Ability 2: Fire Heavy Homing Rockets at Player
+        diddyBoss.rocketTimer -= dt;
+        if (diddyBoss.rocketTimer <= 0) {
+          diddyBoss.rocketTimer = 2.4;
+          const ang = Math.atan2(player.y - diddyBoss.y, player.x - diddyBoss.x);
+          bossRockets.push({
+            x: diddyBoss.x + Math.cos(ang) * (diddyBoss.radius + 10),
+            y: diddyBoss.y + Math.sin(ang) * (diddyBoss.radius + 10),
+            vx: Math.cos(ang) * 265,
+            vy: Math.sin(ang) * 265,
+            radius: 9,
+            life: 4.5
+          });
+          playSound('bossRocket');
+        }
+
+        // Contact with DIDDY Boss
+        const distBoss = Math.hypot(diddyBoss.x - player.x, diddyBoss.y - player.y);
+        if (distBoss < diddyBoss.radius + player.radius && !player.shieldActive && player.invulnTimer <= 0) {
+          player.oxygen = Math.max(0, player.oxygen - 22);
+          player.invulnTimer = 0.8;
+          spawnExplosion(player.x, player.y, '#e879f9', 18, 0.9);
+          playSound('hurt');
+        }
+      }
+
+      // Update Oil Splatters lifetime
+      for (let i = oilSplatters.length - 1; i >= 0; i--) {
+        oilSplatters[i].life -= dt;
+        if (oilSplatters[i].life <= 0) oilSplatters.splice(i, 1);
+      }
+
+      // Update Boss Rockets
+      for (let i = bossRockets.length - 1; i >= 0; i--) {
+        const rkt = bossRockets[i];
+        // Slight steering toward player
+        const desiredAngle = Math.atan2(player.y - rkt.y, player.x - rkt.x);
+        const currentAngle = Math.atan2(rkt.vy, rkt.vx);
+        let diff = desiredAngle - currentAngle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const newAngle = currentAngle + diff * 1.4 * dt;
+        const spd = Math.hypot(rkt.vx, rkt.vy);
+        rkt.vx = Math.cos(newAngle) * spd;
+        rkt.vy = Math.sin(newAngle) * spd;
+
+        rkt.x += rkt.vx * dt;
+        rkt.y += rkt.vy * dt;
+        rkt.life -= dt;
+
+        // Check collision with Player
+        const dPlayer = Math.hypot(rkt.x - player.x, rkt.y - player.y);
+        if (dPlayer < rkt.radius + (player.shieldActive ? player.radius + 14 : player.radius)) {
+          if (player.shieldActive) {
+            // Blocked by Sector 50 Shield!
+            spawnExplosion(rkt.x, rkt.y, '#22d3ee', 22, 0.9);
+            playSound('shield');
+          } else {
+            player.oxygen = Math.max(0, player.oxygen - 20);
+            spawnExplosion(rkt.x, rkt.y, '#f43f5e', 26, 1.0);
+            playSound('explode');
+          }
+          bossRockets.splice(i, 1);
+          continue;
+        }
+
+        // Check wall hit or timeout
+        let hitWall = rkt.life <= 0;
+        for (const seg of wallSegments) {
+          if (!seg.isPhase && resolveCircleSegmentCollision(rkt, seg, false)) {
+            hitWall = true;
+            break;
+          }
+        }
+        if (hitWall) {
+          spawnExplosion(rkt.x, rkt.y, '#f97316', 18, 0.8);
+          bossRockets.splice(i, 1);
+        }
+      }
+
+      // 6. Update Player Bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.trail.push({ x: b.x, y: b.y });
+        if (b.trail.length > 6) b.trail.shift();
+
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.life -= dt;
+
+        let consumed = false;
+
+        // Hit Red Orbs
+        for (let j = redOrbs.length - 1; j >= 0; j--) {
+          const orb = redOrbs[j];
+          if (Math.hypot(b.x - orb.x, b.y - orb.y) < b.radius + orb.radius) {
+            orb.hp = b.oneTap ? 0 : orb.hp - b.damage;
+            consumed = true;
+            if (orb.hp <= 0) {
+              // 1-second glowing particle explosion!
+              spawnExplosion(orb.x, orb.y, '#ff2a55', 30, 1.0);
+              redOrbs.splice(j, 1);
+              orbsLabel.textContent = currentSector === 50 ? 'BOSS' : String(redOrbs.length);
+              playSound('explode');
             } else {
-                // Standard Sectors & Sector 20
-                maze = generateMaze(GRID_SIZE, GRID_SIZE);
-                player.x = 45; player.y = 45;
-                exitPortal.x = (GRID_SIZE - 2) * TILE_SIZE + 15;
-                exitPortal.y = (GRID_SIZE - 2) * TILE_SIZE + 15;
-
-                if (sectorNum === 20) {
-                    gameState.keysRequired = 3;
-                    exitPortal.unlocked = false;
-                    document.getElementById('ui-keys').innerText = `0/3`;
-                    // Spawn 3 Yellow Orbs
-                    for (let i = 0; i < 3; i++) {
-                        let pos = getEmptyTilePos();
-                        powerups.push({ x: pos.x, y: pos.y, type: 'key' });
-                    }
-                } else {
-                    gameState.keysRequired = 0;
-                    exitPortal.unlocked = true;
-                    document.getElementById('ui-keys').innerText = `N/A`;
-                    
-                    // Spawn regular enemies & powerups
-                    let enemyCount = Math.min(2 + Math.floor(sectorNum / 5), 10);
-                    for (let i = 0; i < enemyCount; i++) {
-                        let pos = getEmptyTilePos();
-                        enemies.push({
-                            x: pos.x, y: pos.y, radius: 10,
-                            vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3
-                        });
-                    }
-
-                    if (Math.random() > 0.4) {
-                        let pos = getEmptyTilePos();
-                        powerups.push({ x: pos.x, y: pos.y, type: 'speed' });
-                    }
-                }
+              spawnExplosion(b.x, b.y, '#fda4af', 10, 0.5);
             }
+            break;
+          }
+        }
 
-            // Story Trigger Sector 22
-            if (sectorNum === 22) {
-                showCutscene("SECTOR 22: ORIGIN REVEALED", 
-                    "ARCHIVE LOG #022:\n\n" +
-                    "This White Orb was forged in the cosmic mountains at the edge of the universe.\n" +
-                    "During a spatial rupture, it accidentally clipped into this multi-sector matrix.\n" +
-                    "It has been trapped in an endless loop, attempting to escape back to its home dimension... but the DIDDY Boss blocks the exit threshold."
-                );
+        // Hit DIDDY Boss
+        if (!consumed && diddyBoss.active && diddyBoss.hp > 0) {
+          if (Math.hypot(b.x - diddyBoss.x, b.y - diddyBoss.y) < b.radius + diddyBoss.radius) {
+            diddyBoss.hp = Math.max(0, diddyBoss.hp - b.damage);
+            diddyBoss.flashTimer = 0.1;
+            consumed = true;
+            spawnExplosion(b.x, b.y, '#e879f9', 14, 0.65);
+            updateBossHud();
+
+            if (diddyBoss.hp <= 0) {
+              // Massive Boss Defeat Particle Explosion!
+              spawnExplosion(diddyBoss.x, diddyBoss.y, '#d946ef', 75, 1.6);
+              spawnExplosion(diddyBoss.x, diddyBoss.y, '#ffffff', 40, 1.2);
+              diddyBoss.active = false;
+              bossRockets = [];
+              playSound('explode');
+              triggerVictory();
+              return;
             }
+          }
         }
 
-        function getEmptyTilePos() {
-            let r, c;
-            do {
-                r = Math.floor(Math.random() * (GRID_SIZE - 2)) + 1;
-                c = Math.floor(Math.random() * (GRID_SIZE - 2)) + 1;
-            } while (maze[r][c] !== 0 || (r < 3 && c < 3));
-            return { x: c * TILE_SIZE + 15, y: r * TILE_SIZE + 15 };
+        // Hit Solid Walls
+        if (!consumed) {
+          for (const seg of wallSegments) {
+            if (!seg.isPhase && resolveCircleSegmentCollision(b, seg, false)) {
+              consumed = true;
+              spawnExplosion(b.x, b.y, '#00ff66', 8, 0.45);
+              break;
+            }
+          }
         }
 
-        /* --- CONTROLS & INPUT SYSTEM --- */
-        window.addEventListener('keydown', e => {
-            keysPressed[e.key.toLowerCase()] = true;
-            if (e.code === 'Space') shootBullet();
-            if (e.key.toLowerCase() === 'shift' || e.key.toLowerCase() === 'e') triggerWarp();
-        });
-        window.addEventListener('keyup', e => { keysPressed[e.key.toLowerCase()] = false; });
+        if (consumed || b.life <= 0) {
+          bullets.splice(i, 1);
+        }
+      }
 
-        // Mobile Control Bindings
-        function setupMobileControls() {
-            const bindBtn = (id, key) => {
-                const el = document.getElementById(id);
-                el.addEventListener('touchstart', (e) => { e.preventDefault(); keysPressed[key] = true; });
-                el.addEventListener('touchend', (e) => { e.preventDefault(); keysPressed[key] = false; });
-            };
-            bindBtn('btn-up', 'w');
-            bindBtn('btn-down', 's');
-            bindBtn('btn-left', 'a');
-            bindBtn('btn-right', 'd');
+      // 7. Collect Power-Ups
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const p = powerUps[i];
+        p.bobOffset += dt * 4;
+        if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + p.radius + 4) {
+          if (p.type === 'oxygen') {
+            player.oxygen = Math.min(100, player.oxygen + 45);
+            spawnExplosion(p.x, p.y, '#38bdf8', 18, 0.7);
+          } else if (p.type === 'speed') {
+            player.buffs.speed = 10.0;
+            spawnExplosion(p.x, p.y, '#facc15', 18, 0.7);
+          } else if (p.type === 'strength') {
+            player.buffs.strength = 12.0;
+            spawnExplosion(p.x, p.y, '#fb923c', 18, 0.7);
+          } else if (p.type === 'onetap') {
+            player.buffs.oneTap = 10.0;
+            spawnExplosion(p.x, p.y, '#e879f9', 18, 0.7);
+          }
+          playSound('powerup');
+          powerUps.splice(i, 1);
+          renderBuffBadges();
+        }
+      }
 
-            document.getElementById('btn-shoot').addEventListener('touchstart', (e) => { e.preventDefault(); shootBullet(); });
-            document.getElementById('btn-warp').addEventListener('touchstart', (e) => { e.preventDefault(); triggerWarp(); });
+      // 8. Check Exit Portal Transition (Sectors 1-49)
+      if (currentSector < 50) {
+        exitPortal.angle += dt * 3;
+        if (Math.hypot(player.x - exitPortal.x, player.y - exitPortal.y) < player.radius + exitPortal.radius) {
+          playSound('warp');
+          loadSector(currentSector + 1);
+          return;
+        }
+      }
 
-            // Joystick Implementation
-            const zone = document.getElementById('control-joystick');
-            const knob = document.getElementById('joystick-knob');
-            zone.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                let rect = zone.getBoundingClientRect();
-                let touch = e.touches[0];
-                let x = touch.clientX - rect.left - 55;
-                let y = touch.clientY - rect.top - 55;
-                let dist = Math.hypot(x, y);
-                let maxDist = 35;
-                if (dist > maxDist) { x = (x / dist) * maxDist; y = (y / dist) * maxDist; }
-                knob.style.transform = `translate(${x}px, ${y}px)`;
-                joystickVector.x = x / maxDist;
-                joystickVector.y = y / maxDist;
-            });
-            zone.addEventListener('touchend', () => {
-                knob.style.transform = `translate(0px, 0px)`;
-                joystickVector = { x: 0, y: 0 };
-            });
+      // 9. Update HUD Bars & Camera
+      oxyBar.style.width = `${player.oxygen}%`;
+      oxyText.textContent = `${Math.ceil(player.oxygen)}%`;
+      engBar.style.width = `${player.energy}%`;
+      engText.textContent = `${Math.ceil(player.energy)}%`;
+
+      camera.x += (player.x - camera.x) * Math.min(1, dt * 10);
+      camera.y += (player.y - camera.y) * Math.min(1, dt * 10);
+    }
+
+    // =========================================================================
+    // CUTSCENE & PROLOGUE UPDATE STEPS
+    // =========================================================================
+    function updatePrologue(dt) {
+      cutscene.timer += dt;
+      const input = getMovementInputVector();
+      // Gentle auto-walk if player doesn't press anything so cutscene flows smoothly
+      const walkX = input.mag > 0.05 ? input.ix : 0.75;
+      const walkY = input.mag > 0.05 ? input.iy : 0;
+
+      player.x += walkX * 165 * dt;
+      player.y += walkY * 140 * dt;
+      player.y = Math.max(-75, Math.min(75, player.y));
+      player.x = Math.max(20, player.x);
+
+      player.trail.push({ x: player.x, y: player.y, alpha: 0.7 });
+      if (player.trail.length > 14) player.trail.shift();
+
+      const distPortal = Math.hypot(player.x - cutscene.portalX, player.y - cutscene.portalY);
+      if (distPortal < 130 && cutscene.phase === 0) {
+        cutscene.phase = 1;
+        cutsceneText.textContent = 'Gravitational pull critical! You are being drawn into the Space Maze vortex!';
+        playSound('warp');
+      }
+
+      if (cutscene.phase === 1) {
+        // Pull player into the swirling portal vortex
+        player.x += (cutscene.portalX - player.x) * 4.5 * dt;
+        player.y += (cutscene.portalY - player.y) * 4.5 * dt;
+        if (distPortal < 16) {
+          spawnExplosion(cutscene.portalX, cutscene.portalY, '#a855f7', 40, 1.2);
+          hasPlayedOrigin = true;
+          cutsceneBanner.classList.add('hidden');
+          loadSector(1);
+          return;
+        }
+      }
+
+      camera.x += (player.x - camera.x) * Math.min(1, dt * 8);
+      camera.y += (player.y - camera.y) * Math.min(1, dt * 8);
+    }
+
+    function updateSector5Cutscene(dt) {
+      cutscene.timer += dt;
+      if (cutscene.shakeTimer > 0) cutscene.shakeTimer = Math.max(0, cutscene.shakeTimer - dt);
+      if (player.warpTimer > 0) player.warpTimer = Math.max(0, player.warpTimer - dt);
+      if (player.warpCooldown > 0) player.warpCooldown = Math.max(0, player.warpCooldown - dt);
+      if (player.invulnTimer > 0) player.invulnTimer = Math.max(0, player.invulnTimer - dt);
+
+      // Update active buffs
+      ['speed', 'strength', 'oneTap'].forEach(k => {
+        if (player.buffs[k] > 0) player.buffs[k] = Math.max(0, player.buffs[k] - dt);
+      });
+
+      // Regenerate Energy & gentle Oxygen drain while exploring Mansion
+      player.energy = Math.min(player.maxEnergy, player.energy + 16 * dt);
+      if (cutscene.phase < 2) {
+        player.oxygen = Math.max(0, player.oxygen - 1.1 * dt);
+        if (player.oxygen <= 0) {
+          triggerGameOver('OXYGEN DEPLETED', 'You ran out of oxygen inside the Neon Mansion.');
+          return;
+        }
+      }
+
+      // Phase 0 & 1: Interactive Mansion Exploration, Shooting Guards, Collecting 3 Keys
+      if (cutscene.phase === 0 || cutscene.phase === 1) {
+        const input = getMovementInputVector();
+        if (input.mag > 0.05) {
+          player.lastMoveDirX = input.ix;
+          player.lastMoveDirY = input.iy;
+        }
+        let moveSpeed = player.baseSpeed * (player.buffs.speed > 0 ? 1.45 : 1);
+        if (player.warpTimer > 0) {
+          player.vx = player.warpDirX * 620;
+          player.vy = player.warpDirY * 620;
+        } else {
+          player.vx = input.ix * moveSpeed;
+          player.vy = input.iy * moveSpeed;
+        }
+        const moveSteps = player.warpTimer > 0 ? 8 : 2;
+        const stepDt = dt / moveSteps;
+        for (let sIdx = 0; sIdx < moveSteps; sIdx++) {
+          player.x += player.vx * stepDt;
+          player.y += player.vy * stepDt;
+          for (const seg of wallSegments) {
+            if (seg.isPhase && player.warpTimer > 0) continue;
+            resolveCircleSegmentCollision(player, seg, false);
+          }
         }
 
-        /* --- GAME MECHANICS ACTIONS --- */
-        function shootBullet() {
-            // Auto-aiming mechanics: find nearest target
-            let target = null;
-            let minDist = Infinity;
+        player.trail.push({ x: player.x, y: player.y, alpha: 0.7 });
+        if (player.trail.length > 14) player.trail.shift();
 
-            if (boss) {
-                target = boss;
+        player.lockedTarget = config.autoAim ? findNearestTarget() : null;
+        if (player.lockedTarget) {
+          player.aimAngle = Math.atan2(player.lockedTarget.y - player.y, player.lockedTarget.x - player.x);
+        } else if (input.mag > 0.05) {
+          player.aimAngle = Math.atan2(input.iy, input.ix);
+        }
+
+        // Update Guard Red Orbs
+        for (let i = redOrbs.length - 1; i >= 0; i--) {
+          const orb = redOrbs[i];
+          orb.pulse += dt * 5;
+          orb.x += orb.vx * dt;
+          orb.y += orb.vy * dt;
+          for (const seg of wallSegments) {
+            resolveCircleSegmentCollision(orb, seg, true);
+          }
+          const dPlayer = Math.hypot(orb.x - player.x, orb.y - player.y);
+          if (dPlayer < orb.radius + player.radius && player.warpTimer <= 0 && player.invulnTimer <= 0) {
+            player.oxygen = Math.max(0, player.oxygen - 14);
+            player.invulnTimer = 0.65;
+            spawnExplosion(player.x, player.y, '#fb7185', 14, 0.7);
+            playSound('hurt');
+          }
+        }
+
+        // Update Bullets in Mansion
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          const b = bullets[i];
+          b.trail.push({ x: b.x, y: b.y });
+          if (b.trail.length > 6) b.trail.shift();
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+          b.life -= dt;
+          let hit = false;
+          for (let j = redOrbs.length - 1; j >= 0; j--) {
+            const orb = redOrbs[j];
+            if (Math.hypot(b.x - orb.x, b.y - orb.y) < b.radius + orb.radius) {
+              orb.hp -= b.damage;
+              hit = true;
+              if (orb.hp <= 0) {
+                spawnExplosion(orb.x, orb.y, '#ff2a55', 28, 1.0);
+                redOrbs.splice(j, 1);
+                playSound('explode');
+              } else {
+                spawnExplosion(b.x, b.y, '#fda4af', 10, 0.5);
+              }
+              break;
+            }
+          }
+          if (!hit) {
+            for (const seg of wallSegments) {
+              if (!seg.isPhase && resolveCircleSegmentCollision(b, seg, false)) {
+                hit = true;
+                spawnExplosion(b.x, b.y, '#00ff66', 8, 0.45);
+                break;
+              }
+            }
+          }
+          if (hit || b.life <= 0) bullets.splice(i, 1);
+        }
+
+        // Collect Power-Ups in Mansion
+        for (let i = powerUps.length - 1; i >= 0; i--) {
+          const p = powerUps[i];
+          p.bobOffset += dt * 4;
+          if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + p.radius + 4) {
+            if (p.type === 'oxygen') player.oxygen = Math.min(100, player.oxygen + 45);
+            if (p.type === 'speed') player.buffs.speed = 10.0;
+            playSound('powerup');
+            spawnExplosion(p.x, p.y, '#38bdf8', 16, 0.7);
+            powerUps.splice(i, 1);
+          }
+        }
+
+        // Collect Golden Mansion Keys
+        for (const k of cutscene.mansionKeys) {
+          k.bob += dt * 4;
+          if (!k.collected && Math.hypot(player.x - k.x, player.y - k.y) < player.radius + k.radius + 6) {
+            k.collected = true;
+            cutscene.keysCollected++;
+            playSound('powerup');
+            spawnExplosion(k.x, k.y, '#facc15', 28, 0.9);
+            orbsLabel.textContent = `KEYS: ${cutscene.keysCollected}/${cutscene.totalKeys}`;
+            cutsceneHint.textContent = `KEYS: ${cutscene.keysCollected} / ${cutscene.totalKeys}`;
+
+            if (cutscene.keysCollected >= cutscene.totalKeys) {
+              cutscene.phase = 1;
+              cutscene.portalUnlocked = true;
+              cutsceneText.textContent = 'All 3 Mansion Keys collected! Head north to the Sanctum Portal to unlock it!';
+              spawnExplosion(exitPortal.x, exitPortal.y, '#00ff66', 35, 1.1);
             } else {
-                enemies.forEach(e => {
-                    let d = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (d < minDist) { minDist = d; target = e; }
-                });
+              cutsceneText.textContent = `Key found (${cutscene.keysCollected}/3)! Search the remaining Mansion wings!`;
             }
-
-            let angle = 0;
-            if (target) {
-                angle = Math.atan2(target.y - player.y, target.x - player.x);
-            } else {
-                // Default facing angle based on velocity
-                angle = Math.atan2(player.vy || -1, player.vx || 0);
-            }
-
-            bullets.push({
-                x: player.x, y: player.y,
-                vx: Math.cos(angle) * 7, vy: Math.sin(angle) * 7
-            });
-            playSound(600, 'square', 0.05);
+          }
         }
 
-        function triggerWarp() {
-            if (gameState.warpCooldown > 0) return;
-
-            let warpDistance = 80;
-            let dirX = player.vx || (keysPressed['d'] ? 1 : keysPressed['a'] ? -1 : 0);
-            let dirY = player.vy || (keysPressed['s'] ? 1 : keysPressed['w'] ? -1 : 0);
-
-            if (dirX === 0 && dirY === 0) dirY = -1; // Default forward
-
-            let targetX = player.x + dirX * warpDistance;
-            let targetY = player.y + dirY * warpDistance;
-
-            // Wall-Collision Protection: check if target is inside a wall
-            let gridC = Math.floor(targetX / TILE_SIZE);
-            let gridR = Math.floor(targetY / TILE_SIZE);
-
-            if (gridR >= 0 && gridR < GRID_SIZE && gridC >= 0 && gridC < GRID_SIZE && maze[gridR][gridC] === 0) {
-                player.x = targetX;
-                player.y = targetY;
-                gameState.warpCooldown = 120; // Cooldown frames (~2 secs)
-                playSound(300, 'sawtooth', 0.15);
-            }
+        // Check if Player steps into the Unlocked Sanctum Portal
+        exitPortal.angle += dt * 3.5;
+        if (cutscene.portalUnlocked && Math.hypot(player.x - exitPortal.x, player.y - exitPortal.y) < player.radius + exitPortal.radius + 8) {
+          // Trigger Phase 2: DIDDY Boss Slams Down from Above!
+          cutscene.phase = 2;
+          cutscene.timer = 0;
+          cutscene.bossSlamScale = 3.4;
+          diddyBoss.active = true;
+          diddyBoss.x = exitPortal.x;
+          diddyBoss.y = exitPortal.y - 260;
+          diddyBoss.radius = 52;
+          diddyBoss.hp = 100;
+          diddyBoss.maxHp = 100;
+          bossHudContainer.classList.remove('hidden');
+          bossNameTitle.textContent = 'THE DIDDY BOSS // OVERLORD ORB';
+          bossHpLabel.textContent = '100 / 100 HP (SECTOR 50)';
+          bossHpBar.style.width = '100%';
+          cutsceneText.textContent = 'WARNING: Massive gravitational signature dropping onto the Mansion Portal!';
+          playSound('warp');
         }
 
-        /* --- GAME LOOP & UPDATES --- */
-        function update() {
-            if (gameState.warpCooldown > 0) gameState.warpCooldown--;
+        camera.x += (player.x - camera.x) * Math.min(1, dt * 9);
+        camera.y += (player.y - camera.y) * Math.min(1, dt * 9);
+      }
+      // Phase 2: DIDDY Boss Descending & Slamming Down onto the Portal
+      else if (cutscene.phase === 2) {
+        diddyBoss.y += (exitPortal.y - diddyBoss.y) * Math.min(1, dt * 9);
+        cutscene.bossSlamScale = Math.max(1.0, cutscene.bossSlamScale - dt * 4.2);
 
-            // Player Movement Logic
-            player.vx = 0; player.vy = 0;
-            if (keysPressed['w'] || keysPressed['arrowup']) player.vy = -player.speed;
-            if (keysPressed['s'] || keysPressed['arrowdown']) player.vy = player.speed;
-            if (keysPressed['a'] || keysPressed['arrowleft']) player.vx = -player.speed;
-            if (keysPressed['d'] || keysPressed['arrowright']) player.vx = player.speed;
+        if (Math.abs(diddyBoss.y - exitPortal.y) < 8 && cutscene.bossSlamScale <= 1.05) {
+          // SLAM IMPACT!
+          diddyBoss.y = exitPortal.y;
+          cutscene.bossSlamScale = 1.0;
+          cutscene.phase = 3;
+          cutscene.timer = 0;
+          cutscene.shakeTimer = 0.65;
+          cutscene.bossQuote = '"See you at Sector 50, you weakling."';
 
-            if (joystickVector.x !== 0 || joystickVector.y !== 0) {
-                player.vx = joystickVector.x * player.speed;
-                player.vy = joystickVector.y * player.speed;
-            }
+          // Knock player back slightly from the shockwave
+          player.y = Math.max(player.y, exitPortal.y + 115);
 
-            // Tile Wall Collision
-            let newX = player.x + player.vx;
-            let newY = player.y + player.vy;
-            if (!checkWallCollision(newX, player.y, player.radius)) player.x = newX;
-            if (!checkWallCollision(player.x, newY, player.radius)) player.y = newY;
-
-            // Bullets Update
-            bullets.forEach((b, index) => {
-                b.x += b.vx; b.y += b.vy;
-                if (checkWallCollision(b.x, b.y, 3)) bullets.splice(index, 1);
-
-                // Bullet hit enemies
-                enemies.forEach((e, eIdx) => {
-                    if (Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 3) {
-                        enemies.splice(eIdx, 1);
-                        bullets.splice(index, 1);
-                        gameState.score += 50;
-                        playSound(800, 'sine', 0.05);
-                    }
-                });
-
-                // Bullet hit boss
-                if (boss && Math.hypot(b.x - boss.x, b.y - boss.y) < boss.radius) {
-                    boss.hp -= 2;
-                    bullets.splice(index, 1);
-                    document.getElementById('boss-hp-bar').style.width = `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%`;
-                    playSound(150, 'sawtooth', 0.05);
-
-                    if (boss.hp <= 0) {
-                        alert("CONGRATULATIONS! YOU DEFEATED THE DIDDY BOSS AND ESCAPED THE MATRIX!");
-                        saveScore();
-                        loadSector(1);
-                    }
-                }
+          // Spawn massive purple shockwave & oil splatters around the Sanctum
+          spawnExplosion(diddyBoss.x, diddyBoss.y, '#d946ef', 60, 1.5);
+          spawnExplosion(diddyBoss.x, diddyBoss.y, '#ffffff', 30, 1.1);
+          for (let i = 0; i < 6; i++) {
+            const ang = (Math.PI * 2 * i) / 6;
+            oilSplatters.push({
+              x: diddyBoss.x + Math.cos(ang) * 75,
+              y: diddyBoss.y + Math.sin(ang) * 75,
+              radius: 34 + (i % 2) * 10,
+              life: 8.0
             });
-
-            // Enemy Bullets
-            enemyBullets.forEach((eb, index) => {
-                eb.x += eb.vx; eb.y += eb.vy;
-                if (checkWallCollision(eb.x, eb.y, 3)) enemyBullets.splice(index, 1);
-
-                if (!gameState.godMode && Math.hypot(eb.x - player.x, eb.y - player.y) < player.radius) {
-                    playerHit();
-                }
-            });
-
-            // Enemies Patrol Update
-            enemies.forEach(e => {
-                let nx = e.x + e.vx, ny = e.y + e.vy;
-                if (checkWallCollision(nx, e.y, e.radius)) e.vx *= -1; else e.x = nx;
-                if (checkWallCollision(e.x, ny, e.radius)) e.vy *= -1; else e.y = ny;
-
-                if (!gameState.godMode && Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius) {
-                    playerHit();
-                }
-            });
-
-            // DIDDY Boss AI
-            if (boss) {
-                boss.x += boss.vx; boss.y += boss.vy;
-                if (boss.x - boss.radius < 0 || boss.x + boss.radius > 600) boss.vx *= -1;
-                if (boss.y - boss.radius < 0 || boss.y + boss.radius > 600) boss.vy *= -1;
-
-                // Yellow oil splatter trail
-                if (Math.random() < 0.2) {
-                    splatters.push({ x: boss.x, y: boss.y, radius: Math.random() * 8 + 4 });
-                }
-
-                // Boss Shooting
-                boss.shootTimer++;
-                if (boss.shootTimer > 90) {
-                    boss.shootTimer = 0;
-                    let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-                    enemyBullets.push({
-                        x: boss.x, y: boss.y,
-                        vx: Math.cos(angle) * 4, vy: Math.sin(angle) * 4
-                    });
-                }
-            }
-
-            // Powerups Pickup
-            powerups.forEach((p, idx) => {
-                if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + 10) {
-                    if (p.type === 'key') {
-                        gameState.keysCollected++;
-                        document.getElementById('ui-keys').innerText = `${gameState.keysCollected}/${gameState.keysRequired}`;
-                        if (gameState.keysCollected >= gameState.keysRequired) exitPortal.unlocked = true;
-                    } else if (p.type === 'speed') {
-                        player.speed = 5.5;
-                        setTimeout(() => player.speed = 3.5, 5000);
-                    }
-                    powerups.splice(idx, 1);
-                    playSound(900, 'triangle', 0.1);
-                }
-            });
-
-            // Exit Portal Trigger
-            if (exitPortal.unlocked && Math.hypot(player.x - exitPortal.x, player.y - exitPortal.y) < 20) {
-                if (gameState.sector === 20) {
-                    showCutscene("SECTOR 20 CLEARED", 
-                        "The unlocked portal opens with a flash of light.\n\n" +
-                        "A massive purple shadow drops from above:\n" +
-                        "DIDDY BOSS: \"Impressive work, little orb... See you at Sector 202!\"",
-                        () => loadSector(21)
-                    );
-                } else {
-                    gameState.score += 100;
-                    loadSector(gameState.sector + 1);
-                }
-            }
-
-            document.getElementById('ui-score').innerText = gameState.score;
+          }
+          playSound('slam');
+          cutsceneTag.textContent = 'THE DIDDY BOSS';
+          cutsceneText.textContent = '"See you at Sector 50, you weakling."';
+          cutsceneHint.textContent = 'TELEPORTING TO SECTOR 6...';
         }
 
-        function checkWallCollision(x, y, r) {
-            let left = Math.floor((x - r) / TILE_SIZE);
-            let right = Math.floor((x + r) / TILE_SIZE);
-            let top = Math.floor((y - r) / TILE_SIZE);
-            let bottom = Math.floor((y + r) / TILE_SIZE);
+        camera.x += (exitPortal.x - camera.x) * Math.min(1, dt * 8);
+        camera.y += ((exitPortal.y + 40) - camera.y) * Math.min(1, dt * 8);
+      }
+      // Phase 3: Boss holds the taunt speech bubble, then warps player to Sector 6
+      else if (cutscene.phase === 3) {
+        diddyBoss.pulseAngle += dt * 6;
+        camera.x += (exitPortal.x - camera.x) * Math.min(1, dt * 8);
+        camera.y += ((exitPortal.y + 40) - camera.y) * Math.min(1, dt * 8);
 
-            for (let row = top; row <= bottom; row++) {
-                for (let col = left; col <= right; col++) {
-                    if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) return true;
-                    if (maze[row][col] === 1) return true;
-                }
-            }
-            return false;
+        if (cutscene.timer > 4.2) {
+          cutsceneBanner.classList.add('hidden');
+          bossHudContainer.classList.add('hidden');
+          diddyBoss.active = false;
+          loadSector(6);
+          return;
         }
+      }
 
-        function playerHit() {
-            playSound(100, 'sawtooth', 0.3);
-            alert("MATRIX COLLAPSE: Sector Reset!");
-            loadSector(gameState.sector);
-        }
+      // Sync HUD Bars
+      oxyBar.style.width = `${player.oxygen}%`;
+      oxyText.textContent = `${Math.ceil(player.oxygen)}%`;
+      engBar.style.width = `${player.energy}%`;
+      engText.textContent = `${Math.ceil(player.energy)}%`;
+    }
 
-        /* --- RENDERING SYSTEM --- */
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function renderBuffBadges() {
+      const items = [];
+      if (player.buffs.speed > 0) {
+        items.push(`<span class="px-2.5 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-400 text-yellow-300 text-[11px] font-bold mono">⚡ SPEED ${Math.ceil(player.buffs.speed)}s</span>`);
+      }
+      if (player.buffs.strength > 0) {
+        items.push(`<span class="px-2.5 py-0.5 rounded-full bg-orange-500/20 border border-orange-400 text-orange-300 text-[11px] font-bold mono">🔥 2X DMG ${Math.ceil(player.buffs.strength)}s</span>`);
+      }
+      if (player.buffs.oneTap > 0) {
+        items.push(`<span class="px-2.5 py-0.5 rounded-full bg-fuchsia-500/20 border border-fuchsia-400 text-fuchsia-300 text-[11px] font-bold mono">💀 ONE-TAP ${Math.ceil(player.buffs.oneTap)}s</span>`);
+      }
+      activeBuffsRow.innerHTML = items.join('');
+    }
 
-            // Sector Color Palette Rules
-            let wallColor = 'var(--neon-green)';
-            if (gameState.sector === 20) wallColor = '#b026ff';
+    function triggerGameOver(title, desc) {
+      gameState = 'GAMEOVER';
+      endStateBadge.textContent = 'MISSION FAILED';
+      endStateBadge.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-2 mono bg-rose-500/20 text-rose-300 border border-rose-500/40';
+      endStateTitle.textContent = title;
+      endStateDesc.textContent = desc;
+      retrySectorBtn.textContent = `RETRY SECTOR ${currentSector}`;
+      endStateModal.classList.remove('hidden');
+      syncOnScreenControlsVisibility();
+    }
 
-            // 1. Draw Maze
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(wallColor) || wallColor;
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (maze[r][c] === 1) {
-                        ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                    }
-                }
-            }
+    function triggerVictory() {
+      gameState = 'VICTORY';
+      endStateBadge.textContent = 'SECTOR 50 CLEARED // VICTORY';
+      endStateBadge.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-2 mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+      endStateTitle.textContent = 'DIDDY BOSS DEFEATED!';
+      endStateDesc.textContent = 'You conquered all 50 procedural sectors, mastered the Shield & Warp thrusters, and shattered the giant purple Overlord Orb!';
+      retrySectorBtn.textContent = 'PLAY SECTOR 50 AGAIN';
+      endStateModal.classList.remove('hidden');
+      syncOnScreenControlsVisibility();
+    }
 
-            // 2. Draw Splatters
-            ctx.fillStyle = '#ffee00';
-            splatters.forEach(s => {
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
+    // =========================================================================
+    // HIGH-FPS NEON RENDERER
+    // =========================================================================
+    function renderGame(timeMs) {
+      // Pure black background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, viewWidth, viewHeight);
 
-            // 3. Draw Exit Portal
-            if (gameState.sector !== 202) {
-                ctx.fillStyle = exitPortal.unlocked ? '#00f0ff' : '#444444';
-                ctx.beginPath();
-                ctx.arc(exitPortal.x, exitPortal.y, 12, 0, Math.PI * 2);
-                ctx.fill();
-                if (exitPortal.unlocked) {
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
-                }
-            }
+      ctx.save();
+      ctx.translate(viewWidth / 2 - camera.x, viewHeight / 2 - camera.y);
 
-            // 4. Draw Powerups
-            powerups.forEach(p => {
-                ctx.fillStyle = (p.type === 'key') ? '#ffee00' : '#00f0ff';
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
-                ctx.fill();
-            });
+      // Subtle background coordinate grid
+      drawBackgroundGrid();
 
-            // 5. Draw Player
-            ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fill();
+      if (gameState === 'PROLOGUE') {
+        drawPrologueScene(timeMs);
+      } else if (gameState === 'SECTOR_5_CUTSCENE') {
+        drawSector5SurrealScene(timeMs);
+      } else {
+        drawMazeScene(timeMs);
+      }
 
-            // Warp Indicator Ring
-            if (gameState.warpCooldown === 0) {
-                ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius + 4, 0, Math.PI * 2);
-                ctx.stroke();
-            }
+      // Draw Particles (Bullet hits & 1-second death explosions)
+      for (const p of particles) {
+        const alpha = Math.max(0, p.life / p.maxLife);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
 
-            // 6. Draw Enemies
-            ctx.fillStyle = '#ff2a2a';
-            enemies.forEach(e => {
-                ctx.beginPath();
-                ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
+      ctx.restore();
+    }
 
-            // 7. Draw Bullets
-            ctx.fillStyle = '#ffee00';
-            bullets.forEach(b => {
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
+    function drawBackgroundGrid() {
+      const step = 76;
+      const startX = Math.floor((camera.x - viewWidth / 2) / step) * step;
+      const endX = camera.x + viewWidth / 2 + step;
+      const startY = Math.floor((camera.y - viewHeight / 2) / step) * step;
+      const endY = camera.y + viewHeight / 2 + step;
 
-            ctx.fillStyle = '#ff0077';
-            enemyBullets.forEach(eb => {
-                ctx.beginPath();
-                ctx.arc(eb.x, eb.y, 5, 0, Math.PI * 2);
-                ctx.fill();
-            });
+      ctx.strokeStyle = 'rgba(0, 255, 102, 0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = startX; x <= endX; x += step) {
+        ctx.moveTo(x, startY);
+        ctx.lineTo(x, endY);
+      }
+      for (let y = startY; y <= endY; y += step) {
+        ctx.moveTo(startX, y);
+        ctx.lineTo(endX, y);
+      }
+      ctx.stroke();
+    }
 
-            // 8. Draw Boss
-            if (boss) {
-                ctx.fillStyle = '#b026ff';
-                ctx.beginPath();
-                ctx.arc(boss.x, boss.y, boss.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#ffee00';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            }
+    function drawPrologueScene(timeMs) {
+      // Draw Street Sidewalks & Neon Streetlights
+      ctx.strokeStyle = '#00ff66';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, -90);
+      ctx.lineTo(cutscene.streetLength, -90);
+      ctx.moveTo(0, 90);
+      ctx.lineTo(cutscene.streetLength, 90);
+      ctx.stroke();
 
-            requestAnimationFrame(() => { update(); render(); });
-        }
+      // Dashed street centerline
+      ctx.strokeStyle = 'rgba(0, 255, 102, 0.35)';
+      ctx.setLineDash([18, 18]);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(cutscene.streetLength - 100, 0);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-        /* --- USER INTERFACE & SCREENS --- */
-        document.getElementById('login-submit').addEventListener('click', () => {
-            let val = document.getElementById('username-input').value.trim();
-            if (val) {
-                gameState.username = val;
-                document.getElementById('screen-login').classList.add('hidden');
-                showTutorialScreen();
-            }
-        });
+      // Streetlights along pavement
+      for (let x = 60; x < cutscene.streetLength - 80; x += 130) {
+        ctx.fillStyle = 'rgba(0, 255, 102, 0.14)';
+        ctx.beginPath();
+        ctx.arc(x, -90, 26, 0, Math.PI * 2);
+        ctx.arc(x, 90, 26, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-        function showTutorialScreen() {
-            const term = document.getElementById('terminal-content');
-            term.innerHTML = `
-                <p>> USER AUTHENTICATED: <strong>${gameState.username}</strong></p>
-                <p>> SYSTEM BRIEFING INITIALIZED...</p>
-                <hr style="border-color:var(--neon-green); margin:10px 0;">
-                <p><strong>CONTROLS:</strong></p>
-                <p>• WASD / ARROWS: Navigate Matrix Space</p>
-                <p>• SPACE / TOUCH SHOOT: Fire Auto-Targeting Plasma</p>
-                <p>• SHIFT / TOUCH WARP: Quantum Phase Shift through corridors</p>
-                <hr style="border-color:var(--neon-green); margin:10px 0;">
-                <p><strong>OBJECTIVE:</strong> Traverse 202 sectors. Locate blue portals to progress. Eliminate hostiles.</p>
-            `;
-            document.getElementById('screen-tutorial').classList.remove('hidden');
-        }
+      // Dimensional Vortex Portal at end of street
+      const pulse = Math.sin(timeMs * 0.008) * 6;
+      const grad = ctx.createRadialGradient(
+        cutscene.portalX, cutscene.portalY, 4,
+        cutscene.portalX, cutscene.portalY, 54 + pulse
+      );
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.4, '#c026d3');
+      grad.addColorStop(0.8, '#00ff66');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cutscene.portalX, cutscene.portalY, 54 + pulse, 0, Math.PI * 2);
+      ctx.fill();
 
-        document.getElementById('start-game-btn').addEventListener('click', () => {
-            document.getElementById('screen-tutorial').classList.add('hidden');
-            document.getElementById('screen-menu').classList.remove('hidden');
-            loadLeaderboard();
-        });
+      drawPlayerDot(timeMs);
+    }
 
-        document.getElementById('menu-play-btn').addEventListener('click', () => {
-            document.getElementById('screen-menu').classList.add('hidden');
-            loadSector(1);
-        });
+    function drawSector5SurrealScene(timeMs) {
+      ctx.save();
+      if (cutscene.shakeTimer > 0) {
+        const mag = cutscene.shakeTimer * 18;
+        ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+      }
 
-        // Mobile Controls Toggle
-        document.getElementById('toggle-mobile-ctrl').addEventListener('click', (e) => {
-            gameState.isMobile = !gameState.isMobile;
-            e.target.innerText = `MOBILE CONTROLS: ${gameState.isMobile ? 'ON' : 'OFF'}`;
-            document.getElementById('mobile-controls').classList.toggle('hidden', !gameState.isMobile);
-            document.getElementById('toggle-control-type').classList.toggle('hidden', !gameState.isMobile);
-        });
+      // 1. Draw Mansion Room Carpets & Room Labels
+      for (const dec of cutscene.mansionDecor) {
+        ctx.fillStyle = 'rgba(88, 28, 135, 0.16)';
+        ctx.strokeStyle = 'rgba(217, 70, 239, 0.28)';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(dec.x, dec.y, dec.w, dec.h);
+        ctx.strokeRect(dec.x, dec.y, dec.w, dec.h);
 
-        document.getElementById('toggle-control-type').addEventListener('click', (e) => {
-            gameState.controlType = (gameState.controlType === 'dpad') ? 'joystick' : 'dpad';
-            e.target.innerText = `MOBILE UI: ${gameState.controlType.toUpperCase()}`;
-            document.getElementById('control-dpad').classList.toggle('hidden', gameState.controlType !== 'dpad');
-            document.getElementById('control-joystick').classList.toggle('hidden', gameState.controlType !== 'joystick');
-        });
+        ctx.fillStyle = 'rgba(240, 171, 252, 0.35)';
+        ctx.font = 'bold 10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(dec.label, dec.x + dec.w / 2, dec.y + 18);
+      }
 
-        function showCutscene(title, text, callback) {
-            document.getElementById('cutscene-title').innerText = title;
-            document.getElementById('cutscene-text').innerText = text;
-            document.getElementById('screen-cutscene').classList.remove('hidden');
+      // 2. Draw Oil Splatters (when Boss slams)
+      drawOilSplatters();
 
-            const btn = document.getElementById('cutscene-continue-btn');
-            const onContinue = () => {
-                document.getElementById('screen-cutscene').classList.add('hidden');
-                btn.removeEventListener('click', onContinue);
-                if (callback) callback();
-            };
-            btn.addEventListener('click', onContinue);
-        }
+      // 3. Draw Mansion Sanctum Portal (Locked Amber vs Unlocked Emerald)
+      const pRad = exitPortal.radius + Math.sin(timeMs * 0.007) * 3;
+      const grad = ctx.createRadialGradient(
+        exitPortal.x, exitPortal.y, 4,
+        exitPortal.x, exitPortal.y, pRad * 1.65
+      );
+      if (cutscene.portalUnlocked) {
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.5, '#00ff66');
+        grad.addColorStop(1, 'rgba(0, 255, 102, 0)');
+      } else {
+        grad.addColorStop(0, '#fde047');
+        grad.addColorStop(0.5, '#f59e0b');
+        grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+      }
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(exitPortal.x, exitPortal.y, pRad * 1.65, 0, Math.PI * 2);
+      ctx.fill();
 
-        /* --- ADMIN PANEL & SECRET ACCESS --- */
-        document.getElementById('game-title').addEventListener('click', () => {
-            gameState.titleClicks++;
-            if (gameState.titleClicks >= 3) {
-                gameState.titleClicks = 0;
-                document.getElementById('screen-admin-pass').classList.remove('hidden');
-            }
-        });
+      ctx.strokeStyle = cutscene.portalUnlocked ? '#00ff66' : '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(exitPortal.x, exitPortal.y, pRad * 0.75, exitPortal.angle, exitPortal.angle + Math.PI * 1.5);
+      ctx.stroke();
 
-        document.getElementById('admin-pass-submit').addEventListener('click', () => {
-            let pass = document.getElementById('admin-pass-input').value.trim();
-            if (pass === 'viaan2014') {
-                document.getElementById('screen-admin-pass').classList.add('hidden');
-                document.getElementById('screen-admin-panel').classList.remove('hidden');
-            } else {
-                alert("ACCESS DENIED");
-            }
-        });
-
-        document.getElementById('admin-pass-cancel').addEventListener('click', () => {
-            document.getElementById('screen-admin-pass').classList.add('hidden');
-        });
-
-        document.getElementById('admin-skip-level').addEventListener('click', () => {
-            loadSector(20);
-            document.getElementById('screen-admin-panel').classList.add('hidden');
-        });
-
-        document.getElementById('admin-skip-boss').addEventListener('click', () => {
-            loadSector(202);
-            document.getElementById('screen-admin-panel').classList.add('hidden');
-        });
-
-        document.getElementById('admin-godmode').addEventListener('click', () => {
-            gameState.godMode = !gameState.godMode;
-            alert(`GOD MODE: ${gameState.godMode ? 'ACTIVE' : 'INACTIVE'}`);
-        });
-
-        document.getElementById('admin-close').addEventListener('click', () => {
-            document.getElementById('screen-admin-panel').classList.add('hidden');
-        });
-
-        /* --- HIGH SCORES --- */
-        function saveScore() {
-            let scores = JSON.parse(localStorage.getItem('space_maze_scores') || '[]');
-            scores.push({ name: gameState.username, score: gameState.score });
-            scores.sort((a, b) => b.score - a.score);
-            localStorage.setItem('space_maze_scores', JSON.stringify(scores.slice(0, 5)));
-        }
-
-        function loadLeaderboard() {
-            let scores = JSON.parse(localStorage.getItem('space_maze_scores') || '[]');
-            const list = document.getElementById('leaderboard-list');
-            if (scores.length === 0) {
-                list.innerText = "No scores recorded yet.";
-            } else {
-                list.innerHTML = scores.map((s, i) => `<p>${i+1}. ${s.name} - ${s.score} PTS</p>`).join('');
-            }
-        }
-
-        // Initialize Engine
-        setupMobileControls();
-        render();
-    </script>
-</body>
-</html>
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        cutsc
