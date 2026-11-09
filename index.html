@@ -24,11 +24,12 @@
       background-color: #000000;
       color: #ffffff;
       font-family: 'Inter', sans-serif;
+      touch-action: manipulation;
+    }
+    #gameCanvas, #joystickContainer, .ctrl-btn {
       touch-action: none;
     }
-    .hidden {
-      display: none !important;
-    }
+
     .mono {
       font-family: 'JetBrains Mono', monospace;
     }
@@ -239,6 +240,11 @@
       .sm\:flex-row { flex-direction: row; }
       .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .sm\:block { display: block; }
+    }
+    .hidden, [hidden] {
+      display: none !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
     }
   </style>
 </head>
@@ -1142,11 +1148,9 @@
       initAudio();
       renderLeaderboardTable();
       leaderboardModal.classList.remove('hidden');
-      leaderboardModal.style.display = 'flex';
     });
     closeLeaderboardBtn.addEventListener('click', () => {
       leaderboardModal.classList.add('hidden');
-      leaderboardModal.style.display = 'none';
     });
     resetLeaderboardBtn.addEventListener('click', () => {
       leaderboardData = [...DEFAULT_LEADERBOARD];
@@ -1221,12 +1225,10 @@
       initAudio();
       drawPerkWheel();
       perkWheelModal.classList.remove('hidden');
-      perkWheelModal.style.display = 'flex';
     });
 
     closePerkWheelBtn.addEventListener('click', () => {
       perkWheelModal.classList.add('hidden');
-      perkWheelModal.style.display = 'none';
     });
 
     spinPerkWheelBtn.addEventListener('click', () => {
@@ -1355,12 +1357,10 @@
       renderLobbyPlayersList();
       drawKillerWheel();
       lanLobbyModal.classList.remove('hidden');
-      lanLobbyModal.style.display = 'flex';
     });
 
     closeLanLobbyBtn.addEventListener('click', () => {
       lanLobbyModal.classList.add('hidden');
-      lanLobbyModal.style.display = 'none';
     });
 
     addLobbyBotBtn.addEventListener('click', () => {
@@ -1734,13 +1734,11 @@
         skillCheckOverlay.classList.add('hidden');
         resumeMissionBtn.classList.remove('hidden');
         mainMenuModal.classList.remove('hidden');
-        mainMenuModal.style.display = 'flex';
       }
     });
 
     resumeMissionBtn.addEventListener('click', () => {
       mainMenuModal.classList.add('hidden');
-      mainMenuModal.style.display = 'none';
       if (forestState.trees.length > 0 && hudCenterTitle1.textContent === 'MODE') {
         gameState = 'SLASHER_FOREST';
       } else if (cutsceneBanner.classList.contains('hidden')) {
@@ -1802,9 +1800,7 @@
     startMissionBtn.addEventListener('click', () => {
       initAudio();
       mainMenuModal.classList.add('hidden');
-      mainMenuModal.style.display = 'none';
       endStateModal.classList.add('hidden');
-      endStateModal.style.display = 'none';
       terrorVignette.classList.add('hidden');
       killerActionsCluster.classList.add('hidden');
       skillCheckOverlay.classList.add('hidden');
@@ -1829,11 +1825,8 @@
     launchLanMatchBtn.addEventListener('click', () => {
       initAudio();
       lanLobbyModal.classList.add('hidden');
-      lanLobbyModal.style.display = 'none';
       mainMenuModal.classList.add('hidden');
-      mainMenuModal.style.display = 'none';
       endStateModal.classList.add('hidden');
-      endStateModal.style.display = 'none';
       totalScore = 0;
       scoreLabel.textContent = '0';
       applyStartingWheelPerk();
@@ -1880,7 +1873,6 @@
     retrySectorBtn.addEventListener('click', () => {
       initAudio();
       endStateModal.classList.add('hidden');
-      endStateModal.style.display = 'none';
       applyStartingWheelPerk();
       if (hudCenterTitle1.textContent === 'MODE') {
         startCreepyForestSlasherMode();
@@ -1894,12 +1886,10 @@
 
     endToMenuBtn.addEventListener('click', () => {
       endStateModal.classList.add('hidden');
-      endStateModal.style.display = 'none';
       terrorVignette.classList.add('hidden');
       skillCheckOverlay.classList.add('hidden');
       resumeMissionBtn.classList.add('hidden');
       mainMenuModal.classList.remove('hidden');
-      mainMenuModal.style.display = 'flex';
       gameState = 'MENU';
     });
 
@@ -2094,8 +2084,12 @@
       playSound('sonar');
     }
 
-    btnKillerTrap.addEventListener('pointerdown', (e) => { e.preventDefault(); triggerKillerTrap(); });
-    btnKillerSonar.addEventListener('pointerdown', (e) => { e.preventDefault(); triggerKillerSonar(); });
+    let lastTrapTouch = 0;
+    let lastSonarTouch = 0;
+    btnKillerTrap.addEventListener('pointerdown', (e) => { e.preventDefault(); lastTrapTouch = Date.now(); triggerKillerTrap(); });
+    btnKillerTrap.addEventListener('click', (e) => { if (Date.now() - lastTrapTouch > 350) triggerKillerTrap(); });
+    btnKillerSonar.addEventListener('pointerdown', (e) => { e.preventDefault(); lastSonarTouch = Date.now(); triggerKillerSonar(); });
+    btnKillerSonar.addEventListener('click', (e) => { if (Date.now() - lastSonarTouch > 350) triggerKillerSonar(); });
 
     // Generator Skill-Check Minigame Hit Handler
     function triggerSkillCheckHit() {
@@ -2131,10 +2125,15 @@
       }
     }
 
+    let lastSkillTouch = 0;
     btnSkillCheckHit.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      lastSkillTouch = Date.now();
       triggerSkillCheckHit();
+    });
+    btnSkillCheckHit.addEventListener('click', () => {
+      if (Date.now() - lastSkillTouch > 350) triggerSkillCheckHit();
     });
 
     function drawSkillCheckDial() {
-      const gen = forestState.activeSkillCheckGe
+      const gen = forestState.activeSkillChe
